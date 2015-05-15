@@ -15,3 +15,7 @@ def parse_durationMillis(data):
  if data.startswith('0:'):
   data = data[2:]
  return data
+
+def parse_trackAvailableForPurchase(data):
+ """Prints a * for yes, and a space for no."""
+ return '*' if data else ' '

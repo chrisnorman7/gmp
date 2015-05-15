@@ -71,7 +71,7 @@ class MainFrame(wx.Frame):
   self.pan.Bind(wx.EVT_SLIDER, self.set_pan)
   s3.Add(self.pan, 1, wx.GROW)
   s.Add(s3, 1, wx.GROW)
-  self.artist_bio = wx.TextCtrl(p, style = wx.TE_READONLY|wx.TE_MULTILINE, value = 'No song playing.')
+  self.artist_bio = wx.StaticText(p, label = 'No song playing.')
   s.Add(self.artist_bio, 1, wx.GROW)
   p.SetSizerAndFit(s)
   mb = wx.MenuBar()
@@ -226,6 +226,7 @@ class MainFrame(wx.Frame):
  def play(self, item, history = True):
   """Plays the track given in item. If history is True, add any current track to the history."""
   id = functions.get_id(item)
+  print application.mobile_api.get_track_info(id).keys()
   track = None # The object to store the track in until it's ready for playing.
   error = None # Any error that occured.
   fname = id + application.track_extension
@@ -265,7 +266,7 @@ class MainFrame(wx.Frame):
   self.current_track.play()
   self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
-  self.artist_bio.SetValue(self.artist_info.get('artistBio', 'No information available.'))
+  self.artist_bio.SetLabel(self.artist_info.get('artistBio', 'No information available.'))
  
  def set_volume(self, event):
   """Sets the volume with the slider."""

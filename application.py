@@ -60,10 +60,6 @@ config.add_section('library')
 config.set('library', 'save_tracks', 1000, title = 'The number of tracks to save in the library before the oldest are deleted')
 config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retrieve when getting artist info')
 
-config.add_section('columns')
-for real, friendly in columns:
- config.set('columns', real, friendly, 'Include the %s column in results (black to exclude)' % real)
-
 config.add_section('windows')
 config.set('windows', 'title_format', '{artist} - {title}', title = 'The format for track names in the window title')
 config.set('windows', 'uid_label', '&Username', title = 'The label for the username field')

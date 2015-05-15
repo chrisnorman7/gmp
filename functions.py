@@ -25,6 +25,22 @@ def in_library(id):
     return True
  return False
 
+def select_artist(artists):
+ """Given a list of artists, selects one, with user intervention if there is more than one in the list."""
+ if len(artists) >1:
+  a = {}
+  for x in artists:
+   a[x] = application.mobile_api.get_artist_info(x).get('name', 'Unknown')
+  dlg = wx.SingleChoiceDialog(frame, 'Select an artist', 'This track has multiple artists', a.values())
+  if dlg.ShowModal() == wx.ID_OK:
+   artist = a.keys()[dlg.GetSelection()]
+  else:
+   artist = None
+  dlg.Destroy()
+ else:
+  artist = artists[0]
+ return artist
+
 def reveal_media(event):
  """Opens the media directory in the file manager."""
  if sys.platform == 'darwin':
@@ -247,13 +263,15 @@ def focus_playing(event):
  else:
   wx.Bell()
 
-def artist_tracks(event):
+def artist_tracks(event = None, id = None):
  """Get all tracks for a particular artist."""
  frame = application.main_frame
- cr = frame.get_current_result()
- if cr == -1:
-  return wx.Bell() # There is no track selected yet.
- info = application.mobile_api.get_artist_info(frame.get_results()[cr]['artistId'][0])
+ if id == None:
+  cr = frame.get_current_result()
+  if cr == -1:
+   return wx.Bell() # There is no track selected yet.
+  id = select_artist(frame.get_results()[cr]['artistId'])
+ info = application.mobile_api.get_artist_info(id)
  frame.clear_results()
  for a in info['albums']:
   a = application.mobile_api.get_album_info(a['albumId'])
@@ -269,8 +287,35 @@ def current_album(event):
 
 def artist_album(event):
  """Selects a particular artist album."""
- pass
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell()
+ artists = frame.get_results()[cr]['artistId']
+ artist = select_artist(artists)
+ if not artist:
+  return
+ albums = application.mobile_api.get_artist_info(artist).get('albums', [])
+ dlg = wx.SingleChoiceDialog(frame, 'Select an album', 'Album Selection', [x.get('name', 'Unnamed') for x in albums])
+ if dlg.ShowModal() == wx.ID_OK:
+  frame.add_results(application.mobile_api.get_album_info(albums[dlg.GetSelection()]['albumId'])['tracks'], True)
+ dlg.Destroy()
 
 def related_artists(event):
  """Selects and views tracks for a related artist."""
- pass
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell()
+ artist = select_artist(frame.get_results()[cr]['artistId'])
+ if not artist:
+  return # User canceled.
+ related = application.mobile_api.get_artist_info(artist).get('related_artists', [])
+ dlg = wx.SingleChoiceDialog(frame, 'Select an artist', 'Related Artists', [x.get('name', 'Unknown') for x in related])
+ if dlg.ShowModal():
+  artist = related[dlg.GetSelection()].get('artistId', None)
+  if not artist:
+   return # No clue...
+  info = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks'))
+  frame.add_results(info.get('topTracks', []), True)
+ dlg.Destroy()
