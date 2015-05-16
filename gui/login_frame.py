@@ -48,11 +48,11 @@ class LoginFrame(SF):
    application.config.set('login', 'remember', self.remember.GetValue())
    wx.CallAfter(self.post_login)
   else:
-   self.login.SetLabel(application.config.get('windows', 'login_label'))
-   self.login.Enable()
-   wx.MessageBox('Login unsuccessful', 'Error')
-   self.uid.SetSelection(0, -1)
-   self.pwd.SetSelection(0, -1)
+   wx.CallAfter(self.login.SetLabel, application.config.get('windows', 'login_label'))
+   wx.CallAfter(self.login.Enable)
+   wx.CallAfter(wx.MessageBox, 'Login unsuccessful', 'Error')
+   wx.CallAfter(self.uid.SetSelection, 0, -1)
+   wx.CallAfter(self.pwd.SetSelection, 0, -1)
  
  def do_cancel(self, event = None):
   """Closes this window and application.main_frame."""

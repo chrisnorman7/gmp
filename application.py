@@ -1,3 +1,4 @@
+devel = False
 from confmanager import ConfManager, parser
 
 columns = [
@@ -26,8 +27,8 @@ from gmusicapi import Mobileclient, Webclient
 
 sound_output = Output()
 
-mobile_api = Mobileclient()
-web_api = Webclient()
+mobile_api = Mobileclient(verify_ssl = devel)
+web_api = Webclient(verify_ssl = devel)
 app_id = '1234567890abcdef'
 
 device_id = None
@@ -114,7 +115,10 @@ class MyApp(wx.App):
    json.dump(library, f, indent = 1)
   return l
 
-app = MyApp(False)
+if devel:
+ app = MyApp(False)
+else:
+ app = MyApp(True, os.path.join(directory, name + '.log'))
 app.SetAppDisplayName('%s (v %s)' % (name, version))
 app.SetAppName(name)
 app.SetVendorName(vendor_name)
