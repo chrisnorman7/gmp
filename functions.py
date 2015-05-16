@@ -151,22 +151,20 @@ def stop(event):
 def volume_up(event):
  """Turn up the playing song."""
  frame = application.main_frame
- v = application.config.get('sound', 'volume_increment') + frame.volume.GetValue()
- if v > 100:
+ v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
+ if v == 100:
   wx.Bell()
- else:
-  frame.volume.SetValue(v)
-  frame.set_volume(event)
+ frame.volume.SetValue(v)
+ frame.set_volume(event)
 
 def volume_down(event):
  """Turn down the playing song."""
  frame = application.main_frame
- v = frame.volume.GetValue() - application.config.get('sound', 'volume_decrement')
- if v < 0:
+ v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
+ if not v:
   wx.Bell()
- else:
-  frame.volume.SetValue(v)
-  frame.set_volume(event)
+ frame.volume.SetValue(v)
+ frame.set_volume(event)
 
 def previous(event):
  """Select the previous track."""
