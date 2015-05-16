@@ -115,7 +115,7 @@ class MainFrame(wx.Frame):
   self.Bind(wx.EVT_MENU, lambda event: Thread(target = functions.all_playlist_tracks, args = [event]).start(), source_menu.Append(wx.ID_ANY, 'Load &All Playlist Tracks\tCTRL+0', 'Load every item from every playlist into the results table'))
   mb.Append(source_menu, '&Source')
   track_menu = wx.Menu()
-  self.Bind(wx.EVT_MENU, lambda event: Thread(target = functions.queue_result, args = [event]).start(), track_menu.Append(wx.ID_ANY, '&Queue Item\tQ', 'Add the currently selected item to the play queue'))
+  self.Bind(wx.EVT_MENU, lambda event: Thread(target = functions.queue_result, args = [event]).start(), track_menu.Append(wx.ID_ANY, '&Queue Item\tALT+0', 'Add the currently selected item to the play queue'))
   mb.Append(track_menu, '&Track')
   play_menu = wx.Menu()
   self.Bind(wx.EVT_MENU, lambda event: self.select_item(event) if self.results.HasFocus() else None, play_menu.Append(wx.ID_ANY, '&Select Current Item\tENTER', 'Selects the current item'))
@@ -126,7 +126,7 @@ class MainFrame(wx.Frame):
   self.Bind(wx.EVT_MENU, functions.next, play_menu.Append(wx.ID_ANY, '&Next\tCTRL+RIGHT', 'Play the next track'))
   self.Bind(wx.EVT_MENU, functions.stop, play_menu.Append(wx.ID_ANY, '&Stop\tCTRL+.', 'Stop the currently playing song.'))
   self.stop_after = play_menu.AppendCheckItem(wx.ID_ANY, 'Stop &After The Current Track\tCTRL+SHIFT+.', 'Stop after the currently playing track has finished')
-  self.Bind(wx.EVT_MENU, lambda event: application.config.set('sound', 'stop_after', self.stop_after.Checked()), self.stop_after)
+  self.Bind(wx.EVT_MENU, lambda event: application.config.set('sound', 'stop_after', self.stop_after.IsChecked()), self.stop_after)
   self.Bind(wx.EVT_MENU, functions.rewind, play_menu.Append(wx.ID_ANY, '&Rewind\tSHIFT+LEFT', 'Rewind by %s' % application.config.get('sound', 'rewind_amount')))
   self.Bind(wx.EVT_MENU, functions.fastforward, play_menu.Append(wx.ID_ANY, '&Fastforward\tSHIFT+RIGHT', 'Fastforward by %s' % application.config.get('sound', 'fastforward_amount')))
   self.Bind(wx.EVT_MENU, lambda event: self.set_frequency(self.frequency.SetValue(min(100, self.frequency.GetValue() + 1))), play_menu.Append(wx.ID_ANY, 'Frequency &Up\tSHIFT+UP', 'Shift the frequency up a little'))
@@ -321,7 +321,7 @@ class MainFrame(wx.Frame):
     i = min(self.current_track.get_length(), int(self.current_track.get_position() / (self.current_track.get_length() / 100.0)))
     if not self.track_position.HasFocus() and i != self.track_position.GetValue():
      self.track_position.SetValue(i)
-    if self.current_track.get_position() == self.current_track.get_length() and not self.should_stop.Checked():
+    if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
      functions.next(None, interactive = False)
  
  def get_current_result(self):

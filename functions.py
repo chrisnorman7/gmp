@@ -275,7 +275,7 @@ def do_search(event = None, search = None):
    frame.last_search = search
   dlg.Destroy()
  if search:
-  results = application.mobile_api.search_all_access(search)['song_hits']
+  results = application.mobile_api.search_all_access(search, max_results = application.config.get('library', 'max_results'))['song_hits']
   if not results:
    wx.MessageBox('No results found', 'Error')
   else:
@@ -429,7 +429,7 @@ def delete_playlist_or_station(event):
   wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])))
  elif frame.current_station:
   # We are working on a radio station.
-  wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'][0])))
+  wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]))
  else:
   # There is no playlist or station selected.
   wx.Bell()
@@ -455,7 +455,7 @@ def station_from_artist(event):
   return wx.Bell()
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s' % (track.get('artist', 'Unknown Artist')))
- if dlg.ShowModal() and dlg.GetValue():
+ if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
   id = application.mobile_api.create_station(dlg.GetValue(), artist_id = get_id(track))
   select_station(station = id, interactive = True)
  dlg.Destroy()
@@ -468,7 +468,7 @@ def station_from_album(event):
   return wx.Bell()
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('album', 'Unknown Album')))
- if dlg.ShowModal() and dlg.GetValue():
+ if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
   id = application.mobile_api.create_station(dlg.GetValue(), album_id = get_id(track))
   select_station(station = id, interactive = True)
  dlg.Destroy()
@@ -478,14 +478,16 @@ def station_from_genre(event):
  frame = application.main_frame
  genres = application.mobile_api.get_genres()['genres']
  dlg = wx.SingleChoiceDialog(frame, 'Select a genre to build a station', 'Select A Genre', [g['name'] for g in genres])
- if dlg.ShowModal():
+ if dlg.ShowModal() == wx.ID_OK:
   genre = genres[dlg.GetSelection()]
  else:
   genre = None
  dlg.Destroy()
  if genre:
   dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Genre station for %s' % genre['name'])
-  if dlg.ShowModal() and dlg.GetValue():
+  if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
+   for x in genre:
+    print '%s: %s' % (x, genre[x])
    id = application.mobile_api.create_station(dlg.GetValue(), genre_id = genre['id'])
    select_station(station = id, interactive = True)
   dlg.Destroy()

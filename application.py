@@ -59,6 +59,7 @@ config.set('login', 'remember', False, title = 'Remember credentials across rest
 config.add_section('library')
 config.set('library', 'save_tracks', 1000, title = 'The number of tracks to save in the library before the oldest are deleted')
 config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retrieve when getting artist info')
+config.set('library', 'max_results', 50, title = 'Maximum search results to display')
 
 config.add_section('windows')
 config.set('windows', 'title_format', '{artist} - {title}', title = 'The format for track names in the window title')
