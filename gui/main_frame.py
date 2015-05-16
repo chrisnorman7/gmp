@@ -557,7 +557,7 @@ class MainFrame(wx.Frame):
      error = e # Just store it for later alerting.
     Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)]).start()
    else:
-    return None # Track is not downloaded, and can't get a device to download with.
+    return # Track is not downloaded, and can't get a device to download with.
   else:
    try:
     track = FileStream(file = path)
@@ -576,6 +576,7 @@ class MainFrame(wx.Frame):
   self.current_track.set_pan(application.config.get('sound', 'pan'))
   self.set_frequency()
   self.current_track.play()
+  application.mobile_api.increment_song_playcount(id)
   self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
   self.artist_bio.SetLabel(self.artist_info.get('artistBio', 'No information available.'))
