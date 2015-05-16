@@ -5,10 +5,19 @@ from sound_lib.main import BassError
 
 id_fields = [
  'storeId',
- 'nid',
  'id',
- 'trackId'
+ 'trackId',
+ 'nid',
 ]
+
+def config_update(config, section, option, value):
+ """Ran when apply or OK is clicked in the options window."""
+ frame = application.main_frame
+ if section == 'sound':
+  if option == 'repeat':
+   frame.repeat.Check(value)
+  elif option == 'stop_after':
+   frame.stop_after.Check(value)
 
 def get_id(item):
  """Return the ID for the provided item."""
@@ -75,23 +84,42 @@ def get_device_id(frame = None):
   dlg.Destroy()
  return application.device_id
 
-def select_playlist(event):
- """Select a playlist."""
- frame = event.GetEventObject().GetWindow()
- playlists = application.mobile_api.get_all_playlists()
- dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', ['%s - %s' % (x['ownerName'], x['name']) for x in playlists])
- if dlg.ShowModal() == wx.ID_OK:
-  frame.add_results([x['track'] for x in application.mobile_api.get_shared_playlist_contents(playlists[dlg.GetSelection()]['shareToken'])], True)
- dlg.Destroy()
+def select_playlist(event = None, playlist = None, interactive = True):
+ frame = application.main_frame
+ playlists = application.mobile_api.get_all_user_playlist_contents()
+ if playlist:
+  for p in playlists:
+   if p['id'] == playlist:
+    playlist = p
+ else:
+  dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', ['%s - %s' % (x['ownerName'], x['name']) for x in playlists])
+  if dlg.ShowModal() == wx.ID_OK:
+   playlist = playlists[dlg.GetSelection()]
+  dlg.Destroy()
+ if interactive:
+  if playlist:
+   frame.add_results([x['track'] for x in application.mobile_api.get_shared_playlist_contents(playlist['shareToken'])], True, playlist = playlist)
+ else:
+  return playlist
 
-def select_radio(event):
+def select_station(event = None, station = None, interactive = True):
  """Select a radio station."""
- frame = event.GetEventObject().GetWindow()
+ frame = application.main_frame
  stations = application.mobile_api.get_all_stations()
- dlg = wx.SingleChoiceDialog(frame, 'Select a radio station', 'Select Station', [x['name'] for x in stations])
- if dlg.ShowModal() == wx.ID_OK:
-  frame.add_results(application.mobile_api.get_station_tracks(stations[dlg.GetSelection()]['id']), True)
- dlg.Destroy()
+ if station:
+  for s in stations:
+   if s['id'] == station:
+    station = s
+ else:
+  dlg = wx.SingleChoiceDialog(frame, 'Select a radio station', 'Select Station', [x['name'] for x in stations])
+  if dlg.ShowModal() == wx.ID_OK:
+   station = stations[dlg.GetSelection()]
+  dlg.Destroy()
+ if interactive:
+  if station:
+   frame.add_results(application.mobile_api.get_station_tracks(station['id']), True, station = station)
+ else:
+  return station
 
 def play_pause(event):
  """Play or pause the music."""
@@ -137,23 +165,46 @@ def volume_down(event):
 def previous(event):
  """Select the previous track."""
  frame = application.main_frame
- if frame.current_track and (frame.track_position.GetValue() >= 1 or not frame.track_history):
-  frame.current_track.set_position(0)
+ if not frame.track_history:
+  if frame.current_track:
+   frame.current_track.play(True)
+  else:
+   return wx.Bell()
  else:
-  frame.queue_tracks([frame.get_current_track()] + frame.get_queue(), True)
+  q = frame.get_queue()
+  if q:
+   q.insert(0, frame.get_current_track())
+  frame.queue_tracks(q, True)
   frame.play(frame.track_history.pop(-1))
-  frame.delete_history()
 
 def next(event, interactive = True):
  """Plays the next track."""
  frame = application.main_frame
  q = frame.get_queue()
- if not q:
-  if interactive:
-   wx.Bell()
- else:
-  frame.play(q[0])
+ if q:
+  q = q[0]
   frame.unqueue_track(0)
+ else:
+  q = frame.get_results()
+  track = frame.get_current_track()
+  if track in q:
+   cr = q.index(track) + 1
+   if cr == len(q):
+    if interactive:
+     return wx.Bell()
+    else:
+     if application.config.get('sound', 'repeat') and q:
+      q = q[0]
+     else:
+      return # User has not selected repeat or there are no results there.
+   else:
+    q = q[cr]
+  else:
+   if q:
+    q = q[0]
+   else:
+    return # There are no results.
+ frame.play(q)
 
 def rewind(event):
  """Rewind the track a bit."""
@@ -175,7 +226,7 @@ def fastforward(event):
   pos = min(track.get_position() + application.config.get('sound', 'rewind_amount'), track.get_length())
   track.set_position(pos)
 
-def prune_library(self):
+def prune_library():
  """Delete the oldest track from the library."""
  id = None # The id of the track to delete.
  path = None # The path to the file to be deleted.
@@ -214,17 +265,21 @@ def track_seek(event):
   except BassError:
    pass # Don't care.
 
-def do_search(event):
+def do_search(event = None, search = None):
  """Search google music."""
  frame = application.main_frame
- dlg = wx.TextEntryDialog(frame, 'Find', 'Search Google Music', frame.last_search)
- if dlg.ShowModal() == wx.ID_OK:
-  results = application.mobile_api.search_all_access(dlg.GetValue())['song_hits']
+ if not search:
+  dlg = wx.TextEntryDialog(frame, 'Find', 'Search Google Music', frame.last_search)
+  if dlg.ShowModal() == wx.ID_OK:
+   search = dlg.GetValue()
+   frame.last_search = search
+  dlg.Destroy()
+ if search:
+  results = application.mobile_api.search_all_access(search)['song_hits']
   if not results:
    wx.MessageBox('No results found', 'Error')
   else:
    frame.add_results([x['track'] for x in results], True)
- dlg.Destroy()
 
 def select_output(event = None):
  """Selects a new audio output."""
@@ -312,10 +367,125 @@ def related_artists(event):
   return # User canceled.
  related = application.mobile_api.get_artist_info(artist).get('related_artists', [])
  dlg = wx.SingleChoiceDialog(frame, 'Select an artist', 'Related Artists', [x.get('name', 'Unknown') for x in related])
- if dlg.ShowModal():
+ if dlg.ShowModal() == wx.ID_OK:
   artist = related[dlg.GetSelection()].get('artistId', None)
   if not artist:
    return # No clue...
   info = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks'))
   frame.add_results(info.get('topTracks', []), True)
  dlg.Destroy()
+
+def all_playlist_tracks(event):
+ """Add every track from every playlist."""
+ frame = application.main_frame
+ frame.clear_results()
+ for p in application.mobile_api.get_all_playlists():
+  frame.add_results([x['track'] for x in application.mobile_api.get_shared_playlist_contents(p['shareToken'])])
+
+def queue_result(event):
+ """Adds the current result to the queue."""
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell() # No row selected.
+ frame.queue_track(frame.get_results()[cr])
+
+def add_to_playlist(event):
+ """Add the current result to a playlist."""
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell() # No item selected.
+ id = get_id(frame.get_results()[cr])
+ playlist = select_playlist(interactive = False).get('id')
+ application.mobile_api.add_songs_to_playlist(playlist, id)
+
+def delete_from_playlist(event):
+ """Deletes an item from a playlist, which must be in the results column."""
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ playlist = frame.current_playlist
+ if not playlist or cr == -1:
+  return wx.Bell()
+ track = playlist['tracks'][cr]
+ application.mobile_api.remove_entries_from_playlist(track['id'])
+ select_playlist(playlist = frame.current_playlist, interactive = True)
+
+def rename_playlist(event):
+ """Renames the currently focused playlist."""
+ frame = application.main_frame
+ if not frame.current_playlist:
+  return wx.Bell()
+ dlg = wx.TextEntryDialog(frame, 'Enter a new name for the %s playlist' % frame.current_playlist.get('name', 'unknown'), 'Rename Playlist', frame.current_playlist.get('name', 'New Playlist'))
+ if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
+  application.mobile_api.change_playlist_name(frame.current_playlist['id'], dlg.GetValue())
+ dlg.Destroy()
+
+def delete_playlist_or_station(event):
+ """Deletes the current playlist or station."""
+ frame = application.main_frame
+ if frame.current_playlist:
+  # We are working on a playlist.
+  wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])))
+ elif frame.current_station:
+  # We are working on a radio station.
+  wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'][0])))
+ else:
+  # There is no playlist or station selected.
+  wx.Bell()
+
+def station_from_result(event):
+ """Creates a station from the current result."""
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell()
+ track = frame.get_results()[cr]
+ dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('title', 'Untitled Track')))
+ if dlg.ShowModal() and dlg.GetValue():
+  id = application.mobile_api.create_station(dlg.GetValue(), track_id = get_id(track))
+  select_station(station = id, interactive = True)
+ dlg.Destroy()
+
+def station_from_artist(event):
+ """Create a station based on the currently selected artist."""
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell()
+ track = frame.get_results()[cr]
+ dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s' % (track.get('artist', 'Unknown Artist')))
+ if dlg.ShowModal() and dlg.GetValue():
+  id = application.mobile_api.create_station(dlg.GetValue(), artist_id = get_id(track))
+  select_station(station = id, interactive = True)
+ dlg.Destroy()
+
+def station_from_album(event):
+ """Create a station from the currently selected album."""
+ frame = application.main_frame
+ cr = frame.get_current_result()
+ if cr == -1:
+  return wx.Bell()
+ track = frame.get_results()[cr]
+ dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('album', 'Unknown Album')))
+ if dlg.ShowModal() and dlg.GetValue():
+  id = application.mobile_api.create_station(dlg.GetValue(), album_id = get_id(track))
+  select_station(station = id, interactive = True)
+ dlg.Destroy()
+
+def station_from_genre(event):
+ """Creates a station based on a genre."""
+ frame = application.main_frame
+ genres = application.mobile_api.get_genres()['genres']
+ dlg = wx.SingleChoiceDialog(frame, 'Select a genre to build a station', 'Select A Genre', [g['name'] for g in genres])
+ if dlg.ShowModal():
+  genre = genres[dlg.GetSelection()]
+ else:
+  genre = None
+ dlg.Destroy()
+ if genre:
+  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Genre station for %s' % genre['name'])
+  if dlg.ShowModal() and dlg.GetValue():
+   id = application.mobile_api.create_station(dlg.GetValue(), genre_id = genre['id'])
+   select_station(station = id, interactive = True)
+  dlg.Destroy()

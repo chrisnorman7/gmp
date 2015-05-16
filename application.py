@@ -74,8 +74,13 @@ config.set('windows', 'previous_label', '&Previous', title = 'The title for the 
 config.set('windows',  'play_label', '&Play', title = 'The label for the play button')
 config.set('windows', 'pause_label', '&Pause', title = 'The label for the pause button')
 config.set('windows', 'next_label', '&Next', title = 'The label for the next button')
+config.set('windows', 'new_playlist_name_label', 'Playlist &name', title = 'The label for the new playlist name field')
+config.set('windows', 'new_playlist_public_label', 'Make playlist &public', title = 'The label for the new playlist public checkbox')
+config.set('windows', 'create_label', '&Create', title = 'Label for create buttons')
 
 config.add_section('sound')
+config.set('sound', 'repeat', False, title = 'Repeat')
+config.set('sound', 'stop_after', False, title = 'Stop after the current track has finished playing')
 config.set('sound', 'volume_increment', 10, title = 'The percent to increase the volume by when using the volume hotkey')
 config.set('sound', 'volume_decrement', 10, title = 'The amount to decrement the volume by when using the hotkey')
 config.set('sound', 'rewind_amount', 100000, title = 'The number of samples to rewind by when using the hotkey')
@@ -136,3 +141,8 @@ for x in os.listdir(media_directory):
 for l in library.keys():
  if not os.path.isfile(os.path.join(media_directory, l + track_extension)):
   del library[l]
+
+while len(os.listdir(media_directory)) > config.get('library', 'save_tracks'):
+ functions.prune_library()
+
+config.updateFunc = functions.config_update

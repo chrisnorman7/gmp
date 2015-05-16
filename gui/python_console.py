@@ -19,6 +19,7 @@ class PythonConsole(wx.Frame):
   self.entry.Bind(wx.EVT_TEXT_ENTER, self.exec_code)
   s1.Add(self.entry, 1, wx.GROW)
   self.close_button = wx.Button(p, label = application.config.get('windows', 'close_label'))
+  self.close_button.Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
   s1.Add(self.close_button, 0, wx.GROW)
   s.Add(s1, 0, wx.GROW)
   p.SetSizerAndFit(s)
