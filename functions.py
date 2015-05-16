@@ -35,9 +35,8 @@ def in_library(id):
  """Checks if the given ID is in the library."""
  lib = application.mobile_api.get_all_songs()
  for l in lib:
-  for f in id_fields:
-   if l.get(f, None) == id:
-    return True
+  if l.get('id', '') == id:
+   return True
  return False
 
 def select_artist(artists):
@@ -64,18 +63,16 @@ def reveal_media(event):
   cmd = 'start'
  os.system('%s "%s"' % (cmd, application.media_directory))
 
-def toggle_library(event):
- """Adds or removes the currently selected track from the library."""
+def add_to_library(event):
+ """Adds the current result to the library."""
  frame = application.main_frame
  cr = frame.get_current_result()
- if cr == -1:
-  return wx.Bell()
+ if frame.current_library or cr == -1:
+  return wx.Bell() # Can't add stuff in the library to the library, or there's nothing selected to add.
  track = frame.get_results()[cr]
  id = get_id(track)
- if in_library(id):
-  application.mobile_api.add_aa_track(id)
- else:
-  application.mobile_api.remove_songs(id)
+ application.mobile_api.add_aa_track(id)
+ wx.MessageBox('%s was added to your library.' % format_title(track), 'Track Added')
 
 def get_device_id(frame = None):
  """Get and return a device ID. If none can be found, and the user cancels, close the initiating frame if it's provided.."""
@@ -404,17 +401,27 @@ def add_to_playlist(event):
  playlist = select_playlist(interactive = False).get('id')
  application.mobile_api.add_songs_to_playlist(playlist, id)
 
-def delete_from_playlist(event):
- """Deletes an item from a playlist, which must be in the results column."""
+def delete(event):
+ """Deletes an item from the focused playlist, or the library if that is focused."""
  frame = application.main_frame
  cr = frame.get_current_result()
  playlist = frame.current_playlist
- if not playlist or cr == -1:
+ library = frame.current_library
+ if (not playlist and not library) or cr == -1:
   return wx.Bell()
- track = playlist['tracks'][cr]
- if wx.MessageBox('Are you sure you want to delete %s from the %s playlist?' % (format_title(track.get('track', {})), frame.current_playlist.get('name', 'Unnamed')), 'Are You Sure', style = wx.YES_NO) == wx.YES:
-  application.mobile_api.remove_entries_from_playlist(track['id'])
-  select_playlist(playlist = frame.current_playlist, interactive = True)
+ if playlist: # Deal with the playlist side of things first.
+  track = playlist['tracks'][cr]
+  name = track.get('track', {})
+  source = '%s playlist' % playlist.get('name', 'Unnamed')
+  func = application.mobile_api.remove_entries_from_playlist
+ else: # Now the library:
+  track = library[cr] # Library is just a list of tracks.
+  name = track
+  source = 'library'
+  func = application.mobile_api.delete_songs
+ if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(name), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
+  func(track['id'])
+  frame.delete_result(cr)
 
 def rename_playlist(event):
  """Renames the currently focused playlist."""

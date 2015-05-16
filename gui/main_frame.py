@@ -21,6 +21,7 @@ class MainFrame(wx.Frame):
   self.last_search = '' # Whatever the user last searched for.
   self.current_playlist = None # The current playlist
   self.current_station = None # The current radio station.
+  self.current_library = None # The library in it's current state.
   self._current_track = None # The metadata for the currently playing track.
   self.current_track = None
   self._queue = [] # The actual queue of tracks.
@@ -129,10 +130,10 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.delete_from_playlist, event]).start(),file_menu.Append(
+  lambda event: Thread(target = wx.CallAfter, args = [functions.delete, event]).start(),file_menu.Append(
   wx.ID_ANY,
-  '&Delete Current Result From Playlist\tDELETE',
-  'Removes an item from the currently focused playlist'))
+  '&Delete Current Result\tDELETE',
+  'Removes an item from the library or the currently focused playlist'))
   self.Bind(
   wx.EVT_MENU,
   lambda event: Thread(target = wx.CallAfter, args = [functions.rename_playlist, event]).start(),
@@ -187,10 +188,10 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.toggle_library, event]).start(),
+  lambda event: Thread(target = wx.CallAfter, args = [functions.add_to_library, event]).start(),
   edit_menu.Append(
   wx.ID_ANY,
-  '&Add Or Remove From Library\tCTRL+/',
+  '&Add To Library\tCTRL+/',
   'Add or remove the current song from the library'
   ))
   mb.Append(edit_menu, '&Edit')
@@ -468,13 +469,14 @@ class MainFrame(wx.Frame):
  
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
-  self.results.remove(result)
+  self.results.DeleteItem(result)
   del self._results[result]
  
- def add_results(self, results, clear = False, playlist = None, station = None):
+ def add_results(self, results, clear = False, playlist = None, station = None, library = None):
   """Adds multiple results using self.add_result. If playlist is provided, store the ID of the current playlist so we can perform operations on it."""
   self.current_playlist = playlist # Keep a record of what playlist we're in, so we can delete items and reload them.
   self.current_station = station # The current station for delete and such.
+  self.current_library = library
   if clear:
    self.clear_results()
   for x in results:
@@ -487,7 +489,8 @@ class MainFrame(wx.Frame):
  
  def init_results(self, event = None):
   """Initialises the results table."""
-  self.add_results(application.mobile_api.get_all_songs(), True)
+  songs = application.mobile_api.get_all_songs()
+  self.add_results(songs, True, library = songs)
  
  def Show(self, value = True):
   """Shows the frame."""
