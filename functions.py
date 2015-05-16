@@ -10,6 +10,12 @@ id_fields = [
  'nid',
 ]
 
+def format_title(track):
+ try:
+  return application.config.get('windows', 'title_format').format(**track)
+ except KeyError as e:
+  return 'Error in title format: %s.' % e
+
 def config_update(config, section, option, value):
  """Ran when apply or OK is clicked in the options window."""
  frame = application.main_frame
@@ -59,7 +65,7 @@ def reveal_media(event):
  os.system('%s "%s"' % (cmd, application.media_directory))
 
 def toggle_library(event):
- """Adds the currently selected song to the library."""
+ """Adds or removes the currently selected track from the library."""
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
@@ -301,7 +307,7 @@ def select_output(event = None):
    frame.current_track.set_position(loc)
  dlg.Destroy()
 
-def thumbs_up_songs(event):
+def thumbs_up_tracks(event):
  """Get thumbs up tracks (may be empty)."""
  frame = application.main_frame
  frame.clear_results()
@@ -408,8 +414,9 @@ def delete_from_playlist(event):
  if not playlist or cr == -1:
   return wx.Bell()
  track = playlist['tracks'][cr]
- application.mobile_api.remove_entries_from_playlist(track['id'])
- select_playlist(playlist = frame.current_playlist, interactive = True)
+ if wx.MessageBox('Are you sure you want to delete %s from the %s playlist?' % (format_title(track.get('track', {})), frame.current_playlist.get('name', 'Unnamed')), 'Are You Sure', style = wx.YES_NO) == wx.YES:
+  application.mobile_api.remove_entries_from_playlist(track['id'])
+  select_playlist(playlist = frame.current_playlist, interactive = True)
 
 def rename_playlist(event):
  """Renames the currently focused playlist."""
@@ -426,10 +433,12 @@ def delete_playlist_or_station(event):
  frame = application.main_frame
  if frame.current_playlist:
   # We are working on a playlist.
-  wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])))
+  if wx.MessageBox('Are you sure you want to delete the %s playlist?', 'Are You Sure', style = wx.YES_NO) == wx.YES:
+   wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])))
  elif frame.current_station:
   # We are working on a radio station.
-  wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]))
+  if wx.MessageBox('Are you sure you want to delete the %s station?', 'Are You Sure', style = wx.YES_NO) == wx.YES:
+   wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]))
  else:
   # There is no playlist or station selected.
   wx.Bell()
@@ -476,7 +485,7 @@ def station_from_album(event):
 def station_from_genre(event):
  """Creates a station based on a genre."""
  frame = application.main_frame
- genres = application.mobile_api.get_genres()['genres']
+ genres = application.mobile_api.get_genres()
  dlg = wx.SingleChoiceDialog(frame, 'Select a genre to build a station', 'Select A Genre', [g['name'] for g in genres])
  if dlg.ShowModal() == wx.ID_OK:
   genre = genres[dlg.GetSelection()]
@@ -486,8 +495,6 @@ def station_from_genre(event):
  if genre:
   dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Genre station for %s' % genre['name'])
   if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
-   for x in genre:
-    print '%s: %s' % (x, genre[x])
    id = application.mobile_api.create_station(dlg.GetValue(), genre_id = genre['id'])
    select_station(station = id, interactive = True)
   dlg.Destroy()

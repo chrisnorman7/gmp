@@ -28,6 +28,8 @@ sound_output = Output()
 
 mobile_api = Mobileclient()
 web_api = Webclient()
+app_id = '1234567890abcdef'
+
 device_id = None
 
 version = '1.0'
