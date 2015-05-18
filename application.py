@@ -1,5 +1,6 @@
-devel = False
+devel = True
 from confmanager import ConfManager, parser
+from sys import platform
 
 columns = [
  ['composer', ''],

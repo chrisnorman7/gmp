@@ -29,18 +29,28 @@ class MainFrame(wx.Frame):
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
-  self.results = dv.DataViewListCtrl(p, style = wx.TE_PROCESS_ENTER) # User friendly track list.
-  self.results.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
+  if application.platform == 'darwin':
+   self.results = dv.DataViewListCtrl(p, style = wx.TE_PROCESS_ENTER) # User friendly track list.
+   self.results.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
+   self.queue = dv.DataViewListCtrl(p)
+  else:
+   self.results = wx.ListCtrl(p, style = wx.LC_REPORT)
+   self.results.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
+   self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
   self.results.SetFocus()
-  self.results.SetFocusFromKbd()
   self._results = [] # The raw json from Google.
-  for real, friendly in application.columns:
+  for i, (real, friendly) in enumerate(application.columns):
    if friendly:
-    self.results.AppendTextColumn(friendly)
+    if application.platform == 'darwin':
+     self.results.AppendTextColumn(friendly)
+    else:
+     self.results.InsertColumn(i, friendly)
+  for x, y in enumerate(['Name', 'Artist', 'Album', 'Duration']):
+   if application.platform == 'darwin':
+    self.queue.AppendTextColumn(x)
+   else:
+    self.queue.InsertColumn(x, y)
   s1.Add(self.results, 7, wx.GROW)
-  self.queue = dv.DataViewListCtrl(p)
-  for x in ['Name', 'Artist', 'Album', 'Duration']:
-   self.queue.AppendTextColumn(x)
   s1.Add(self.queue, 3, wx.GROW)
   s.Add(s1, 7, wx.GROW)
   s2 = wx.BoxSizer(wx.HORIZONTAL)
@@ -432,11 +442,7 @@ class MainFrame(wx.Frame):
   self._thread = TrackThread(target = self.track_thread)
   self.Maximize()
   self.Raise()
- 
- def Close(self, value = True):
-  """Close the window, terminating the track thread in the process."""
-  self._thread.should_stop.set()
-  return super(MainFrame, self).Close(value)
+  self.Bind(wx.EVT_CLOSE, self.do_close)
  
  def get_current_track(self):
   """Gets the current track data."""
@@ -465,7 +471,7 @@ class MainFrame(wx.Frame):
   for real, friendly in application.columns:
    if friendly:
     stuff.append(getattr(columns, 'parse_%s' % real, lambda data: unicode(data))(result.get(real, 'Unknown')))
-  wx.CallAfter(self.results.AppendItem, stuff)
+  wx.CallAfter(self.results.AppendItem if application.platform == 'darwin' else self.results.Append, stuff)
  
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
@@ -520,7 +526,7 @@ class MainFrame(wx.Frame):
  def queue_track(self, value):
   """Add a track to the queue."""
   self._queue.append(value)
-  self.queue.AppendItem([value['title'], value['artist'], value['album'], columns.parse_durationMillis(value['durationMillis'])])
+  wx.CallAfter(self.queue.AppendItem if application.platform == 'darwin' else self.queue.Append, [value['title'], value['artist'], value['album'], columns.parse_durationMillis(value['durationMillis'])])
  
  def queue_tracks(self, items, clear = False):
   """Add multiple items to the queue."""
@@ -605,13 +611,25 @@ class MainFrame(wx.Frame):
  def track_thread(self):
   """Move track progress bars and play queued tracks."""
   while not self._thread.should_stop.is_set():
-   if self.current_track:
-    i = min(self.current_track.get_length(), int(self.current_track.get_position() / (self.current_track.get_length() / 100.0)))
-    if not self.track_position.HasFocus() and i != self.track_position.GetValue():
-     self.track_position.SetValue(i)
-    if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
-     functions.next(None, interactive = False)
+   try:
+    if self.current_track:
+     i = min(self.current_track.get_length(), int(self.current_track.get_position() / (self.current_track.get_length() / 100.0)))
+     if not self.track_position.HasFocus() and i != self.track_position.GetValue():
+      self.track_position.SetValue(i)
+     if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
+      functions.next(None, interactive = False)
+   except Exception as e:
+    print 'Problem with the track thread: %s.' % str(e)
+  self.Close(True)
  
  def get_current_result(self):
   """Returns the current result."""
-  return self.results.GetSelection().GetID() - 1
+  if application.platform == 'darwin':
+   return self.results.GetSelection().GetID() - 1
+  else:
+   return self.results.GetFocusedItem()
+ 
+ def do_close(self, event):
+  """Closes the window after shutting down the track thread."""
+  self._thread.should_stop.set()
+  event.Skip()

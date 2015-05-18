@@ -60,6 +60,6 @@ class LoginFrame(SF):
   return self.Close(True)
  
  def post_login(self):
-  """CLoses this window and opens the main frame."""
+  """Closes this window and opens the main frame."""
   application.main_frame.Show(True)
   self.Close(True)
