@@ -39,12 +39,7 @@ class MainFrame(wx.Frame):
    self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
   self.results.SetFocus()
   self._results = [] # The raw json from Google.
-  for i, (real, friendly) in enumerate(application.columns):
-   if friendly:
-    if application.platform == 'darwin':
-     self.results.AppendTextColumn(friendly)
-    else:
-     self.results.InsertColumn(i, friendly)
+  self.init_results_columns()
   for x, y in enumerate(['Name', 'Artist', 'Album', 'Duration']):
    if application.platform == 'darwin':
     self.queue.AppendTextColumn(x)
@@ -468,9 +463,13 @@ class MainFrame(wx.Frame):
   """Given a list item from Google, add it to self._results, and add data to the table."""
   self._results.append(result)
   stuff = []
-  for real, friendly in application.columns:
-   if friendly:
-    stuff.append(getattr(columns, 'parse_%s' % real, lambda data: unicode(data))(result.get(real, 'Unknown')))
+  for spec, column in application.columns:
+   if type(column) != dict:
+    application.columns.remove([spec, column])
+    column = application.default_columns.get('spec', {})
+    application.columns.append([spec, column])
+   if column.get('include', False):
+    stuff.append(getattr(columns, 'parse_%s' % spec, lambda data: unicode(data))(result.get(spec, 'Unknown')))
   wx.CallAfter(self.results.AppendItem if application.platform == 'darwin' else self.results.Append, stuff)
  
  def delete_result(self, result):
@@ -485,8 +484,7 @@ class MainFrame(wx.Frame):
   self.current_library = library
   if clear:
    self.clear_results()
-  for x in results:
-   self.add_result(x)
+  map(self.add_result, results)
  
  def clear_results(self):
   """Clears the results table."""
@@ -633,3 +631,17 @@ class MainFrame(wx.Frame):
   """Closes the window after shutting down the track thread."""
   self._thread.should_stop.set()
   event.Skip()
+ 
+ def init_results_columns(self):
+  """Creates columns for the results table."""
+  if application.platform == 'darwin':
+   self.results.ClearColumns()
+  else:
+   self.results.ClearAll()
+  for i, (spec, column) in enumerate(application.columns):
+   if column.get('include', False):
+    name = column.get('friendly_name', spec.title())
+    if application.platform == 'darwin':
+     self.results.AppendTextColumn(name)
+    else:
+     self.results.InsertColumn(i, name)

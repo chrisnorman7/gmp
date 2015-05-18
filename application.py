@@ -3,24 +3,28 @@ from confmanager import ConfManager, parser
 from sys import platform
 
 columns = [
- ['composer', ''],
- ['trackType', ''],
- ['creationTimestamp', ''],
- ['recentTimestamp', ''],
- ['albumArtist', ''],
- ['contentType', ''],
- ['deleted', ''],
- ['estimatedSize', ''],
- ['lastModifiedTimestamp', ''],
- ['trackNumber', 'Number'],
- ['title', 'Name'],
- ['artist', 'Artist'],
- ['album', 'Album'],
- ['discNumber', 'Disc Number'],
- ['durationMillis', 'Duration'],
- ['genre', 'Genre'],
- ['year', 'Year']
+ ['composer', {'friendly_name': 'Composer'}],
+ ['trackType', {'friendly_name': 'Track Type'}],
+ ['creationTimestamp', {'friendly_name': 'Created'}],
+ ['recentTimestamp', {'friendly_name': 'Recently Modified'}],
+ ['albumArtist', {'friendly_name': 'Album Artist'}],
+ ['contentType', {'friendly_name': 'Content Type'}],
+ ['deleted', {'friendly_name': 'Deleted'}],
+ ['estimatedSize', {'friendly_name': 'Estimated Size'}],
+ ['lastModifiedTimestamp', {'friendly_name': ''}],
+ ['trackNumber', {'friendly_name': 'Number', 'include': True}],
+ ['title', {'friendly_name': 'Name', 'include': True}],
+ ['artist', {'friendly_name': 'Artist', 'include': True}],
+ ['album', {'friendly_name': 'Album', 'include': True}],
+ ['discNumber', {'friendly_name': 'Disc Number', 'include': True}],
+ ['durationMillis', {'friendly_name': 'Duration', 'include': True}],
+ ['genre', {'friendly_name': 'Genre', 'include': True}],
+ ['year', {'friendly_name': 'Year', 'include': True}]
 ]
+
+default_columns = {}
+for spec, column in columns:
+ default_columns[spec] = column
 
 import wx, os, json, functions
 from sound_lib.output import Output
@@ -101,6 +105,9 @@ if os.path.isfile(config_file):
   try:
    j = json.load(f)
    device_id = j.get('device_id', None)
+   columns = j.get('columns', columns)
+   if len(columns) != len(default_columns):
+    columns = default_columns
    parser.parse_json(config, j.get('config', {}))
   except ValueError:
    pass
@@ -111,7 +118,7 @@ class MyApp(wx.App):
   l = super(MyApp, self).MainLoop(*args, **kwargs)
   sound_output.stop()
   with open(config_file, 'wb') as f:
-   json.dump({'config': config.get_dump(), 'device_id': device_id}, f, indent = 1)
+   json.dump({'columns': columns, 'config': config.get_dump(), 'device_id': device_id}, f, indent = 1)
   with open(library_file, 'wb') as f:
    json.dump(library, f, indent = 1)
   return l
