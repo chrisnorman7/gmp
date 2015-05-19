@@ -438,12 +438,12 @@ def delete_playlist_or_station(event):
  frame = application.main_frame
  if frame.current_playlist:
   # We are working on a playlist.
-  if wx.MessageBox('Are you sure you want to delete the %s playlist?', 'Are You Sure', style = wx.YES_NO) == wx.YES:
-   wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])))
+  if wx.MessageBox('Are you sure you want to delete the %s playlist?' % frame.current_playlist.get('name', 'Untitled'), 'Are You Sure', style = wx.YES_NO) == wx.YES:
+   wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])), 'Playlist Deleted')
  elif frame.current_station:
   # We are working on a radio station.
   if wx.MessageBox('Are you sure you want to delete the %s station?' % frame.current_station.get('name', 'Unnamed'), 'Are You Sure', style = wx.YES_NO) == wx.YES:
-   wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]))
+   wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]), 'Station Deleted')
  else:
   # There is no playlist or station selected.
   wx.Bell()
