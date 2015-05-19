@@ -5,6 +5,7 @@ from threading import Thread, Event
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
 from gui.python_console import PythonConsole
+from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
 
 class TrackThread(Thread):
@@ -30,7 +31,7 @@ class MainFrame(wx.Frame):
   s = wx.BoxSizer(wx.VERTICAL)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
   if application.platform == 'darwin':
-   self.results = dv.DataViewListCtrl(p, style = wx.TE_PROCESS_ENTER) # User friendly track list.
+   self.results = dv.DataViewListCtrl(p) # User friendly track list.
    self.results.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
    self.queue = dv.DataViewListCtrl(p)
   else:
@@ -38,11 +39,12 @@ class MainFrame(wx.Frame):
    self.results.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
    self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
   self.results.SetFocus()
+  self.results.SetFocusFromKbd()
   self._results = [] # The raw json from Google.
   self.init_results_columns()
   for x, y in enumerate(['Name', 'Artist', 'Album', 'Duration']):
    if application.platform == 'darwin':
-    self.queue.AppendTextColumn(x)
+    self.queue.AppendTextColumn(y)
    else:
     self.queue.InsertColumn(x, y)
   s1.Add(self.results, 7, wx.GROW)
@@ -80,7 +82,13 @@ class MainFrame(wx.Frame):
   self.pan.Bind(wx.EVT_SLIDER, self.set_pan)
   s3.Add(self.pan, 1, wx.GROW)
   s.Add(s3, 1, wx.GROW)
-  self.artist_bio = wx.StaticText(p, label = 'No song playing.')
+  l = 'No song playing.'
+  if application.platform == 'darwin':
+   self.artist_bio = wx.StaticText(p, label = l)
+   self.set_artist_bio = lambda value: self.artist_bio.SetLabel(value)
+  else:
+   self.artist_bio = wx.TextCtrl(p, style = wx.TE_MULTILINE|wx.TE_READONLY, value = l)
+   self.set_artist_bio = lambda value: self.artist_bio.SetValue(value)
   s.Add(self.artist_bio, 1, wx.GROW)
   p.SetSizerAndFit(s)
   mb = wx.MenuBar()
@@ -96,7 +104,7 @@ class MainFrame(wx.Frame):
   station_menu = wx.Menu()
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.station_from_result, event]).start(),
+  lambda event: Thread(target = functions.station_from_result, args = [event]).start(),
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From Current &Result\tCTRL+9',
@@ -104,13 +112,13 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.station_from_artist, event]).start(),
+  lambda event: Thread(target = functions.station_from_artist, args = [event]).start(),
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From Current &Artist\tALT+4', 'Create a radio station based on the currently focused artist'))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.station_from_album, event]).start(),
+  lambda event: Thread(target = functions.station_from_album, args = [event]).start(),
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From Current A&lbum\tALT+5',
@@ -118,7 +126,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.station_from_genre, event]).start(),
+  lambda event: Thread(target = functions.station_from_genre, args = [event]).start(),
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From &Genre\tALT+6',
@@ -127,7 +135,7 @@ class MainFrame(wx.Frame):
   file_menu.AppendMenu(wx.ID_ANY, 'Create &Station', station_menu, 'Create radio stations from various sources')
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.add_to_playlist, event]).start(),
+  lambda event: Thread(target = functions.add_to_playlist, args = [event]).start(),
   file_menu.Append(
   wx.ID_ANY,
   'Add Current Result To &Playlist...\tCTRL+8',
@@ -135,13 +143,13 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.delete, event]).start(),file_menu.Append(
+  lambda event: Thread(target = functions.delete, args = [event]).start(),file_menu.Append(
   wx.ID_ANY,
   '&Delete Current Result\tDELETE',
   'Removes an item from the library or the currently focused playlist'))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.rename_playlist, event]).start(),
+  lambda event: Thread(target = functions.edit_playlist, args = [event]).start(),
   file_menu.Append(
   wx.ID_ANY,
   '&Rename Current Playlist...\tF2',
@@ -149,7 +157,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.delete_playlist_or_station, event]).start(),
+  lambda event: Thread(target = functions.delete_playlist_or_station, args = [event]).start(),
   file_menu.Append(
   wx.ID_ANY,
   '&Delete Current Playlist Or Station\tCTRL+DELETE',
@@ -177,7 +185,7 @@ class MainFrame(wx.Frame):
   edit_menu = wx.Menu()
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.do_search, event]).start(),
+  lambda event: Thread(target = functions.do_search, args = [event]).start(),
   edit_menu.Append(
   wx.ID_FIND,
   '&Find...\tCTRL+F',
@@ -185,7 +193,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.do_search, event, self.last_search]).start(),
+  lambda event: Thread(target = functions.do_search, args = [event, self.last_search]).start(),
   edit_menu.Append(
   wx.ID_ANY,
   'Find &Again\tCTRL+G',
@@ -193,7 +201,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.add_to_library, event]).start(),
+  lambda event: Thread(target = functions.add_to_library, args = [event]).start(),
   edit_menu.Append(
   wx.ID_ANY,
   '&Add To Library\tCTRL+/',
@@ -213,7 +221,7 @@ class MainFrame(wx.Frame):
   source_menu = wx.Menu()
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [self.init_results, event]).start(),
+  lambda event: Thread(target = self.init_results, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   '&Library\tCTRL+l',
@@ -221,7 +229,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.select_playlist, event]).start(),
+  lambda event: Thread(target = functions.select_playlist, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Select &Playlist...\tCTRL+1',
@@ -229,7 +237,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.select_station, event]).start(),
+  lambda event: Thread(target = functions.select_station, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Select &Station...\tCTRL+2',
@@ -237,7 +245,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.thumbs_up_tracks, event]).start(),
+  lambda event: Thread(target = functions.thumbs_up_tracks, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   '&Thumbs Up Songs\tCTRL+3',
@@ -245,7 +253,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.artist_tracks, event]).start(),
+  lambda event: Thread(target = functions.artist_tracks, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Go To Current &Artist\tCTRL+4',
@@ -253,7 +261,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.current_album, event]).start(),
+  lambda event: Thread(target = functions.current_album, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Go To Current A&lbum\tCTRL+5',
@@ -261,7 +269,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.artist_album, event]).start(),
+  lambda event: Thread(target = functions.artist_album, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Select Al&bum...\tCTRL+6',
@@ -269,7 +277,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.related_artists, event]).start(),
+  lambda event: Thread(target = functions.related_artists, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Select &Related Artist...\tCTRL+7',
@@ -277,7 +285,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.all_playlist_tracks, event]).start(),
+  lambda event: Thread(target = functions.all_playlist_tracks, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
   'Loa&d All Playlist Tracks\tCTRL+0',
@@ -286,7 +294,7 @@ class MainFrame(wx.Frame):
   track_menu = wx.Menu()
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.queue_result, event]).start(),
+  lambda event: Thread(target = functions.queue_result, args = [event]).start(),
   track_menu.Append(
   wx.ID_ANY,
   '&Queue Item\tCTRL+ENTER',
@@ -296,7 +304,7 @@ class MainFrame(wx.Frame):
   play_menu = wx.Menu()
   self.Bind(
   wx.EVT_MENU,
-  lambda event: self.select_item(event) if self.results.HasFocus() else None,
+  self.select_item,
   play_menu.Append(
   wx.ID_ANY,
   '&Select Current Item\tENTER',
@@ -312,7 +320,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.volume_up, event]).start(),
+  lambda event: Thread(target = functions.volume_up, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   'Volume &Up\tCTRL+UP',
@@ -320,14 +328,14 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.volume_down, event]).start(),
+  lambda event: Thread(target = functions.volume_down, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   'Volume &Down\tCTRL+DOWN',
   'Decrease the volume'
   ))
   self.Bind(wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.previous, event]).start(),
+  lambda event: Thread(target = functions.previous, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   '&Previous\tCTRL+LEFT',
@@ -335,7 +343,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(wx.
   EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.next, event]).start(),
+  lambda event: Thread(target = functions.next, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY, 
   '&Next\tCTRL+RIGHT',
@@ -361,13 +369,13 @@ class MainFrame(wx.Frame):
   )
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.rewind, event]).start(),
+  lambda event: Thread(target = functions.rewind, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,'&Rewind\tSHIFT+LEFT',
   'Rewind'
   ))
   self.Bind(
-  wx.EVT_MENU,lambda event: Thread(target = wx.CallAfter, args = [functions.fastforward, event]).start(),
+  wx.EVT_MENU,lambda event: Thread(target = functions.fastforward, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   '&Fastforward\tSHIFT+RIGHT',
@@ -401,11 +409,19 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = wx.CallAfter, args = [functions.select_output, event]).start(),
+  lambda event: Thread(target = functions.select_output, args = [event]).start(),
   options_menu.Append(
   wx.ID_ANY,
   '&Select sound output...\tF12',
   'Select a new output device for sound playback'
+  ))
+  self.Bind(
+  wx.EVT_MENU,
+  lambda event: ColumnEditor().Show(True),
+  options_menu.Append(
+  wx.ID_ANY,
+  '&View Options...\tCTRL+J',
+  'Configure the columns for the table of results'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -586,7 +602,7 @@ class MainFrame(wx.Frame):
   application.mobile_api.increment_song_playcount(id)
   self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
-  self.artist_bio.SetLabel(self.artist_info.get('artistBio', 'No information available.'))
+  self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))
  
  def set_volume(self, event):
   """Sets the volume with the slider."""
@@ -645,3 +661,8 @@ class MainFrame(wx.Frame):
      self.results.AppendTextColumn(name)
     else:
      self.results.InsertColumn(i, name)
+ 
+ def reload_results(self):
+  """Reloads the results table."""
+  self.init_results_columns()
+  self.add_results(self.get_results(), clear = True, playlist = self.current_playlist, library = self.current_library, station = self.current_station)

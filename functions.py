@@ -423,7 +423,7 @@ def delete(event):
   func(track['id'])
   frame.delete_result(cr)
 
-def rename_playlist(event):
+def edit_playlist(event):
  """Renames the currently focused playlist."""
  frame = application.main_frame
  if not frame.current_playlist:

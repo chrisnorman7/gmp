@@ -11,7 +11,7 @@ columns = [
  ['contentType', {'friendly_name': 'Content Type'}],
  ['deleted', {'friendly_name': 'Deleted'}],
  ['estimatedSize', {'friendly_name': 'Estimated Size'}],
- ['lastModifiedTimestamp', {'friendly_name': ''}],
+ ['lastModifiedTimestamp', {'friendly_name': 'Last Modified'}],
  ['trackNumber', {'friendly_name': 'Number', 'include': True}],
  ['title', {'friendly_name': 'Name', 'include': True}],
  ['artist', {'friendly_name': 'Artist', 'include': True}],
