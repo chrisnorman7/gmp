@@ -423,16 +423,6 @@ def delete(event):
   func(track['id'])
   frame.delete_result(cr)
 
-def edit_playlist(event):
- """Renames the currently focused playlist."""
- frame = application.main_frame
- if not frame.current_playlist:
-  return wx.Bell()
- dlg = wx.TextEntryDialog(frame, 'Enter a new name for the %s playlist' % frame.current_playlist.get('name', 'unknown'), 'Rename Playlist', frame.current_playlist.get('name', 'New Playlist'))
- if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
-  application.mobile_api.change_playlist_name(frame.current_playlist['id'], dlg.GetValue())
- dlg.Destroy()
-
 def delete_playlist_or_station(event):
  """Deletes the current playlist or station."""
  frame = application.main_frame

@@ -149,10 +149,10 @@ class MainFrame(wx.Frame):
   'Removes an item from the library or the currently focused playlist'))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = functions.edit_playlist, args = [event]).start(),
+  lambda event: NewPlaylist(self.current_playlist).Show() if self.current_playlist else wx.Bell(),
   file_menu.Append(
   wx.ID_ANY,
-  '&Rename Current Playlist...\tF2',
+  '&Edit Current Playlist...\tF2',
   'Rename the currently focused playlist'
   ))
   self.Bind(

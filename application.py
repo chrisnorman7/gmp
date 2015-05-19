@@ -84,6 +84,7 @@ config.set('windows',  'play_label', '&Play', title = 'The label for the play bu
 config.set('windows', 'pause_label', '&Pause', title = 'The label for the pause button')
 config.set('windows', 'next_label', '&Next', title = 'The label for the next button')
 config.set('windows', 'new_playlist_name_label', 'Playlist &name', title = 'The label for the new playlist name field')
+config.set('windows', 'new_playlist_description_label', '&Description', title = 'The label for the new playlist description field')
 config.set('windows', 'new_playlist_public_label', 'Make playlist &public', title = 'The label for the new playlist public checkbox')
 config.set('windows', 'create_label', '&Create', title = 'Label for create buttons')
 
