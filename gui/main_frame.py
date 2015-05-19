@@ -19,6 +19,28 @@ class MainFrame(wx.Frame):
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
+  self.frequency_up = lambda event: self.set_frequency(self.frequency.SetValue(min(100, self.frequency.GetValue() + 1)))
+  self.frequency_down = lambda event: self.set_frequency(self.frequency.SetValue(max(0, self.frequency.GetValue() - 1)))
+  self.pan_left = lambda event: self.set_pan(self.pan.SetValue(max(0, self.pan.GetValue() - 1)))
+  self.pan_right = lambda event: self.set_pan(self.pan.SetValue(min(100, self.pan.GetValue() + 1)))
+  self.hotkeys = {
+   (0, ord('X')): lambda event: self.current_track.play(True) if self.current_track else functions.play_pause(),
+   (0, ord('C')): functions.play_pause,
+   (0, ord('Z')): functions.previous,
+   (0, ord('B')): functions.next,
+   (0, ord('V')): functions.stop,
+   (0, ord(';')): functions.reset_fx,
+   (0, wx.WXK_UP): functions.volume_up,
+   (0, wx.WXK_DOWN): functions.volume_down,
+   (0, wx.WXK_LEFT): functions.rewind,
+   (0, wx.WXK_RIGHT): functions.fastforward,
+   (0, ord('J')): self.pan_left,
+   (0, ord('L')): self.pan_right,
+   (0, ord('I')): self.frequency_up,
+   (0, ord('K')): self.frequency_down,
+   (0, ord('F')): functions.do_search,
+   (0, ord('G')): lambda event: functions.do_search(search = self.last_search),
+  }
   self.last_search = '' # Whatever the user last searched for.
   self.current_playlist = None # The current playlist
   self.current_station = None # The current radio station.
@@ -39,7 +61,6 @@ class MainFrame(wx.Frame):
    self.results.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
    self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
   self.results.SetFocus()
-  self.results.SetFocusFromKbd()
   self._results = [] # The raw json from Google.
   self.init_results_columns()
   for x, y in enumerate(['Name', 'Artist', 'Album', 'Duration']):
@@ -90,6 +111,12 @@ class MainFrame(wx.Frame):
    self.artist_bio = wx.TextCtrl(p, style = wx.TE_MULTILINE|wx.TE_READONLY, value = l)
    self.set_artist_bio = lambda value: self.artist_bio.SetValue(value)
   s.Add(self.artist_bio, 1, wx.GROW)
+  s4 = wx.BoxSizer(wx.HORIZONTAL)
+  s4.Add(wx.StaticText(p, label = application.config.get('windows', 'winamp_label')), 1, wx.GROW)
+  self.hotkey_area = wx.TextCtrl(p, style = wx.TE_READONLY)
+  self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
+  s4.Add(self.hotkey_area, 1, wx.GROW)
+  s.Add(s4, 0, wx.GROW)
   p.SetSizerAndFit(s)
   mb = wx.MenuBar()
   file_menu = wx.Menu()
@@ -384,7 +411,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: self.set_frequency(self.frequency.SetValue(min(100, self.frequency.GetValue() + 1))),
+  self.frequency_up,
   play_menu.Append(
   wx.ID_ANY,
   'Frequency &Up\tSHIFT+UP',
@@ -392,7 +419,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: self.set_frequency(self.frequency.SetValue(max(0, self.frequency.GetValue() - 1))),
+  self.frequency_down,
   play_menu.Append(
   wx.ID_ANY,
   'Frequency &Down\tSHIFT+DOWN',
@@ -510,6 +537,7 @@ class MainFrame(wx.Frame):
   if clear:
    self.clear_results()
   map(self.add_result, results)
+  self.results.SetFocus()
  
  def clear_results(self):
   """Clears the results table."""
@@ -675,3 +703,11 @@ class MainFrame(wx.Frame):
   """Reloads the results table."""
   self.init_results_columns()
   self.add_results(self.get_results(), clear = True, playlist = self.current_playlist, library = self.current_library, station = self.current_station)
+ 
+ def hotkey_parser(self, event):
+  """Handles Winamp-Style hotkeys."""
+  k = (event.GetModifiers(), event.GetKeyCode())
+  if k in self.hotkeys:
+   self.hotkeys[k](event)
+  else:
+   event.Skip()
