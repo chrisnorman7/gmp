@@ -2,6 +2,7 @@
 
 import application, wx, os, requests, sys
 from sound_lib.main import BassError
+from time import time
 
 id_fields = [
  'storeId',
@@ -231,11 +232,13 @@ def prune_library():
  """Delete the oldest track from the library."""
  id = None # The id of the track to delete.
  path = None # The path to the file to be deleted.
- stamp = None # The last modified time stamp of the file.
+ stamp = time() # The last modified time stamp of the file.
  for x in os.listdir(application.media_directory):
   p = os.path.join(application.media_directory, x)
-  if not stamp or os.path.getmtime(p) < stamp:
-   id = x[:-4]
+  fstamp = os.path.getctime(p) # The created time of the current file.
+  if fstamp < stamp:
+   id = x[:len(application.track_extension) * -1]
+   stamp = fstamp
    path = p
  if path:
   os.remove(path)
@@ -493,3 +496,11 @@ def station_from_genre(event):
    id = application.mobile_api.create_station(dlg.GetValue(), genre_id = genre['id'])
    select_station(station = id, interactive = True)
   dlg.Destroy()
+
+def reset_fx(event):
+ """Resets pan and frequency to defaults."""
+ frame = application.main_frame
+ frame.frequency.SetValue(50)
+ frame.set_frequency()
+ frame.pan.SetValue(50)
+ frame.set_pan()

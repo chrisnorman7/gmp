@@ -143,7 +143,8 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = functions.delete, args = [event]).start(),file_menu.Append(
+  functions.delete,
+  file_menu.Append(
   wx.ID_ANY,
   '&Delete Current Result\tDELETE',
   'Removes an item from the library or the currently focused playlist'))
@@ -157,7 +158,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = functions.delete_playlist_or_station, args = [event]).start(),
+  functions.delete_playlist_or_station,
   file_menu.Append(
   wx.ID_ANY,
   '&Delete Current Playlist Or Station\tCTRL+DELETE',
@@ -409,6 +410,14 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
+  functions.reset_fx,
+  options_menu.Append(
+  wx.ID_ANY,
+  '&Reset FX\tCTRL+\\',
+  'Reset pand and frequency'
+  ))
+  self.Bind(
+  wx.EVT_MENU,
   lambda event: Thread(target = functions.select_output, args = [event]).start(),
   options_menu.Append(
   wx.ID_ANY,
@@ -610,9 +619,9 @@ class MainFrame(wx.Frame):
   if self.current_track:
    self.current_track.set_volume(application.config.get('sound', 'volume'))
  
- def set_pan(self, event):
+ def set_pan(self, event = None):
   """Sets pan with the slider."""
-  application.config.set('sound', 'pan', (event.GetSelection() / 50.0) - 1.0)
+  application.config.set('sound', 'pan', (self.pan.GetValue() / 50.0) - 1.0)
   if self.current_track:
    self.current_track.set_pan(application.config.get('sound', 'pan'))
  

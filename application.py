@@ -38,7 +38,7 @@ app_id = '1234567890abcdef'
 
 device_id = None
 
-version = '1.0'
+version = '0.2'
 name = 'Google Music Player'
 url = 'www.code-metropolis.com/gmplayer'
 description = 'An app for playing tracks from Google Play Music (account required).'
@@ -151,7 +151,7 @@ for x in os.listdir(media_directory):
  # Delete all the files which don't belong here!
  (fname, ext) = os.path.splitext(x)
  if fname not in library:
-  os.remove(functions.id_to_path(fname))
+  os.remove(os.path.join(media_directory, x))
 
 # Delete all the entries without files.
 for l in library.keys():
