@@ -57,7 +57,15 @@ media_directory = os.path.join(directory, 'media')
 if not os.path.isdir(directory):
  os.mkdir(directory)
 
-config = ConfManager(name + ' Options')
+class MyConfManager(ConfManager):
+ """Try and get around Martin's bug..."""
+ def set(self, *args, **kwargs):
+  try:
+   return super(MyConfManager, self).set(*args, **kwargs)
+  except Exception as e:
+   print 'Error: set(*%s, **%s)' % (args, kwargs)
+
+config = MyConfManager(name + ' Options')
 
 config.add_section('login')
 config.set('login', 'uid', '', title = 'The email address to log in with')
