@@ -1,6 +1,6 @@
 """Various functions used in the program."""
 
-import application, wx, os, requests, sys
+import application, wx, os, requests, sys, random
 from sound_lib.main import BassError
 from time import time
 
@@ -504,3 +504,8 @@ def reset_fx(event):
  frame.set_frequency()
  frame.pan.SetValue(50)
  frame.set_pan()
+
+def shuffle(stuff):
+ """Shuffles things, and returns them, allowing shuffle to be used from a lambda."""
+ random.shuffle(stuff)
+ return stuff

@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 if __name__ == '__main__':
  import requests, application
  from gui.login_frame import LoginFrame

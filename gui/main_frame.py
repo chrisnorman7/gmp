@@ -411,6 +411,22 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
+  lambda event: self.add_results(functions.shuffle(self.get_results()), True),
+  play_menu.Append(
+  wx.ID_ANY,
+  'Shuffle &Results\tCTRL+S',
+  'Shuffle the currently shown results.'
+  ))
+  self.Bind(
+  wx.EVT_MENU,
+  lambda event: self.queue_tracks(functions.shuffle(self.get_queue()), True),
+  play_menu.Append(
+  wx.ID_ANY,
+  'Shuffle &Queue\tCTRL+SHIFT+S',
+  'Shuffle the play queue'
+  ))
+  self.Bind(
+  wx.EVT_MENU,
   self.frequency_up,
   play_menu.Append(
   wx.ID_ANY,
