@@ -126,7 +126,7 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   wx.ID_ANY,
   '&New Playlist\tCTRL+N',
-  'Create a new playlist'
+  'Create a new playlist..'
   ))
   station_menu = wx.Menu()
   self.Bind(
@@ -135,7 +135,7 @@ class MainFrame(wx.Frame):
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From Current &Result\tCTRL+9',
-  'Creates a radio station from the currently focused result'
+  'Creates a radio station from the currently focused result..'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -149,7 +149,7 @@ class MainFrame(wx.Frame):
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From Current A&lbum\tALT+5',
-  'Create a radio station based on the currently focused album'
+  'Create a radio station based on the currently focused album..'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -157,7 +157,7 @@ class MainFrame(wx.Frame):
   station_menu.Append(
   wx.ID_ANY,
   'Create Station From &Genre\tALT+6',
-  'Create a radio station based on a particular genre'
+  'Create a radio station based on a particular genre..'
   ))
   file_menu.AppendMenu(wx.ID_ANY, 'Create &Station', station_menu, 'Create radio stations from various sources')
   self.Bind(
@@ -166,22 +166,22 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   wx.ID_ANY,
   'Add Current Result To &Playlist...\tCTRL+8',
-  'Add the current result to one of your playlists'
+  'Add the current result to one of your playlists..'
   ))
   self.Bind(
   wx.EVT_MENU,
   functions.delete,
   file_menu.Append(
   wx.ID_ANY,
-  '&Delete Current Result\tDELETE',
-  'Removes an item from the library or the currently focused playlist'))
+  '&Delete\tDELETE',
+  'Removes an item from the play queue if selected, the library or the currently focused playlist'))
   self.Bind(
   wx.EVT_MENU,
   lambda event: NewPlaylist(self.current_playlist).Show() if self.current_playlist else wx.Bell(),
   file_menu.Append(
   wx.ID_ANY,
   '&Edit Current Playlist...\tF2',
-  'Rename the currently focused playlist'
+  'Rename the currently focused playlist.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -189,7 +189,7 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   wx.ID_ANY,
   '&Delete Current Playlist Or Station\tCTRL+DELETE',
-  'Deletes the currently selected playlist or station'
+  'Deletes the currently selected playlist or station.'
   ))
   file_menu.AppendSeparator()
   self.Bind(
@@ -207,7 +207,7 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   wx.ID_EXIT,
   'E&xit',
-  'Quit the program'
+  'Quit the program.'
   ))
   mb.Append(file_menu, '&File')
   edit_menu = wx.Menu()
@@ -217,7 +217,7 @@ class MainFrame(wx.Frame):
   edit_menu.Append(
   wx.ID_FIND,
   '&Find...\tCTRL+F',
-  'Find a song'
+  'Find a song.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -225,7 +225,7 @@ class MainFrame(wx.Frame):
   edit_menu.Append(
   wx.ID_ANY,
   'Find &Again\tCTRL+G',
-  'Repeat the previous search'
+  'Repeat the previous search.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -233,7 +233,7 @@ class MainFrame(wx.Frame):
   edit_menu.Append(
   wx.ID_ANY,
   '&Add To Library\tCTRL+/',
-  'Add or remove the current song from the library'
+  'Add or remove the current song from the library.'
   ))
   mb.Append(edit_menu, '&Edit')
   view_menu = wx.Menu()
@@ -243,7 +243,7 @@ class MainFrame(wx.Frame):
   view_menu.Append(
   wx.ID_ANY,
   '&Focus Current\tALT+ENTER',
-  'Focus the currently playing track'
+  'Focus the currently playing track.'
   ))
   mb.Append(view_menu, '&View')
   source_menu = wx.Menu()
@@ -253,7 +253,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   '&Library\tCTRL+l',
-  'Return to the library'
+  'Return to the library.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -261,7 +261,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   'Select &Playlist...\tCTRL+1',
-  'Select a playlist'
+  'Select a playlist.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -269,7 +269,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   'Select &Station...\tCTRL+2',
-  'Select a radio station'
+  'Select a radio station.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -277,7 +277,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   '&Thumbs Up Songs\tCTRL+3',
-  'Get a list of your thumbed up tracks'
+  'Get a list of your thumbed up tracks.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -285,7 +285,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   'Go To Current &Artist\tCTRL+4',
-  'Get a list of all artist tracks'
+  'Get a list of all artist tracks.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -293,7 +293,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   'Go To Current A&lbum\tCTRL+5',
-  'Go to the current album'
+  'Go to the current album.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -301,7 +301,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   'Select Al&bum...\tCTRL+6',
-  'Go to a particular album'
+  'Go to a particular album.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -309,7 +309,7 @@ class MainFrame(wx.Frame):
   source_menu.Append(
   wx.ID_ANY,
   'Select &Related Artist...\tCTRL+7',
-  'Select a related artist to view tracks.'
+  'Select a related artist to view tracks..'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -326,7 +326,7 @@ class MainFrame(wx.Frame):
   track_menu.Append(
   wx.ID_ANY,
   '&Queue Item\tCTRL+ENTER',
-  'Add the currently selected item to the play queue'
+  'Add the currently selected item to the play queue.'
   ))
   mb.Append(track_menu, '&Track')
   play_menu = wx.Menu()
@@ -336,7 +336,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   '&Select Current Item\tENTER',
-  'Selects the current item'
+  'Selects the current item.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -344,7 +344,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   '&Play or Pause\tSPACE',
-  'Play or pause the currently playing song'
+  'Play or pause the currently playing song.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -352,7 +352,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   'Volume &Up\tCTRL+UP',
-  'Increase the Volume'
+  'Increase the Volume.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -360,14 +360,14 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   'Volume &Down\tCTRL+DOWN',
-  'Decrease the volume'
+  'Decrease the volume.'
   ))
   self.Bind(wx.EVT_MENU,
   lambda event: Thread(target = functions.previous, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   '&Previous\tCTRL+LEFT',
-  'Play the previous track'
+  'Play the previous track.'
   ))
   self.Bind(wx.
   EVT_MENU,
@@ -375,7 +375,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY, 
   '&Next\tCTRL+RIGHT',
-  'Play the next track'
+  'Play the next track.'
   ))
   self.Bind(wx.
   EVT_MENU,
@@ -383,7 +383,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   '&Stop\tCTRL+.',
-  'Stop the currently playing song.'
+  'Stop the currently playing song..'
   ))
   self.stop_after = play_menu.AppendCheckItem(
   wx.ID_ANY,
@@ -400,14 +400,14 @@ class MainFrame(wx.Frame):
   lambda event: Thread(target = functions.rewind, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,'&Rewind\tSHIFT+LEFT',
-  'Rewind'
+  'Rewind.'
   ))
   self.Bind(
   wx.EVT_MENU,lambda event: Thread(target = functions.fastforward, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   '&Fastforward\tSHIFT+RIGHT',
-  'Fastforward'
+  'Fastforward.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -415,7 +415,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   'Shuffle &Results\tCTRL+S',
-  'Shuffle the currently shown results.'
+  'Shuffle the currently shown results..'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -423,7 +423,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   'Shuffle &Queue\tCTRL+SHIFT+S',
-  'Shuffle the play queue'
+  'Shuffle the play queue.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -431,7 +431,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   'Frequency &Up\tSHIFT+UP',
-  'Shift the frequency up a little'
+  'Shift the frequency up a little.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -439,7 +439,7 @@ class MainFrame(wx.Frame):
   play_menu.Append(
   wx.ID_ANY,
   'Frequency &Down\tSHIFT+DOWN',
-  'Shift the frequency down a little'
+  'Shift the frequency down a little.'
   ))
   mb.Append(play_menu, '&Play')
   options_menu = wx.Menu()
@@ -449,7 +449,7 @@ class MainFrame(wx.Frame):
   options_menu.Append(
   wx.ID_PREFERENCES,
   '&Preferences\tCTRL+,',
-  'Configure the program'
+  'Configure the program.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -457,7 +457,7 @@ class MainFrame(wx.Frame):
   options_menu.Append(
   wx.ID_ANY,
   '&Reset FX\tCTRL+\\',
-  'Reset pand and frequency'
+  'Reset pand and frequency.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -465,7 +465,7 @@ class MainFrame(wx.Frame):
   options_menu.Append(
   wx.ID_ANY,
   '&Select sound output...\tF12',
-  'Select a new output device for sound playback'
+  'Select a new output device for sound playback.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -473,7 +473,7 @@ class MainFrame(wx.Frame):
   options_menu.Append(
   wx.ID_ANY,
   '&View Options...\tCTRL+J',
-  'Configure the columns for the table of results'
+  'Configure the columns for the table of results.'
   ))
   self.Bind(
   wx.EVT_MENU,
@@ -481,7 +481,7 @@ class MainFrame(wx.Frame):
   options_menu.Append(
   wx.ID_ANY,
   '&Python Console...\tF11',
-  'Launch a Python console for development purposes'
+  'Launch a Python console for development purposes.'
   ))
   self.repeat = options_menu.AppendCheckItem(
   wx.ID_ANY,
@@ -498,7 +498,7 @@ class MainFrame(wx.Frame):
   self.Bind(
   wx.EVT_MENU,
   lambda event: wx.AboutBox(application.info),
-  help_menu.Append(wx.ID_ABOUT, '&About...', 'About the program'
+  help_menu.Append(wx.ID_ABOUT, '&About...', 'About the program.'
   ))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)
@@ -611,6 +611,13 @@ class MainFrame(wx.Frame):
   """Clears the play queue."""
   self._queue = []
   self.queue.DeleteAllItems()
+ 
+ def get_current_queue_result(self):
+  """Same as get_current_result, but with the queue."""
+  if application.platform == 'darwin':
+   return self.queue.GetSelection().GetID() - 1
+  else:
+   return self.queue.GetFocusedItem()
  
  def play(self, item, history = True):
   """Plays the track given in item. If history is True, add any current track to the history."""

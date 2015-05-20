@@ -61,7 +61,7 @@ def reveal_media(event):
  if sys.platform == 'darwin':
   cmd = 'open'
  else:
-  cmd = 'start'
+  cmd = 'explorer'
  os.system('%s "%s"' % (cmd, application.media_directory))
 
 def add_to_library(event):
@@ -407,24 +407,31 @@ def add_to_playlist(event):
 def delete(event):
  """Deletes an item from the focused playlist, or the library if that is focused."""
  frame = application.main_frame
- cr = frame.get_current_result()
- playlist = frame.current_playlist
- library = frame.current_library
- if (not playlist and not library) or cr == -1:
-  return wx.Bell()
- if playlist: # Deal with the playlist side of things first.
-  track = playlist['tracks'][cr]
-  name = track.get('track', {})
-  source = '%s playlist' % playlist.get('name', 'Unnamed')
-  func = application.mobile_api.remove_entries_from_playlist
- else: # Now the library:
-  track = library[cr] # Library is just a list of tracks.
-  name = track
-  source = 'library'
-  func = application.mobile_api.delete_songs
- if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(name), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
-  func(track['id'])
-  frame.delete_result(cr)
+ if frame.queue.HasFocus():
+  # They pressed delete from the play queue.
+  q = frame.get_current_queue_result()
+  if q == -1:
+   return wx.Bell() # There is no item selected.
+  frame.unqueue_track(q)
+ else:
+  cr = frame.get_current_result()
+  playlist = frame.current_playlist
+  library = frame.current_library
+  if (not playlist and not library) or cr == -1:
+   return wx.Bell()
+  if playlist: # Deal with the playlist side of things first.
+   track = playlist['tracks'][cr]
+   name = track.get('track', {})
+   source = '%s playlist' % playlist.get('name', 'Unnamed')
+   func = application.mobile_api.remove_entries_from_playlist
+  else: # Now the library:
+   track = library[cr] # Library is just a list of tracks.
+   name = track
+   source = 'library'
+   func = application.mobile_api.delete_songs
+  if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(name), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
+   func(track['id'])
+   frame.delete_result(cr)
 
 def delete_playlist_or_station(event):
  """Deletes the current playlist or station."""

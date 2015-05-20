@@ -51,7 +51,7 @@ info.SetDescription(description)
 info.SetVersion(version)
 info.SetDevelopers(developers)
 
-directory = os.path.expanduser('~/.%s' % name)
+directory = os.path.join(os.path.expanduser('~'), '.%s' % name)
 media_directory = os.path.join(directory, 'media')
 
 if not os.path.isdir(directory):
