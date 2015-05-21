@@ -81,7 +81,7 @@ def add_to_library(event):
 def get_device_id(frame = None):
  """Get and return a device ID. If none can be found, and the user cancels, close the initiating frame if it's provided.."""
  if not application.device_id:
-  ids = application.web_api.get_registered_devices()
+  ids = application.mobile_api.get_registered_devices()
   dlg = wx.SingleChoiceDialog(application.main_frame, 'Choose your mobile device from the list of devices which are enabled on your account:', 'Device Selection', [x['type'] for x in ids])
   if dlg.ShowModal() == wx.ID_OK:
    application.device_id = ids[dlg.GetSelection()]['id']
@@ -124,7 +124,7 @@ def select_station(event = None, station = None, interactive = True):
   dlg.Destroy()
  if interactive:
   if station:
-   frame.add_results(application.mobile_api.get_station_tracks(station['id']), True, station = station)
+   wx.CallAfter(frame.add_results, application.mobile_api.get_station_tracks(station['id'], application.config.get('library', 'max_results')), True, station = station)
  else:
   return station
 
@@ -309,11 +309,9 @@ def select_output(event = None):
    frame.current_track.set_position(loc)
  dlg.Destroy()
 
-def thumbs_up_tracks(event):
- """Get thumbs up tracks (may be empty)."""
- frame = application.main_frame
- frame.clear_results()
- frame.add_results(application.mobile_api.get_thumbs_up_songs())
+def promoted_songs(event):
+ """Get promoted songs."""
+ wx.CallAfter(application.main_frame.add_results, application.mobile_api.get_promoted_songs(), True)
 
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""

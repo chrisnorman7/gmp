@@ -28,12 +28,11 @@ for spec, column in columns:
 
 import wx, os, json, functions
 from sound_lib.output import Output
-from gmusicapi import Mobileclient, Webclient
+from gmusicapi import Mobileclient
 
 sound_output = Output()
 
-mobile_api = Mobileclient(verify_ssl = devel)
-web_api = Webclient(verify_ssl = devel)
+mobile_api = Mobileclient()
 app_id = '1234567890abcdef'
 
 device_id = None
@@ -75,7 +74,7 @@ config.set('login', 'remember', False, title = 'Remember credentials across rest
 config.add_section('library')
 config.set('library', 'save_tracks', 1000, title = 'The number of tracks to save in the library before the oldest are deleted')
 config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retrieve when getting artist info')
-config.set('library', 'max_results', 50, title = 'Maximum search results to display')
+config.set('library', 'max_results', 50, title = 'Maximum results to display')
 
 config.add_section('windows')
 config.set('windows', 'column_width', 15, title = 'The width of columns in the results view', validate = lambda value: None if value >= -1 and value <= 200 else 'Column width cannot be less than -1, or more than 200.')

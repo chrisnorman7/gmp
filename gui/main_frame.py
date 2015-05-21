@@ -112,7 +112,8 @@ class MainFrame(wx.Frame):
    self.set_artist_bio = lambda value: self.artist_bio.SetValue(value)
   s.Add(self.artist_bio, 1, wx.GROW)
   s4 = wx.BoxSizer(wx.HORIZONTAL)
-  s4.Add(wx.StaticText(p, label = application.config.get('windows', 'winamp_label')), 1, wx.GROW)
+  self.winamp_label = wx.StaticText(p, label = application.config.get('windows', 'winamp_label'))
+  s4.Add(self.winamp_label, 1, wx.GROW)
   self.hotkey_area = wx.TextCtrl(p, style = wx.TE_READONLY)
   self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
   s4.Add(self.hotkey_area, 1, wx.GROW)
@@ -281,10 +282,10 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: Thread(target = functions.thumbs_up_tracks, args = [event]).start(),
+  lambda event: Thread(target = functions.promoted_songs, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
-  '&Thumbs Up Songs\tCTRL+3',
+  '&Promoted Songs\tCTRL+3',
   'Get a list of your thumbed up tracks.'
   ))
   self.Bind(
@@ -585,6 +586,7 @@ class MainFrame(wx.Frame):
   """Sets the title."""
   if value == None:
    value = functions.format_title(self.get_current_track())
+  self.winamp_label.SetLabel('%s: %s' % (application.config.get('windows', 'winamp_label'), value))
   return super(MainFrame, self).SetTitle('%s (%s)' % (application.name, value))
  
  def select_item(self, event):
