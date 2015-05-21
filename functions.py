@@ -283,7 +283,7 @@ def do_search(event = None, search = None):
   if not results:
    wx.MessageBox('No results found', 'Error')
   else:
-   frame.add_results([x['track'] for x in results], True)
+   wx.CallAfter(frame.add_results, [x['track'] for x in results], True)
 
 def select_output(event = None):
  """Selects a new audio output."""
