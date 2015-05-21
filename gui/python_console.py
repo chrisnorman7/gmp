@@ -16,6 +16,7 @@ class PythonConsole(wx.Frame):
   self.prompt = wx.StaticText(p, label = '&Entry')
   s1.Add(self.prompt, 0, wx.GROW)
   self.entry = wx.TextCtrl(p, style = wx.TE_PROCESS_ENTER)
+  self.entry.SetFocus()
   self.entry.Bind(wx.EVT_TEXT_ENTER, self.exec_code)
   s1.Add(self.entry, 1, wx.GROW)
   self.close_button = wx.Button(p, label = application.config.get('windows', 'close_label'))
@@ -25,6 +26,7 @@ class PythonConsole(wx.Frame):
   p.SetSizerAndFit(s)
   self.Maximize()
   self.Raise()
+  self.Bind(wx.EVT_CLOSE, self.on_close)
  
  def Show(self, value = True):
   """Show the window."""
@@ -33,7 +35,7 @@ class PythonConsole(wx.Frame):
    sys.stderr = self.output
   return super(PythonConsole, self).Show(value)
  
- def OnClose(self, event):
+ def on_close(self, event):
   """Closes the window."""
   sys.stderr = self.stderr
   sys.stdout = self.stdout
