@@ -57,7 +57,7 @@ class MainFrame(wx.Frame):
    self.results.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
    self.queue = dv.DataViewListCtrl(p)
   else:
-   self.results = wx.ListCtrl(p, style = wx.LC_REPORT)
+   self.results = wx.ListCtrl(p, style = wx.LC_REPORT|wx.LC_SINGLE_SEL)
    self.results.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
    self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
   self.results.SetFocus()

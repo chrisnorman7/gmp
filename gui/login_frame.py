@@ -8,6 +8,7 @@ class LoginFrame(SF):
  """Frame to log in with."""
  def __init__(self):
   super(LoginFrame, self).__init__(None, title = 'Login')
+  self.processing = False # Set to true when we start the login process.
   p = self.GetContentsPane()
   p.SetSizerType('form')
   wx.StaticText(p, label = application.config.get('windows', 'uid_label'))
@@ -33,6 +34,9 @@ class LoginFrame(SF):
  
  def do_login(self, event = None):
   """Starts the thread that performs the login, so the GUI doesn't freeze."""
+  if self.processing:
+   return wx.Bell()
+  self.processing = True
   self.login.SetLabel('Logging in...')
   self.login.Disable()
   Thread(target = self._do_login).start()

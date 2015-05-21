@@ -318,7 +318,11 @@ def focus_playing(event):
  results = frame.get_results()
  if track:
   if track in results:
-   print results.index(track)
+   i = results.index(track)
+  if application.platform == 'darwin':
+   print 'Not sure yet...'
+  else:
+   frame.results.Select(i)
  else:
   wx.Bell()
 
