@@ -619,7 +619,7 @@ class MainFrame(wx.Frame):
   else:
    return self.queue.GetFocusedItem()
  
- def play(self, item, history = True):
+ def play(self, item, history = True, play = True):
   """Plays the track given in item. If history is True, add any current track to the history."""
   id = functions.get_id(item)
   track = None # The object to store the track in until it's ready for playing.
@@ -658,9 +658,12 @@ class MainFrame(wx.Frame):
   self.current_track.set_volume(application.config.get('sound', 'volume'))
   self.current_track.set_pan(application.config.get('sound', 'pan'))
   self.set_frequency()
-  self.current_track.play()
+  if play:
+   self.current_track.play()
+   self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
+  else:
+   self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
   application.mobile_api.increment_song_playcount(id)
-  self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
   self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))
  

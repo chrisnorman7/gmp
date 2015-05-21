@@ -129,7 +129,7 @@ def play_pause(event):
  """Play or pause the music."""
  frame = application.main_frame
  if frame.current_track:
-  if frame.current_track.is_paused:
+  if frame.current_track.is_paused or frame.current_track.is_stopped:
    frame.current_track.play()
    frame.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   else:
@@ -294,6 +294,7 @@ def select_output(event = None):
  if dlg.ShowModal() == wx.ID_OK:
   if frame.current_track:
    loc = frame.current_track.get_position()
+   playing = frame.current_track.is_playing
    item = frame.get_current_track()
    frame.current_track = None
   else:
@@ -301,7 +302,7 @@ def select_output(event = None):
   o.free()
   application.sound_output = p(device = dlg.GetSelection() + 1)
   if item:
-   frame.play(item)
+   frame.play(item, play = playing)
    frame.current_track.set_position(loc)
  dlg.Destroy()
 
