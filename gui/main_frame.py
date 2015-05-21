@@ -551,7 +551,7 @@ class MainFrame(wx.Frame):
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
   self.results.DeleteItem(result)
-  del self._results[result]
+  #self._results.remove(self.get_results()[result])
  
  def add_results(self, results, clear = False, playlist = None, station = None, library = None):
   """Adds multiple results using self.add_result. If playlist is provided, store the ID of the current playlist so we can perform operations on it."""
@@ -571,7 +571,7 @@ class MainFrame(wx.Frame):
  def init_results(self, event = None):
   """Initialises the results table."""
   songs = application.mobile_api.get_all_songs()
-  self.add_results(songs, True, library = songs)
+  wx.CallAfter(self.add_results, songs, True, library = songs)
  
  def Show(self, value = True):
   """Shows the frame."""
