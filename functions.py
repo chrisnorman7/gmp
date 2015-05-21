@@ -380,8 +380,7 @@ def related_artists(event):
   artist = related[dlg.GetSelection()].get('artistId', None)
   if not artist:
    return # No clue...
-  info = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks'))
-  frame.add_results(info.get('topTracks', []), True)
+  wx.CallAfter(frame.add_results, top_tracks(artist), True)
  dlg.Destroy()
 
 def all_playlist_tracks(event):
@@ -521,3 +520,19 @@ def shuffle(stuff):
  """Shuffles things, and returns them, allowing shuffle to be used from a lambda."""
  random.shuffle(stuff)
  return stuff
+
+def top_tracks(artist = None, interactive = False):
+ """Returns top tracks for an artist."""
+ frame = application.main_frame
+ if not artist:
+  if not interactive:
+   raise ValueError('Must supply an artist when not in interactive mode.')
+  cr = frame.get_current_result()
+  if cr == -1:
+   return wx.Bell()
+  artist = select_artist(frame.get_results()[cr].get('artistId', []))
+ tracks = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks')).get('topTracks', [])
+ if interactive:
+  wx.CallAfter(frame.add_results, tracks, clear = True)
+ else:
+  return tracks

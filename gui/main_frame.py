@@ -273,6 +273,14 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
+  lambda event: Thread(target = functions.top_tracks, kwargs = {'interactive': True}).start(),
+  source_menu.Append(
+  wx.ID_ANY,
+  'Artist &Top Tracks\tCTRL+;',
+  'Get the top tracks for the currently selected song.'
+  ))
+  self.Bind(
+  wx.EVT_MENU,
   lambda event: Thread(target = functions.thumbs_up_tracks, args = [event]).start(),
   source_menu.Append(
   wx.ID_ANY,
