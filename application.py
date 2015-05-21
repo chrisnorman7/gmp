@@ -78,6 +78,7 @@ config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retri
 config.set('library', 'max_results', 50, title = 'Maximum search results to display')
 
 config.add_section('windows')
+config.set('windows', 'column_width', 15, title = 'The width of columns in the results view', validate = lambda value: None if value >= -1 and value <= 200 else 'Column width cannot be less than -1, or more than 200.')
 config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
 config.set('windows', 'uid_label', '&Username', title = 'The label for the username field')
 config.set('windows', 'pwd_label', '&Password', title = 'The label for the password field')

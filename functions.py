@@ -25,6 +25,9 @@ def config_update(config, section, option, value):
    frame.repeat.Check(value)
   elif option == 'stop_after':
    frame.stop_after.Check(value)
+ elif section == 'windows':
+  if option == 'column_width':
+   frame.reload_results()
 
 def get_id(item):
  """Return the ID for the provided item."""
@@ -336,10 +339,10 @@ def artist_tracks(event = None, id = None):
    return wx.Bell() # There is no track selected yet.
   id = select_artist(frame.get_results()[cr]['artistId'])
  info = application.mobile_api.get_artist_info(id)
- frame.clear_results()
+ wx.CallAfter(frame.clear_results)
  for a in info['albums']:
   a = application.mobile_api.get_album_info(a['albumId'])
-  frame.add_results(a['tracks'])
+  wx.CallAfter(frame.add_results, a.get('tracks', []))
 
 def current_album(event):
  """Selects the current album."""
@@ -347,7 +350,7 @@ def current_album(event):
  cr = frame.get_current_result()
  if cr == -1:
   return wx.Bell() # No row selected.
- frame.add_results(application.mobile_api.get_album_info(frame.get_results()[cr]['albumId'])['tracks'], True)
+ wx.CallAfter(frame.add_results, application.mobile_api.get_album_info(frame.get_results()[cr]['albumId']).get('tracks', []), True)
 
 def artist_album(event):
  """Selects a particular artist album."""
@@ -362,7 +365,7 @@ def artist_album(event):
  albums = application.mobile_api.get_artist_info(artist).get('albums', [])
  dlg = wx.SingleChoiceDialog(frame, 'Select an album', 'Album Selection', [x.get('name', 'Unnamed') for x in albums])
  if dlg.ShowModal() == wx.ID_OK:
-  frame.add_results(application.mobile_api.get_album_info(albums[dlg.GetSelection()]['albumId'])['tracks'], True)
+  wx.CallAfter(frame.add_results, application.mobile_api.get_album_info(albums[dlg.GetSelection()]['albumId']).get('tracks', []), True)
  dlg.Destroy()
 
 def related_artists(event):
@@ -388,7 +391,7 @@ def all_playlist_tracks(event):
  frame = application.main_frame
  frame.clear_results()
  for p in application.mobile_api.get_all_playlists():
-  frame.add_results([x['track'] for x in application.mobile_api.get_shared_playlist_contents(p['shareToken'])])
+  wx.CallAfter(frame.add_results, [x['track'] for x in application.mobile_api.get_shared_playlist_contents(p['shareToken'])])
 
 def queue_result(event):
  """Adds the current result to the queue."""

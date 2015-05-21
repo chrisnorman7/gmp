@@ -725,13 +725,14 @@ class MainFrame(wx.Frame):
    self.results.ClearColumns()
   else:
    self.results.ClearAll()
+  width = application.config.get('windows', 'column_width')
   for i, (spec, column) in enumerate(application.columns):
    if column.get('include', False):
     name = column.get('friendly_name', spec.title())
     if application.platform == 'darwin':
-     self.results.AppendTextColumn(name)
+     self.results.AppendTextColumn(name, width = width)
     else:
-     self.results.InsertColumn(i, name)
+     self.results.InsertColumn(i, name, width = width)
  
  def reload_results(self):
   """Reloads the results table."""
