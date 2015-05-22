@@ -3,6 +3,7 @@
 import wx, application
 from wx.lib.sized_controls import SizedFrame as SF
 from threading import Thread
+from requests import ConnectionError
 
 class LoginFrame(SF):
  """Frame to log in with."""
@@ -46,22 +47,27 @@ class LoginFrame(SF):
  
  def _do_login(self):
   """Actually perform the login."""
-  if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue(), application.app_id):
-   application.config.set('login', 'uid', self.uid.GetValue())
-   if self.remember.GetValue():
-    application.config.set('login', 'pwd', self.pwd.GetValue())
+  try:
+   if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue(), application.app_id):
+    application.config.set('login', 'uid', self.uid.GetValue())
+    if self.remember.GetValue():
+     application.config.set('login', 'pwd', self.pwd.GetValue())
+    else:
+     application.config.set('login', 'pwd', '')
+    application.config.set('login', 'remember', self.remember.GetValue())
+    wx.CallAfter(self.post_login)
    else:
-    application.config.set('login', 'pwd', '')
-   application.config.set('login', 'remember', self.remember.GetValue())
-   wx.CallAfter(self.post_login)
-  else:
-   wx.CallAfter(self.login.SetLabel, application.config.get('windows', 'login_label'))
-   wx.CallAfter(self.login.Enable)
-   wx.CallAfter(self.uid.Enable)
-   wx.CallAfter(self.pwd.Enable)
-   wx.CallAfter(wx.MessageBox, 'Login unsuccessful', 'Error')
-   wx.CallAfter(self.uid.SetSelection, 0, -1)
-   wx.CallAfter(self.pwd.SetSelection, 0, -1)
+    wx.CallAfter(self.login.SetLabel, application.config.get('windows', 'login_label'))
+    wx.CallAfter(self.login.Enable)
+    wx.CallAfter(self.uid.Enable)
+    wx.CallAfter(self.pwd.Enable)
+    wx.CallAfter(wx.MessageBox, 'Login unsuccessful', 'Error')
+    wx.CallAfter(self.uid.SetSelection, 0, -1)
+    wx.CallAfter(self.pwd.SetSelection, 0, -1)
+  except ConnectionError:
+   wx.MessageBox('No connection could be made. Please make sure you are connected to the internet.', 'Connection Unsuccessful')
+   application.main_frame.Close(True)
+   return self.Close(True)
  
  def do_cancel(self, event = None):
   """Closes this window and application.main_frame."""
