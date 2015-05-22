@@ -438,7 +438,7 @@ def delete(event):
    func = application.mobile_api.delete_songs
   if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(name), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
    func(track['id'])
-   wx.CallAfter(frame.delete_result, cr)
+   frame.delete_result(cr)
 
 def delete_playlist_or_station(event):
  """Deletes the current playlist or station."""
