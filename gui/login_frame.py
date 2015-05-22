@@ -64,6 +64,7 @@ class LoginFrame(SF):
     wx.CallAfter(wx.MessageBox, 'Login unsuccessful', 'Error')
     wx.CallAfter(self.uid.SetSelection, 0, -1)
     wx.CallAfter(self.pwd.SetSelection, 0, -1)
+    self.processing = False
   except ConnectionError:
    wx.MessageBox('No connection could be made. Please make sure you are connected to the internet.', 'Connection Unsuccessful')
    application.main_frame.Close(True)
