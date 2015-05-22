@@ -1,7 +1,10 @@
 devel = True
+
 from confmanager import ConfManager, parser
 from sys import platform
 
+actions = {}
+keystrokes = {}
 columns = [
  ['composer', {'friendly_name': 'Composer'}],
  ['trackType', {'friendly_name': 'Track Type'}],

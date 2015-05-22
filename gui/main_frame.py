@@ -372,7 +372,7 @@ class MainFrame(wx.Frame):
   'Decrease the volume.'
   ))
   self.Bind(wx.EVT_MENU,
-  lambda event: Thread(target = functions.previous, args = [event]).start(),
+  lambda event: event.Skip() if self.artist_bio.HasFocus() else Thread(target = functions.previous, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY,
   '&Previous\tCTRL+LEFT',
@@ -380,7 +380,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(wx.
   EVT_MENU,
-  lambda event: Thread(target = functions.next, args = [event]).start(),
+  lambda event: event.Skip() if self.artist_bio.HasFocus() else Thread(target = functions.next, args = [event]).start(),
   play_menu.Append(
   wx.ID_ANY, 
   '&Next\tCTRL+RIGHT',
@@ -420,7 +420,7 @@ class MainFrame(wx.Frame):
   ))
   self.Bind(
   wx.EVT_MENU,
-  lambda event: self.add_results(functions.shuffle(self.get_results()), True),
+  lambda event: self.add_results(functions.shuffle(self.get_results()), True, playlist = self.current_playlist, station = self.current_station, library = self.current_library),
   play_menu.Append(
   wx.ID_ANY,
   'Shuffle &Results\tCTRL+S',

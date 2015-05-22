@@ -8,6 +8,7 @@ class LoginFrame(SF):
  """Frame to log in with."""
  def __init__(self):
   super(LoginFrame, self).__init__(None, title = 'Login')
+  self.SetAcceleratorTable(wx.AcceleratorTable([]))
   self.processing = False # Set to true when we start the login process.
   p = self.GetContentsPane()
   p.SetSizerType('form')
@@ -39,6 +40,8 @@ class LoginFrame(SF):
   self.processing = True
   self.login.SetLabel('Logging in...')
   self.login.Disable()
+  self.uid.Disable()
+  self.pwd.Disable()
   Thread(target = self._do_login).start()
  
  def _do_login(self):
@@ -54,6 +57,8 @@ class LoginFrame(SF):
   else:
    wx.CallAfter(self.login.SetLabel, application.config.get('windows', 'login_label'))
    wx.CallAfter(self.login.Enable)
+   wx.CallAfter(self.uid.Enable)
+   wx.CallAfter(self.pwd.Enable)
    wx.CallAfter(wx.MessageBox, 'Login unsuccessful', 'Error')
    wx.CallAfter(self.uid.SetSelection, 0, -1)
    wx.CallAfter(self.pwd.SetSelection, 0, -1)

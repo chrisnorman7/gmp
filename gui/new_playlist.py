@@ -5,6 +5,7 @@ class NewPlaylist(SizedFrame):
  """Use this frame to create a new playlist."""
  def __init__(self, playlist = {}):
   super(NewPlaylist, self).__init__(None, title = 'Edit Playlist' if playlist else 'Create A Playlist')
+  self.SetAcceleratorTable(wx.AcceleratorTable([]))
   p = self.GetContentsPane()
   self.playlist = playlist
   p.SetSizerType('form')
