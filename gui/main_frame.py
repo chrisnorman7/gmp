@@ -11,10 +11,13 @@ from gui.new_playlist import NewPlaylist
 keys = {} # Textual key names.
 mods = {} # Textual modifiers
 for x in dir(wx):
- if x.startswith('ACCEL_') and x != 'ACCEL_NORMAL':
-  mods[getattr(wx, x)] = x[6:]
- elif x.startswith('WXK_'):
+ if x.startswith('WXK_'):
   keys[getattr(wx, x)] = x[4:]
+
+osx = application.platform == 'darwin'
+mods[wx.ACCEL_CTRL] = 'CMD' if osx else 'CTRL'
+mods[wx.ACCEL_ALT] = 'OPT' if osx else 'ALT'
+mods[wx.ACCEL_SHIFT] = 'SHIFT'
 
 class TrackThread(Thread):
  """A thread which can be stopped."""
@@ -755,5 +758,5 @@ class MainFrame(wx.Frame):
    key_str += keys.get(key)
   else:
    key_str += chr(key)
-  key_str = '(%s)' % key_str
+  key_str = ' %s' % key_str
   return [id, title + key_str, description]
