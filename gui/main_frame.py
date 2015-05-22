@@ -8,6 +8,14 @@ from gui.python_console import PythonConsole
 from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
 
+keys = {} # Textual key names.
+mods = {} # Textual modifiers
+for x in dir(wx):
+ if x.startswith('ACCEL_') and x != 'ACCEL_NORMAL':
+  mods[getattr(wx, x)] = x[6:]
+ elif x.startswith('WXK_'):
+  keys[getattr(wx, x)] = x[4:]
+
 class TrackThread(Thread):
  """A thread which can be stopped."""
  def __init__(self, *args, **kwargs):
@@ -19,6 +27,8 @@ class MainFrame(wx.Frame):
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
+  self._accelerator_table = [] # The raw accelerator table as a list. Add entries with add_accelerator.
+  self.accelerator_table = {} # The human-readable accelerator table.
   self.frequency_up = lambda event: self.set_frequency(self.frequency.SetValue(min(100, self.frequency.GetValue() + 1)))
   self.frequency_down = lambda event: self.set_frequency(self.frequency.SetValue(max(0, self.frequency.GetValue() - 1)))
   self.pan_left = lambda event: self.set_pan(self.pan.SetValue(max(0, self.pan.GetValue() - 1)))
@@ -121,75 +131,69 @@ class MainFrame(wx.Frame):
   p.SetSizerAndFit(s)
   mb = wx.MenuBar()
   file_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: NewPlaylist().Show(True),
   file_menu.Append(
-  wx.ID_ANY,
-  '&New Playlist\tCTRL+N',
-  'Create a new playlist..'
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'n',
+  lambda event: NewPlaylist().Show(True),
+  '&New Playlist...',
+  'Create a new playlist.'
   ))
   station_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
+  station_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '9',
   lambda event: Thread(target = functions.station_from_result, args = [event]).start(),
-  station_menu.Append(
-  wx.ID_ANY,
-  'Create Station From Current &Result\tCTRL+9',
-  'Creates a radio station from the currently focused result..'
+  'Create Station From Current &Result...',
+  'Creates a radio station from the currently focused result.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  station_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_ALT, '4',
   lambda event: Thread(target = functions.station_from_artist, args = [event]).start(),
-  station_menu.Append(
-  wx.ID_ANY,
-  'Create Station From Current &Artist\tALT+4', 'Create a radio station based on the currently focused artist'))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.station_from_album, args = [event]).start(),
-  station_menu.Append(
-  wx.ID_ANY,
-  'Create Station From Current A&lbum\tALT+5',
-  'Create a radio station based on the currently focused album..'
+  'Create Station From Current &Artist',
+  'Create a radio station based on the currently focused artist.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.station_from_genre, args = [event]).start(),
   station_menu.Append(
-  wx.ID_ANY,
-  'Create Station From &Genre\tALT+6',
-  'Create a radio station based on a particular genre..'
+  *self.add_accelerator(
+  wx.ACCEL_ALT, '5',
+  lambda event: Thread(target = functions.station_from_album, args = [event]).start(),
+  'Create Station From Current A&lbum',
+  'Create a radio station based on the currently focused album.'
+  ))
+  station_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_ALT, '6',
+  lambda event: Thread(target = functions.station_from_genre, args = [event]).start(),
+  'Create Station From &Genre',
+  'Create a radio station based on a particular genre.'
   ))
   file_menu.AppendMenu(wx.ID_ANY, 'Create &Station', station_menu, 'Create radio stations from various sources')
-  self.Bind(
-  wx.EVT_MENU,
+  file_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '8',
   lambda event: Thread(target = functions.add_to_playlist, args = [event]).start(),
-  file_menu.Append(
-  wx.ID_ANY,
-  'Add Current Result To &Playlist...\tCTRL+8',
-  'Add the current result to one of your playlists..'
+  'Add Current Result To &Playlist...',
+  'Add the current result to one of your playlists.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  file_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, wx.WXK_DELETE,
   functions.delete,
-  file_menu.Append(
-  wx.ID_ANY,
-  '&Delete\tDELETE',
-  'Removes an item from the play queue if selected, the library or the currently focused playlist'))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: NewPlaylist(self.current_playlist).Show() if self.current_playlist else wx.Bell(),
-  file_menu.Append(
-  wx.ID_ANY,
-  '&Edit Current Playlist...\tF2',
-  'Rename the currently focused playlist.'
+  '&Delete',
+  'Removes an item from the play queue if selected, the library or the currently focused playlist.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  functions.delete_playlist_or_station,
   file_menu.Append(
-  wx.ID_ANY,
-  '&Delete Current Playlist Or Station\tCTRL+DELETE',
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, wx.WXK_F2,
+  lambda event: NewPlaylist(self.current_playlist).Show() if self.current_playlist else wx.Bell(),
+  '&Edit Current Playlist...',
+  'Edit the properties of the currently focused playlist.'
+  ))
+  file_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, wx.WXK_DELETE,
+  functions.delete_playlist_or_station,
+  '&Delete Current Playlist Or Station',
   'Deletes the currently selected playlist or station.'
   ))
   file_menu.AppendSeparator()
@@ -198,7 +202,7 @@ class MainFrame(wx.Frame):
   functions.reveal_media,
   file_menu.Append(
   wx.ID_ANY,
-  '&Reveal Media Directory\t',
+  '&Reveal Media Directory',
   'Open the media directory in %s' % ('Finder' if sys.platform == 'darwin' else 'Windows Explorer')
   ))
   file_menu.AppendSeparator()
@@ -212,302 +216,272 @@ class MainFrame(wx.Frame):
   ))
   mb.Append(file_menu, '&File')
   edit_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.do_search, args = [event]).start(),
   edit_menu.Append(
-  wx.ID_FIND,
-  '&Find...\tCTRL+F',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'f',
+  lambda event: Thread(target = functions.do_search, args = [event]).start(),
+  '&Find...',
   'Find a song.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.do_search, args = [event, self.last_search]).start(),
   edit_menu.Append(
-  wx.ID_ANY,
-  'Find &Again\tCTRL+G',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'g',
+  lambda event: Thread(target = functions.do_search, args = [event, self.last_search]).start(),
+  'Find &Again',
   'Repeat the previous search.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.add_to_library, args = [event]).start(),
   edit_menu.Append(
-  wx.ID_ANY,
-  '&Add To Library\tCTRL+/',
-  'Add or remove the current song from the library.'
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '/',
+  lambda event: Thread(target = functions.add_to_library, args = [event]).start(),
+  '&Add To Library',
+  'Add the current song to the library.'
   ))
   mb.Append(edit_menu, '&Edit')
   view_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
-  functions.focus_playing,
   view_menu.Append(
-  wx.ID_ANY,
-  '&Focus Current\tALT+ENTER',
+  *self.add_accelerator(
+  wx.ACCEL_ALT, wx.WXK_RETURN,
+  functions.focus_playing,
+  '&Focus Current',
   'Focus the currently playing track.'
   ))
   mb.Append(view_menu, '&View')
   source_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = self.init_results, args = [event]).start(),
   source_menu.Append(
-  wx.ID_ANY,
-  '&Library\tCTRL+l',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'l',
+  lambda event: Thread(target = self.init_results, args = [event]).start(),
+  '&Library',
   'Return to the library.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.select_playlist, args = [event]).start(),
   source_menu.Append(
-  wx.ID_ANY,
-  'Select &Playlist...\tCTRL+1',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '1',
+  lambda event: Thread(target = functions.select_playlist, args = [event]).start(),
+  'Select &Playlist...',
   'Select a playlist.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.select_station, args = [event]).start(),
   source_menu.Append(
-  wx.ID_ANY,
-  'Select &Station...\tCTRL+2',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '2',
+  lambda event: Thread(target = functions.select_station, args = [event]).start(),
+  'Select &Station...',
   'Select a radio station.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  source_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, ';',
   lambda event: Thread(target = functions.top_tracks, kwargs = {'interactive': True}).start(),
-  source_menu.Append(
-  wx.ID_ANY,
-  'Artist &Top Tracks\tCTRL+;',
-  'Get the top tracks for the currently selected song.'
+  'Artist &Top Tracks',
+  'Get the top tracks for the artist of the currently selected song.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  source_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '3',
   lambda event: Thread(target = functions.promoted_songs, args = [event]).start(),
-  source_menu.Append(
-  wx.ID_ANY,
-  '&Promoted Songs\tCTRL+3',
-  'Get a list of your thumbed up tracks.'
+  '&Promoted Songs',
+  'Get a list of promoted tracks.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  source_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '4',
   lambda event: Thread(target = functions.artist_tracks, args = [event]).start(),
-  source_menu.Append(
-  wx.ID_ANY,
-  'Go To Current &Artist\tCTRL+4',
-  'Get a list of all artist tracks.'
+  'Go To Current &Artist',
+  'Get a list of all tracks by the artist of the currently selected song.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.current_album, args = [event]).start(),
   source_menu.Append(
-  wx.ID_ANY,
-  'Go To Current A&lbum\tCTRL+5',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '5',
+  lambda event: Thread(target = functions.current_album, args = [event]).start(),
+  'Go To Current A&lbum',
   'Go to the current album.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.artist_album, args = [event]).start(),
   source_menu.Append(
-  wx.ID_ANY,
-  'Select Al&bum...\tCTRL+6',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '6',
+  lambda event: Thread(target = functions.artist_album, args = [event]).start(),
+  'Select Al&bum...',
   'Go to a particular album.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  source_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '7',
   lambda event: Thread(target = functions.related_artists, args = [event]).start(),
-  source_menu.Append(
-  wx.ID_ANY,
-  'Select &Related Artist...\tCTRL+7',
-  'Select a related artist to view tracks..'
+  'Select &Related Artist...',
+  'Select a related artist to view tracks.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.all_playlist_tracks, args = [event]).start(),
   source_menu.Append(
-  wx.ID_ANY,
-  'Loa&d All Playlist Tracks\tCTRL+0',
-  'Load every item from every playlist into the results table'))
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '0',
+  lambda event: Thread(target = functions.all_playlist_tracks, args = [event]).start(),
+  'Loa&d All Playlist Tracks',
+  'Load every item from every playlist into the results table.'
+  ))
   mb.Append(source_menu, '&Source')
   track_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.queue_result, args = [event]).start(),
   track_menu.Append(
-  wx.ID_ANY,
-  '&Queue Item\tCTRL+ENTER',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, wx.WXK_RETURN,
+  lambda event: Thread(target = functions.queue_result, args = [event]).start(),
+  '&Queue Item',
   'Add the currently selected item to the play queue.'
   ))
   mb.Append(track_menu, '&Track')
   play_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
-  self.select_item,
   play_menu.Append(
-  wx.ID_ANY,
-  '&Select Current Item\tENTER',
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, wx.WXK_RETURN,
+  self.select_item,
+  '&Select Current Item',
   'Selects the current item.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  functions.play_pause,
   play_menu.Append(
-  wx.ID_ANY,
-  '&Play or Pause\tSPACE',
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, ' ',
+  functions.play_pause,
+  '&Play or Pause',
   'Play or pause the currently playing song.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.volume_up, args = [event]).start(),
   play_menu.Append(
-  wx.ID_ANY,
-  'Volume &Up\tCTRL+UP',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, wx.WXK_UP,
+  lambda event: Thread(target = functions.volume_up, args = [event]).start(),
+  'Volume &Up',
   'Increase the Volume.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.volume_down, args = [event]).start(),
   play_menu.Append(
-  wx.ID_ANY,
-  'Volume &Down\tCTRL+DOWN',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, wx.WXK_DOWN,
+  lambda event: Thread(target = functions.volume_down, args = [event]).start(),
+  'Volume &Down',
   'Decrease the volume.'
   ))
-  self.Bind(wx.EVT_MENU,
-  lambda event: event.Skip() if self.artist_bio.HasFocus() else Thread(target = functions.previous, args = [event]).start(),
   play_menu.Append(
-  wx.ID_ANY,
-  '&Previous\tCTRL+LEFT',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, wx.WXK_LEFT,
+  lambda event: event.Skip() if self.artist_bio.HasFocus() else Thread(target = functions.previous, args = [event]).start(),
+  '&Previous',
   'Play the previous track.'
   ))
-  self.Bind(wx.
-  EVT_MENU,
-  lambda event: event.Skip() if self.artist_bio.HasFocus() else Thread(target = functions.next, args = [event]).start(),
   play_menu.Append(
-  wx.ID_ANY, 
-  '&Next\tCTRL+RIGHT',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, wx.WXK_RIGHT,
+  lambda event: event.Skip() if self.artist_bio.HasFocus() else Thread(target = functions.next, args = [event]).start(),
+  '&Next',
   'Play the next track.'
   ))
-  self.Bind(wx.
-  EVT_MENU,
-  functions.stop,
   play_menu.Append(
-  wx.ID_ANY,
-  '&Stop\tCTRL+.',
-  'Stop the currently playing song..'
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '.',
+  functions.stop,
+  '&Stop',
+  'Stop the currently playing song.'
   ))
   self.stop_after = play_menu.AppendCheckItem(
-  wx.ID_ANY,
-  'Stop &After\tCTRL+SHIFT+.',
-  'Stop after the currently playing track has finished'
-  )
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: application.config.set('sound', 'stop_after', self.stop_after.IsChecked()),
-  self.stop_after
-  )
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.rewind, args = [event]).start(),
+  *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, '.',
+  self.toggle_stop_after,
+  'Stop &After',
+  'Stop after the currently playing track has finished playing.'
+  ))
   play_menu.Append(
-  wx.ID_ANY,'&Rewind\tSHIFT+LEFT',
+  *self.add_accelerator(
+  wx.ACCEL_SHIFT, wx.WXK_LEFT,
+  lambda event: Thread(target = functions.rewind, args = [event]).start(),
+  '&Rewind',
   'Rewind.'
   ))
-  self.Bind(
-  wx.EVT_MENU,lambda event: Thread(target = functions.fastforward, args = [event]).start(),
   play_menu.Append(
-  wx.ID_ANY,
-  '&Fastforward\tSHIFT+RIGHT',
+  *self.add_accelerator(
+  wx.ACCEL_SHIFT, wx.WXK_RIGHT,
+  lambda event: Thread(target = functions.fastforward, args = [event]).start(),
+  '&Fastforward',
   'Fastforward.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  play_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 's',
   lambda event: self.add_results(functions.shuffle(self.get_results()), True, playlist = self.current_playlist, station = self.current_station, library = self.current_library),
-  play_menu.Append(
-  wx.ID_ANY,
-  'Shuffle &Results\tCTRL+S',
-  'Shuffle the currently shown results..'
+  'Shuffle &Results',
+  'Shuffle the currently shown results.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: self.queue_tracks(functions.shuffle(self.get_queue()), True),
   play_menu.Append(
-  wx.ID_ANY,
-  'Shuffle &Queue\tCTRL+SHIFT+S',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 's',
+  lambda event: self.queue_tracks(functions.shuffle(self.get_queue()), True),
+  'Shuffle &Queue',
   'Shuffle the play queue.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  self.frequency_up,
   play_menu.Append(
-  wx.ID_ANY,
-  'Frequency &Up\tSHIFT+UP',
+  *self.add_accelerator(
+  wx.ACCEL_SHIFT, wx.WXK_UP,
+  self.frequency_up,
+  'Frequency &Up',
   'Shift the frequency up a little.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  self.frequency_down,
   play_menu.Append(
-  wx.ID_ANY,
-  'Frequency &Down\tSHIFT+DOWN',
+  *self.add_accelerator(
+  wx.ACCEL_SHIFT, wx.WXK_DOWN,
+  self.frequency_down,
+  'Frequency &Down',
   'Shift the frequency down a little.'
   ))
   mb.Append(play_menu, '&Play')
   options_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
+  options_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, ',',
   lambda event: application.config.get_gui().Show(True),
-  options_menu.Append(
-  wx.ID_PREFERENCES,
-  '&Preferences\tCTRL+,',
-  'Configure the program.'
+  '&Preferences',
+  'Configure the program.',
+  id = wx.ID_PREFERENCES
   ))
-  self.Bind(
-  wx.EVT_MENU,
+  options_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '\\',
   functions.reset_fx,
-  options_menu.Append(
-  wx.ID_ANY,
-  '&Reset FX\tCTRL+\\',
-  'Reset pand and frequency.'
+  '&Reset FX',
+  'Reset pan and frequency.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: Thread(target = functions.select_output, args = [event]).start(),
   options_menu.Append(
-  wx.ID_ANY,
-  '&Select sound output...\tF12',
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, wx.WXK_F12,
+  lambda event: Thread(target = functions.select_output, args = [event]).start(),
+  '&Select sound output...',
   'Select a new output device for sound playback.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: ColumnEditor().Show(True),
   options_menu.Append(
-  wx.ID_ANY,
-  '&View Options...\tCTRL+J',
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'j',
+  lambda event: ColumnEditor().Show(True),
+  '&View Options...',
   'Configure the columns for the table of results.'
   ))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: PythonConsole().Show(True),
   options_menu.Append(
-  wx.ID_ANY,
-  '&Python Console...\tF11',
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, wx.WXK_F11,
+  lambda event: PythonConsole().Show(True),
+  '&Python Console...',
   'Launch a Python console for development purposes.'
   ))
   self.repeat = options_menu.AppendCheckItem(
-  wx.ID_ANY,
-  '&Repeat\tCTRL+R',
-  'Repeat tracks'
-  )
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'r',
+  self.toggle_repeat,
+  '&Repeat',
+  'Repeat tracks.'
+  ))
   self.repeat.Check(application.config.get('sound', 'repeat'))
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: application.config.set('sound', 'repeat', self.repeat.IsChecked()),
-  self.repeat)
   mb.Append(options_menu, '&Options')
   help_menu = wx.Menu()
-  self.Bind(
-  wx.EVT_MENU,
+  help_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_NORMAL, wx.WXK_F1,
   lambda event: wx.AboutBox(application.info),
-  help_menu.Append(wx.ID_ABOUT, '&About...', 'About the program.'
+  '&About...',
+  'About the program.',
+  id = wx.ID_ABOUT
   ))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)
@@ -748,3 +722,38 @@ class MainFrame(wx.Frame):
    self.hotkeys[k](event)
   else:
    event.Skip()
+ 
+ def toggle_stop_after(self, event):
+  """Toggles the stop after menu item."""
+  application.config.toggle('sound', 'stop_after')
+  self.stop_after.Check(application.config.get('sound', 'stop_after'))
+ 
+ def toggle_repeat(self, event):
+  """Toggles the repeat setting."""
+  application.config.toggle('sound', 'repeat')
+  self.repeat.Check(application.config.get('sound', 'repeat'))
+ 
+ def add_accelerator(self, modifiers, key, func, title, description, id = None):
+  """Adds an accelerator to the table."""
+  key = ord(key.upper()) if issubclass(type(key), basestring) else key
+  if not id:
+   id = wx.NewId()
+  self.Bind(wx.EVT_MENU, func, id = id)
+  self._accelerator_table.append((modifiers, key, id))
+  self.accelerator_table[id] = {
+   'title': title.strip('&'),
+   'description': description
+  }
+  self.SetAcceleratorTable(wx.AcceleratorTable(self._accelerator_table))
+  key_str = ''
+  for m, v in mods.iteritems():
+   if modifiers & m == m:
+    key_str += '%s%s' % ('+' if key_str else '', v)
+  if key_str:
+   key_str += '+'
+  if key in keys:
+   key_str += keys.get(key)
+  else:
+   key_str += chr(key)
+  key_str = '(%s)' % key_str
+  return [id, title + key_str, description]
