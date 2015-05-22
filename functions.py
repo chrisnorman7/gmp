@@ -49,7 +49,7 @@ def select_artist(artists):
   a = {}
   for x in artists:
    a[x] = application.mobile_api.get_artist_info(x).get('name', 'Unknown')
-  dlg = wx.SingleChoiceDialog(frame, 'Select an artist', 'This track has multiple artists', a.values())
+  dlg = wx.SingleChoiceDialog(application.main_frame, 'Select an artist', 'This track has multiple artists', a.values())
   if dlg.ShowModal() == wx.ID_OK:
    artist = a.keys()[dlg.GetSelection()]
   else:
