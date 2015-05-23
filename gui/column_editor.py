@@ -84,6 +84,7 @@ class ColumnEditor(SizedFrame):
  
  def do_move_up(self, event):
   """Move the current entry up the pecking order."""
+  self.current_column = -1
   cr = self.get_current_column()
   if cr < 1:
    return wx.Bell() # It's already at the top.
@@ -92,6 +93,7 @@ class ColumnEditor(SizedFrame):
  
  def do_move_down(self, event):
   """Move the current entry down the pecking order."""
+  self.current_column = -1
   cr = self.get_current_column()
   if cr == (len(self._columns) - 1):
    return wx.Bell() # It's already at the bottom.
