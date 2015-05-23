@@ -284,7 +284,7 @@ def do_search(event = None, search = None):
  if search:
   results = application.mobile_api.search_all_access(search, max_results = application.config.get('library', 'max_results'))['song_hits']
   if not results:
-   wx.MessageBox('No results found', 'Error')
+   wx.MessageBox('No results found for %s.' % frame.last_search, 'Error')
    do_search()
   else:
    wx.CallAfter(frame.add_results, [x['track'] for x in results], True)
