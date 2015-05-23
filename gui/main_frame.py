@@ -704,10 +704,10 @@ class MainFrame(wx.Frame):
    self.results.ClearColumns()
   else:
    self.results.ClearAll()
-  width = application.config.get('windows', 'column_width')
   for i, (spec, column) in enumerate(application.columns):
    if column.get('include', False):
     name = column.get('friendly_name', spec.title())
+    width = column.get('width', -1)
     if application.platform == 'darwin':
      self.results.AppendTextColumn(name, width = width)
     else:
