@@ -209,11 +209,10 @@ class MainFrame(wx.Frame):
   'Open the media directory in %s' % ('Finder' if sys.platform == 'darwin' else 'Windows Explorer')
   ))
   file_menu.AppendSeparator()
-  self.Bind(
-  wx.EVT_MENU,
-  lambda event: self.Close(True),
   file_menu.Append(
-  wx.ID_EXIT,
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'q',
+  lambda event: self.Close(True),
   'E&xit',
   'Quit the program.'
   ))
@@ -683,8 +682,7 @@ class MainFrame(wx.Frame):
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
    except Exception as e:
-    print 'Problem with the track thread: %s.' % str(e)
-  self.Close(True)
+    pass # The window has probably closed.
  
  def get_current_result(self):
   """Returns the current result."""
@@ -695,8 +693,9 @@ class MainFrame(wx.Frame):
  
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
-  self._thread.should_stop.set()
-  event.Skip()
+  if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
+   self._thread.should_stop.set()
+   event.Skip()
  
  def init_results_columns(self):
   """Creates columns for the results table."""

@@ -79,6 +79,7 @@ config.set('library', 'max_results', 50, title = 'Maximum results to display')
 
 config.add_section('windows')
 config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
+config.set('windows', 'confirm_quit', True, title = 'Confirm before quitting the program')
 config.set('windows', 'uid_label', '&Username', title = 'The label for the username field')
 config.set('windows', 'pwd_label', '&Password', title = 'The label for the password field')
 config.set('windows', 'remember_label', '&Store my password in plain text', title = 'The label for the remember password checkbox')
