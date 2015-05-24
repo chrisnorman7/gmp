@@ -2,6 +2,7 @@
 
 import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys
 from threading import Thread, Event
+from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
 from gui.python_console import PythonConsole
@@ -58,10 +59,15 @@ class MainFrame(wx.Frame):
   self.current_playlist = None # The current playlist
   self.current_station = None # The current radio station.
   self.current_library = None # The library in it's current state.
+  self.current_saved_result = None # The index of the currently focused daved result.
+  self.saved_results_indices = {} # IDs of saved results.
   self._current_track = None # The metadata for the currently playing track.
   self.current_track = None
   self._queue = [] # The actual queue of tracks.
   self.track_history = [] # The play history.
+  self.results_history = [] # The results history.
+  self.results_history_index = 0 # The index of the results history.
+  self.bypass_history = False # Bypass the results history on the next insertion.
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -141,6 +147,13 @@ class MainFrame(wx.Frame):
   '&New Playlist...',
   'Create a new playlist.'
   ))
+  file_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 's',
+  lambda event: self.add_saved_result(),
+  '&Save Results...',
+  'Save the current results to the saved results list.'
+  ))
   station_menu = wx.Menu()
   station_menu.Append(
   *self.add_accelerator(
@@ -195,9 +208,8 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_CTRL, wx.WXK_DELETE,
-  functions.delete_playlist_or_station,
-  '&Delete Current Playlist Or Station',
-  'Deletes the currently selected playlist or station.'
+  functions.delete_thing,
+  '&Delete Currently focused thing'
   ))
   file_menu.AppendSeparator()
   self.Bind(
@@ -430,6 +442,22 @@ class MainFrame(wx.Frame):
   'Shift the frequency down a little.'
   ))
   mb.Append(play_menu, '&Play')
+  self.history_menu = wx.Menu()
+  self.history_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, '[',
+  functions.results_history_back,
+  '&Back',
+  'Moves back through the results history.'
+  ))
+  self.history_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, ']',
+  functions.results_history_forward,
+  '&Forward',
+  'Move forward through the results history.'
+  ))
+  mb.Append(self.history_menu, '&History')
   options_menu = wx.Menu()
   options_menu.Append(
   *self.add_accelerator(
@@ -530,11 +558,21 @@ class MainFrame(wx.Frame):
   self.results.DeleteItem(result)
   #self._results.remove(self.get_results()[result])
  
- def add_results(self, results, clear = False, playlist = None, station = None, library = None):
+ def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None):
   """Adds multiple results using self.add_result. If playlist is provided, store the ID of the current playlist so we can perform operations on it."""
+  if not self.bypass_history:
+   r = self.get_results()
+   if r and (not self.results_history or r != self.results_history[-1]): # Don't save blank or duplicate results.
+    self.results_history.append([[r], {'playlist': self.current_playlist, 'library': self.current_library, 'station': self.current_station, 'saved_result': self.current_saved_result, 'clear': True}])
+    while len(self.results_history) > application.config.get('library', 'history_length'):
+     del self.results_history[0] # Make sure the results history doesn't get too large.
+  if scroll_history:
+   self.results_history_index = len(self.results_history)
+  self.bypass_history = bypass_history
   self.current_playlist = playlist # Keep a record of what playlist we're in, so we can delete items and reload them.
   self.current_station = station # The current station for delete and such.
   self.current_library = library
+  self.current_saved_result = saved_result
   if clear:
    self.clear_results()
   map(self.add_result, results)
@@ -651,7 +689,10 @@ class MainFrame(wx.Frame):
    self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
   application.mobile_api.increment_song_playcount(id)
   self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
-  self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))
+  try:
+   self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))
+  except wx.PyDeadObjectError:
+   pass # The frame has been deleted.
  
  def set_volume(self, event):
   """Sets the volume with the slider."""
@@ -681,7 +722,7 @@ class MainFrame(wx.Frame):
       self.track_position.SetValue(i)
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
-   except Exception as e:
+   except wx.PyDeadObjectError:
     pass # The window has probably closed.
  
  def get_current_result(self):
@@ -735,8 +776,10 @@ class MainFrame(wx.Frame):
   application.config.toggle('sound', 'repeat')
   self.repeat.Check(application.config.get('sound', 'repeat'))
  
- def add_accelerator(self, modifiers, key, func, title, description, id = None):
+ def add_accelerator(self, modifiers, key, func, title, description = None, id = None):
   """Adds an accelerator to the table."""
+  if not description:
+   description = getdoc(func)
   key = ord(key.upper()) if issubclass(type(key), basestring) else key
   if not id:
    id = wx.NewId()
@@ -759,3 +802,43 @@ class MainFrame(wx.Frame):
    key_str += chr(key)
   key_str = ' %s' % key_str
   return [id, title + key_str, description]
+ 
+ def select_results_history(self, pos):
+  """Selects an item from the results history."""
+  args, kwargs = self.results_history[pos]
+  kwargs['bypass_history'] = True
+  kwargs['scroll_history'] = False
+  self.add_results(*args, **kwargs)
+  self.results_history_index = pos
+ 
+ def add_saved_result(self, name = None, results = None):
+  """Saves results to the config and the history menu."""
+  if not results:
+   results = self.get_results()
+  if not results:
+   return wx.Bell()
+  if not name:
+   dlg = wx.TextEntryDialog(self, 'Enter a name for this result', 'Save Result')
+   if dlg.ShowModal() == wx.ID_OK:
+    name = dlg.GetValue()
+   dlg.Destroy()
+  if name:
+   if name not in application.saved_results or wx.MessageBox('There is already a saved result by that name. Replace?', 'Duplicate Name', style = wx.YES_NO) == wx.YES:
+    application.saved_results[name] = results
+    self.current_saved_result = name
+    id = wx.NewId()
+    self.saved_results_indices[name] = id
+    self.Bind(
+    wx.EVT_MENU,
+    lambda event: self.add_results(application.saved_results[name], clear = True, saved_result = name),
+    self.history_menu.Append(
+    id,
+    '&%s' % name,
+    'Load the %s saved history item.' % name
+    ))
+ 
+ def delete_saved_result(self, name):
+  """Deletes the saved result pointed too by id."""
+  self.history_menu.Delete(self.saved_results_indices[name])
+  del self.saved_results_indices[name]
+  del application.saved_results[name]

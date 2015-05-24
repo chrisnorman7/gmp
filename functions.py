@@ -318,16 +318,10 @@ def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
  frame = application.main_frame
  track = frame.get_current_track()
- results = frame.get_results()
  if track:
-  if track in results:
-   i = results.index(track)
-  if application.platform == 'darwin':
-   print 'Not sure yet...'
-  else:
-   frame.results.Select(i)
+  frame.add_results([track], bypass_history = True, clear = True)
  else:
-  wx.Bell()
+  return wx.Bell()
 
 def artist_tracks(event = None, id = None):
  """Get all tracks for a particular artist."""
@@ -338,10 +332,11 @@ def artist_tracks(event = None, id = None):
    return wx.Bell() # There is no track selected yet.
   id = select_artist(frame.get_results()[cr]['artistId'])
  info = application.mobile_api.get_artist_info(id)
- wx.CallAfter(frame.clear_results)
+ tracks = [] # The final list of tracks for add_results.
  for a in info['albums']:
   a = application.mobile_api.get_album_info(a['albumId'])
-  wx.CallAfter(frame.add_results, a.get('tracks', []))
+  tracks += a.get('tracks', [])
+ wx.CallAfter(frame.add_results, tracks, True)
 
 def current_album(event):
  """Selects the current album."""
@@ -388,9 +383,10 @@ def related_artists(event):
 def all_playlist_tracks(event):
  """Add every track from every playlist."""
  frame = application.main_frame
- frame.clear_results()
+ tracks = [] # The final results.
  for p in application.mobile_api.get_all_playlists():
-  wx.CallAfter(frame.add_results, [x['track'] for x in application.mobile_api.get_shared_playlist_contents(p['shareToken'])])
+  tracks += [x['track'] for x in application.mobile_api.get_shared_playlist_contents(p['shareToken'])]
+ wx.CallAfter(frame.add_results, tracks)
 
 def queue_result(event):
  """Adds the current result to the queue."""
@@ -440,8 +436,8 @@ def delete(event):
    func(track['id'])
    frame.delete_result(cr)
 
-def delete_playlist_or_station(event):
- """Deletes the current playlist or station."""
+def delete_thing(event):
+ """Deletes the current playlist, station or saved result."""
  frame = application.main_frame
  if frame.current_playlist:
   # We are working on a playlist.
@@ -451,6 +447,10 @@ def delete_playlist_or_station(event):
   # We are working on a radio station.
   if wx.MessageBox('Are you sure you want to delete the %s station?' % frame.current_station.get('name', 'Unnamed'), 'Are You Sure', style = wx.YES_NO) == wx.YES:
    wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]), 'Station Deleted')
+ elif frame.current_saved_result:
+  # We are working with a saved result.
+  if wx.MessageBox('Are you sure you want to delete the %s saved result?' % frame.current_saved_result, 'Are you sure', style = wx.YES_NO) == wx.YES:
+   frame.delete_saved_result(frame.current_saved_result)
  else:
   # There is no playlist or station selected.
   wx.Bell()
@@ -539,3 +539,23 @@ def top_tracks(artist = None, interactive = False):
   wx.CallAfter(frame.add_results, tracks, clear = True)
  else:
   return tracks
+
+def results_history_back(event):
+ """Move back through the results history."""
+ frame = application.main_frame
+ if not frame.results_history:
+  return wx.Bell()
+ i = frame.results_history_index - 1
+ if i < 0:
+  return wx.Bell() # We're at the start of the history.
+ frame.select_results_history(i)
+
+def results_history_forward(event):
+ """Moves forward through the results history."""
+ frame = application.main_frame
+ if not frame.results_history:
+  return wx.Bell()
+ i = frame.results_history_index + 1
+ if i >= len(frame.results_history):
+  return wx.Bell()
+ frame.select_results_history(i)
