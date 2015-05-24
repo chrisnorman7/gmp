@@ -391,15 +391,25 @@ def queue_result(event):
   return wx.Bell() # No row selected.
  frame.queue_track(frame.get_results()[cr])
 
-def add_to_playlist(event):
+def add_to_playlist(event = None, playlist = None):
  """Add the current result to a playlist."""
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return wx.Bell() # No item selected.
  id = get_id(frame.get_results()[cr])
- playlist = select_playlist(interactive = False).get('id')
- application.mobile_api.add_songs_to_playlist(playlist, id)
+ if not playlist:
+  playlist = select_playlist(interactive = False).get('id')
+ application.main_frame.add_to_playlist = playlist
+ if playlist:
+  try:
+   application.mobile_api.add_songs_to_playlist(playlist, id)
+  except Exception as e:
+   return wx.MessageBox('Error adding songs to the %s playlist: %s' % (playlist.get('name', 'Unnamed'), str(e)), 'Error')
+
+def add_again_to_playlist(event):
+ """Adds again to the last playlist used."""
+ add_to_playlist(playlist = application.main_frame.add_to_playlist)
 
 def delete(event):
  """Deletes an item from the focused playlist, or the library if that is focused."""

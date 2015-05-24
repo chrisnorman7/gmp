@@ -31,6 +31,7 @@ class MainFrame(wx.Frame):
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
+  self.add_to_playlist = None
   self._accelerator_table = [] # The raw accelerator table as a list. Add entries with add_accelerator.
   self.accelerator_table = {} # The human-readable accelerator table.
   self.frequency_up = lambda event: self.set_frequency(self.frequency.SetValue(min(100, self.frequency.GetValue() + 1)))
@@ -276,6 +277,13 @@ class MainFrame(wx.Frame):
   lambda event: Thread(target = functions.select_playlist, args = [event]).start(),
   'Select &Playlist...',
   'Select a playlist.'
+  ))
+  source_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_SHIFT, wx.WXK_RETURN,
+  lambda event: Thread(target = functions.add_again_to_playlist, args = [event]).start(),
+  'Add A&gain To The Previously Selected Playlist',
+  'Adds the current result to the playlist which items were last added too.'
   ))
   source_menu.Append(
   *self.add_accelerator(
