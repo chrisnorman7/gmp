@@ -31,11 +31,10 @@ for spec, column in columns:
 
 import wx, os, json, functions
 from sound_lib.output import Output
-from gmusicapi import Mobileclient
-
+from my_mobileclient import MyMobileclient
 sound_output = Output()
 
-mobile_api = Mobileclient()
+mobile_api = MyMobileclient()
 app_id = '1234567890abcdef'
 
 device_id = None
@@ -59,15 +58,7 @@ media_directory = os.path.join(directory, 'media')
 if not os.path.isdir(directory):
  os.mkdir(directory)
 
-class MyConfManager(ConfManager):
- """Try and get around Martin's bug..."""
- def set(self, *args, **kwargs):
-  try:
-   return super(MyConfManager, self).set(*args, **kwargs)
-  except Exception as e:
-   print 'Error: set(*%s, **%s)' % (args, kwargs)
-
-config = MyConfManager(name + ' Options')
+config = ConfManager(name + ' Options')
 
 config.add_section('login')
 config.set('login', 'uid', '', title = 'The email address to log in with')

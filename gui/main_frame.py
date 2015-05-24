@@ -559,7 +559,6 @@ class MainFrame(wx.Frame):
  
  def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None):
   """Adds multiple results using self.add_result. If playlist is provided, store the ID of the current playlist so we can perform operations on it."""
-  print len(application.results_history)
   if not self.bypass_history:
    r = self.get_results()
    if r and (not application.results_history or r != application.results_history[-1]): # Don't save blank or duplicate results.
@@ -651,20 +650,16 @@ class MainFrame(wx.Frame):
   fname = id + application.track_extension
   path = functions.id_to_path(id)
   if id not in application.library or (application.library[id] and application.library[id] != item.get('lastModifiedTimestamp', application.library[id])): # Our version is older, download again
-   device = functions.get_device_id()
-   if device:
-    try:
-     url = application.mobile_api.get_stream_url(id, device)
-    except gmusicapi.exceptions.CallFailure as e:
-     application.device_id = None
-     return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
-    try:
-     track = URLStream(url = url)
-    except BassError as e:
-     error = e # Just store it for later alerting.
-    Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)]).start()
-   else:
-    return # Track is not downloaded, and can't get a device to download with.
+   try:
+    url = application.mobile_api.get_stream_url(id)
+   except gmusicapi.exceptions.CallFailure as e:
+    application.device_id = None
+    return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
+   try:
+    track = URLStream(url = url)
+   except BassError as e:
+    error = e # Just store it for later alerting.
+   Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)]).start()
   else:
    try:
     track = FileStream(file = path)

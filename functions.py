@@ -78,19 +78,6 @@ def add_to_library(event):
  application.mobile_api.add_aa_track(id)
  wx.MessageBox('%s was added to your library.' % format_title(track), 'Track Added')
 
-def get_device_id(frame = None):
- """Get and return a device ID. If none can be found, and the user cancels, close the initiating frame if it's provided.."""
- if not application.device_id:
-  ids = application.mobile_api.get_registered_devices()
-  dlg = wx.SingleChoiceDialog(application.main_frame, 'Choose your mobile device from the list of devices which are enabled on your account:', 'Device Selection', [x['type'] for x in ids])
-  if dlg.ShowModal() == wx.ID_OK:
-   application.device_id = ids[dlg.GetSelection()]['id']
-  else:
-   if frame:
-    frame.Close(True)
-  dlg.Destroy()
- return application.device_id
-
 def select_playlist(event = None, playlist = None, interactive = True):
  frame = application.main_frame
  playlists = application.mobile_api.get_all_user_playlist_contents()
