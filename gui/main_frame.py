@@ -65,7 +65,6 @@ class MainFrame(wx.Frame):
   self.current_track = None
   self._queue = [] # The actual queue of tracks.
   self.track_history = [] # The play history.
-  self.results_history = [] # The results history.
   self.results_history_index = 0 # The index of the results history.
   self.bypass_history = False # Bypass the results history on the next insertion.
   p = wx.Panel(self)
@@ -560,14 +559,15 @@ class MainFrame(wx.Frame):
  
  def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None):
   """Adds multiple results using self.add_result. If playlist is provided, store the ID of the current playlist so we can perform operations on it."""
+  print len(application.results_history)
   if not self.bypass_history:
    r = self.get_results()
-   if r and (not self.results_history or r != self.results_history[-1]): # Don't save blank or duplicate results.
-    self.results_history.append([[r], {'playlist': self.current_playlist, 'library': self.current_library, 'station': self.current_station, 'saved_result': self.current_saved_result, 'clear': True}])
-    while len(self.results_history) > application.config.get('library', 'history_length'):
-     del self.results_history[0] # Make sure the results history doesn't get too large.
+   if r and (not application.results_history or r != application.results_history[-1]): # Don't save blank or duplicate results.
+    application.results_history.append([[r], {'playlist': self.current_playlist, 'library': self.current_library, 'station': self.current_station, 'saved_result': self.current_saved_result, 'clear': True}])
+    while len(application.results_history) > application.config.get('library', 'history_length'):
+     del application.results_history[0] # Make sure the results history doesn't get too large.
   if scroll_history:
-   self.results_history_index = len(self.results_history)
+   application.results_history_index = len(application.results_history)
   self.bypass_history = bypass_history
   self.current_playlist = playlist # Keep a record of what playlist we're in, so we can delete items and reload them.
   self.current_station = station # The current station for delete and such.
@@ -805,11 +805,11 @@ class MainFrame(wx.Frame):
  
  def select_results_history(self, pos):
   """Selects an item from the results history."""
-  args, kwargs = self.results_history[pos]
+  args, kwargs = application.results_history[pos]
   kwargs['bypass_history'] = True
   kwargs['scroll_history'] = False
   self.add_results(*args, **kwargs)
-  self.results_history_index = pos
+  application.results_history_index = pos
  
  def add_saved_result(self, name = None, results = None):
   """Saves results to the config and the history menu."""

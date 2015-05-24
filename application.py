@@ -4,6 +4,7 @@ from confmanager import ConfManager, parser
 from sys import platform
 
 saved_results = {}
+results_history = []
 columns = [
  ['composer', {'friendly_name': 'Composer'}],
  ['trackType', {'friendly_name': 'Track Type'}],
@@ -113,6 +114,23 @@ config.set('sound', 'frequency', 50, title = 'The frequency to play songs at (50
 config.set('sound', 'volume', 1.0, title = 'The volume to play tracks at (between 0.0 and 1.0)')
 config.set('sound', 'pan', 0.0, title = 'The left and right stereo balance to play songs at')
 
+config_file = os.path.join(directory, 'config.json')
+
+if os.path.isfile(config_file):
+ with open(config_file, 'rb') as f:
+  try:
+   j = json.load(f)
+   device_id = j.get('device_id', None)
+   for x, y in j.get('saved_results', {}).iteritems():
+    main_frame.add_saved_result(name = x, results = y)
+   results_history = j.get('results_history', [])
+   columns = j.get('columns', columns)
+   if len(columns) != len(default_columns):
+    columns = default_columns
+   parser.parse_json(config, j.get('config', {}))
+  except ValueError as e:
+   pass # They've broken their config file.
+
 class MyApp(wx.App):
  def MainLoop(self, *args, **kwargs):
   """Overrides wx.App.MainLoop, to save the config at the end."""
@@ -122,7 +140,8 @@ class MyApp(wx.App):
    'saved_results': saved_results,
    'columns': columns,
    'config': config.get_dump(),
-   'device_id': device_id
+   'device_id': device_id,
+   'results_history': results_history
   }
   with open(config_file, 'wb') as f:
    json.dump(stuff, f, indent = 1)
@@ -168,19 +187,3 @@ while len(os.listdir(media_directory)) > config.get('library', 'save_tracks'):
  functions.prune_library()
 
 config.updateFunc = functions.config_update
-
-config_file = os.path.join(directory, 'config.json')
-
-if os.path.isfile(config_file):
- with open(config_file, 'rb') as f:
-  try:
-   j = json.load(f)
-   device_id = j.get('device_id', None)
-   for x, y in j.get('saved_results', {}).iteritems():
-    main_frame.add_saved_result(name = x, results = y)
-   columns = j.get('columns', columns)
-   if len(columns) != len(default_columns):
-    columns = default_columns
-   parser.parse_json(config, j.get('config', {}))
-  except ValueError as e:
-   pass # They've broken their config file.

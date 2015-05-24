@@ -543,9 +543,9 @@ def top_tracks(artist = None, interactive = False):
 def results_history_back(event):
  """Move back through the results history."""
  frame = application.main_frame
- if not frame.results_history:
+ if not application.results_history:
   return wx.Bell()
- i = frame.results_history_index - 1
+ i = application.results_history_index - 1
  if i < 0:
   return wx.Bell() # We're at the start of the history.
  frame.select_results_history(i)
@@ -553,9 +553,9 @@ def results_history_back(event):
 def results_history_forward(event):
  """Moves forward through the results history."""
  frame = application.main_frame
- if not frame.results_history:
+ if not application.results_history:
   return wx.Bell()
- i = frame.results_history_index + 1
- if i >= len(frame.results_history):
+ i = application.results_history_index + 1
+ if i >= len(application.results_history):
   return wx.Bell()
  frame.select_results_history(i)
