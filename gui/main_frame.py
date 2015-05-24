@@ -74,10 +74,12 @@ class MainFrame(wx.Frame):
    self.results = dv.DataViewListCtrl(p) # User friendly track list.
    self.results.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
    self.queue = dv.DataViewListCtrl(p)
+   self.queue.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
   else:
    self.results = wx.ListCtrl(p, style = wx.LC_REPORT|wx.LC_SINGLE_SEL)
    self.results.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
    self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
+   self.queue.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
   self.results.SetFocus()
   self._results = [] # The raw json from Google.
   self.init_results_columns()
@@ -604,10 +606,23 @@ class MainFrame(wx.Frame):
  
  def select_item(self, event):
   """Play the track under the mouse."""
-  id = self.get_current_result()
+  ctrl = self.FindFocus()
+  if application.platform == 'darwin':
+   ctrl = self.results
+   func = self.get_results
+  elif ctrl == self.queue:
+   func = self.get_queue
+  elif ctrl == self.results:
+   func = self.get_results
+  else:
+   return event.Skip()
+  id = self.get_current_result(ctrl)
   if id == -1:
    return wx.Bell()
-  Thread(target = self.play, args = [self.get_results()[id]]).start()
+  track = func()[id]
+  if ctrl == self.queue:
+   self.unqueue_item(id)
+  Thread(target = self.play, args = [track]).start()
  
  def get_queue(self):
   """Returns the queued tracks."""
@@ -720,12 +735,14 @@ class MainFrame(wx.Frame):
    except wx.PyDeadObjectError:
     pass # The window has probably closed.
  
- def get_current_result(self):
+ def get_current_result(self, ctrl = None):
   """Returns the current result."""
+  if not ctrl:
+   ctrl = self.results
   if application.platform == 'darwin':
-   return self.results.GetSelection().GetID() - 1
+   return ctrl.GetSelection().GetID() - 1
   else:
-   return self.results.GetFocusedItem()
+   return ctrl.GetFocusedItem()
  
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
@@ -837,3 +854,4 @@ class MainFrame(wx.Frame):
   self.history_menu.Delete(self.saved_results_indices[name])
   del self.saved_results_indices[name]
   del application.saved_results[name]
+ 
