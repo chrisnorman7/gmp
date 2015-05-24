@@ -306,7 +306,12 @@ def focus_playing(event):
  frame = application.main_frame
  track = frame.get_current_track()
  if track:
-  frame.add_results([track], bypass_history = True, clear = True)
+  if application.platform != 'darwin' and track in frame.get_results():
+   pos = frame.get_results().index(track)
+   frame.results.Select(pos)
+   frame.Focus(pos)
+  else:
+   frame.add_results([track], bypass_history = True, clear = True)
  else:
   return wx.Bell()
 
