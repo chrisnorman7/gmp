@@ -424,14 +424,14 @@ class MainFrame(wx.Frame):
   ))
   play_menu.Append(
   *self.add_accelerator(
-  wx.ACCEL_CTRL, 's',
+  wx.ACCEL_CTRL, 'h',
   lambda event: self.add_results(functions.shuffle(self.get_results()), True, playlist = self.current_playlist, station = self.current_station, library = self.current_library),
   'Shuffle &Results',
   'Shuffle the currently shown results.'
   ))
   play_menu.Append(
   *self.add_accelerator(
-  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 's',
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 'h',
   lambda event: self.queue_tracks(functions.shuffle(self.get_queue()), True),
   'Shuffle &Queue',
   'Shuffle the play queue.'
