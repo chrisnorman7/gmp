@@ -740,7 +740,7 @@ class MainFrame(wx.Frame):
       self.track_position.SetValue(i)
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
-   except wx.PyDeadObjectError:
+   except wx.PyDeadObjectError, requests.ConnectionError:
     pass # The window has probably closed.
  
  def get_current_result(self, ctrl = None):

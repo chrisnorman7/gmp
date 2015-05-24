@@ -327,6 +327,7 @@ def artist_tracks(event = None, id = None):
    return wx.Bell() # There is no track selected yet.
   id = select_artist(frame.get_results()[cr]['artistId'])
  info = application.mobile_api.get_artist_info(id)
+ wx.CallAfter(frame.clear_results)
  tracks = [] # The final list of tracks for add_results.
  for a in info['albums']:
   a = application.mobile_api.get_album_info(a['albumId'])
