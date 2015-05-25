@@ -55,7 +55,8 @@ class MainFrame(wx.Frame):
    (0, ord('K')): self.frequency_down,
    (0, ord('F')): functions.do_search,
    (0, ord('G')): lambda event: functions.do_search(search = self.last_search),
-   (0, ord('8')): lambda event: Thread(target = functions.add_again_to_playlist, args = [event]).start()
+   (0, ord('8')): lambda event: Thread(target = functions.add_again_to_playlist, args = [event]).start(),
+   (0, wx.WXK_RETURN): functions.focus_playing
   }
   self.last_search = '' # Whatever the user last searched for.
   self.current_playlist = None # The current playlist

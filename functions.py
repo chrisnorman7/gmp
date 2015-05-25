@@ -312,7 +312,7 @@ def focus_playing(event):
     frame.results.SelectRow(pos)
    else:
     frame.results.Select(pos)
-    frame.Focus(pos)
+    frame.results.Focus(pos)
   else:
    frame.add_results([track], clear = True, bypass_history = True)
  else:
