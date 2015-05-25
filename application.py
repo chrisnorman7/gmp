@@ -39,7 +39,7 @@ app_id = '1234567890abcdef'
 
 device_id = None
 
-version = '0.2'
+version = '0.5'
 name = 'Google Music Player'
 url = 'www.code-metropolis.com/gmplayer'
 description = 'An app for playing tracks from Google Play Music (account required).'
