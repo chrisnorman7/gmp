@@ -1,6 +1,7 @@
 """Various functions used in the program."""
 
 import application, wx, os, requests, sys, random
+RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
 from sound_lib.main import BassError
 from time import time
 
@@ -45,16 +46,20 @@ def in_library(id):
 
 def select_artist(artists):
  """Given a list of artists, selects one, with user intervention if there is more than one in the list."""
+ artists = list(set(artists))
  if len(artists) >1:
   a = {}
   for x in artists:
-   a[x] = application.mobile_api.get_artist_info(x).get('name', 'Unknown')
+   try:
+    a[x] = application.mobile_api.get_artist_info(x).get('name', 'Unknown')
+   except RE as e:
+    return wx.MessageBox(*format_requests_error(e))
   dlg = wx.SingleChoiceDialog(application.main_frame, 'Select an artist', 'This track has multiple artists', a.values())
   if dlg.ShowModal() == wx.ID_OK:
    artist = a.keys()[dlg.GetSelection()]
+   dlg.Destroy()
   else:
    artist = None
-  dlg.Destroy()
  else:
   artist = artists[0]
  return artist
@@ -75,12 +80,21 @@ def add_to_library(event):
   return wx.Bell() # Can't add stuff in the library to the library, or there's nothing selected to add.
  track = frame.get_results()[cr]
  id = get_id(track)
- application.mobile_api.add_aa_track(id)
- wx.MessageBox('%s was added to your library.' % format_title(track), 'Track Added')
+ try:
+  application.mobile_api.add_aa_track(id)
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
+ wx.MessageBox('Added %s to your library.' % format_title(track), 'Track Added')
 
 def select_playlist(event = None, playlist = None, interactive = True):
  frame = application.main_frame
- playlists = application.mobile_api.get_all_user_playlist_contents()
+ try:
+  playlists = application.mobile_api.get_all_user_playlist_contents()
+ except RE as e:
+  if interactive:
+   return wx.MessageBox(*format_requests_error(e))
+  else:
+   return None
  if playlist:
   for p in playlists:
    if p['id'] == playlist:
@@ -92,14 +106,24 @@ def select_playlist(event = None, playlist = None, interactive = True):
   dlg.Destroy()
  if interactive:
   if playlist:
-   frame.add_results([x['track'] for x in application.mobile_api.get_shared_playlist_contents(playlist['shareToken'])], True, playlist = playlist)
+   try: 
+    tracks = application.mobile_api.get_shared_playlist_contents(playlist['shareToken'])
+    wx.CallAfter(frame.add_results, [x['track'] for x in tracks], True, playlist = playlist)
+   except RE as e:
+    return wx.MessageBox(*format_requests_error(e))
  else:
   return playlist
 
 def select_station(event = None, station = None, interactive = True):
  """Select a radio station."""
  frame = application.main_frame
- stations = application.mobile_api.get_all_stations()
+ try:
+  stations = application.mobile_api.get_all_stations()
+ except RE as e:
+  if interactive:
+   return wx.MessageBox(*format_requests_error(e))
+  else:
+   return None
  if station:
   for s in stations:
    if s['id'] == station:
@@ -111,11 +135,15 @@ def select_station(event = None, station = None, interactive = True):
   dlg.Destroy()
  if interactive:
   if station:
-   wx.CallAfter(frame.add_results, application.mobile_api.get_station_tracks(station['id'], application.config.get('library', 'max_results')), True, station = station)
+   try:
+    tracks = application.mobile_api.get_station_tracks(station['id'], application.config.get('library', 'max_results'))
+    wx.CallAfter(frame.add_results, tracks, True, station = station)
+   except RE as e:
+    return wx.MessageBox(*format_requests_error(e))
  else:
   return station
 
-def play_pause(event):
+def play_pause(event = None):
  """Play or pause the music."""
  frame = application.main_frame
  if frame.current_track:
@@ -269,7 +297,10 @@ def do_search(event = None, search = None):
    frame.last_search = search
   dlg.Destroy()
  if search:
-  results = application.mobile_api.search_all_access(search, max_results = application.config.get('library', 'max_results'))['song_hits']
+  try:
+   results = application.mobile_api.search_all_access(search, max_results = application.config.get('library', 'max_results'))['song_hits']
+  except RE as e:
+   return wx.MessageBox(*format_requests_error(e))
   if not results:
    wx.MessageBox('No results found for %s.' % frame.last_search, 'Error')
    do_search()
@@ -299,7 +330,12 @@ def select_output(event = None):
 
 def promoted_songs(event):
  """Get promoted songs."""
- wx.CallAfter(application.main_frame.add_results, application.mobile_api.get_promoted_songs(), True)
+ return wx.MessageBox('This feature has been disabled until the API has been fixed.', 'Feature Disabled')
+ try:
+  songs = application.mobile_api.get_promoted_songs()
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
+ wx.CallAfter(application.main_frame.add_results, songs, True)
 
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
@@ -326,11 +362,18 @@ def artist_tracks(event = None, id = None):
   if cr == -1:
    return wx.Bell() # There is no track selected yet.
   id = select_artist(frame.get_results()[cr]['artistId'])
- info = application.mobile_api.get_artist_info(id)
+ try:
+  info = application.mobile_api.get_artist_info(id)
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
  wx.CallAfter(frame.clear_results)
  tracks = [] # The final list of tracks for add_results.
  for a in info['albums']:
-  a = application.mobile_api.get_album_info(a['albumId'])
+  try:
+   a = application.mobile_api.get_album_info(a['albumId'])
+  except RE as e:
+   wx.CallAfter(frame.add_results, tracks)
+   return wx.MessageBox(*format_requests_error(e))
   tracks += a.get('tracks', [])
  wx.CallAfter(frame.add_results, tracks, True)
 
@@ -340,7 +383,11 @@ def current_album(event):
  cr = frame.get_current_result()
  if cr == -1:
   return wx.Bell() # No row selected.
- wx.CallAfter(frame.add_results, application.mobile_api.get_album_info(frame.get_results()[cr]['albumId']).get('tracks', []), True)
+ try:
+  songs = application.mobile_api.get_album_info(frame.get_results()[cr]['albumId']).get('tracks', [])
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
+ wx.CallAfter(frame.add_results, songs, True)
 
 def artist_album(event):
  """Selects a particular artist album."""
@@ -352,11 +399,19 @@ def artist_album(event):
  artist = select_artist(artists)
  if not artist:
   return
- albums = application.mobile_api.get_artist_info(artist).get('albums', [])
+ try:
+  albums = application.mobile_api.get_artist_info(artist).get('albums', [])
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
  dlg = wx.SingleChoiceDialog(frame, 'Select an album', 'Album Selection', [x.get('name', 'Unnamed') for x in albums])
  if dlg.ShowModal() == wx.ID_OK:
-  wx.CallAfter(frame.add_results, application.mobile_api.get_album_info(albums[dlg.GetSelection()]['albumId']).get('tracks', []), True)
- dlg.Destroy()
+  res = dlg.GetSelection()
+  dlg.Destroy()
+  try:
+   songs = application.mobile_api.get_album_info(albums[res]['albumId']).get('tracks', [])
+   wx.CallAfter(frame.add_results, songs, True)
+  except RE as e:
+   wx.MessageBox(*format_requests_error(e))
 
 def related_artists(event):
  """Selects and views tracks for a related artist."""
@@ -367,21 +422,36 @@ def related_artists(event):
  artist = select_artist(frame.get_results()[cr]['artistId'])
  if not artist:
   return # User canceled.
- related = application.mobile_api.get_artist_info(artist).get('related_artists', [])
+ try:
+  related = application.mobile_api.get_artist_info(artist).get('related_artists', [])
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
  dlg = wx.SingleChoiceDialog(frame, 'Select an artist', 'Related Artists', [x.get('name', 'Unknown') for x in related])
  if dlg.ShowModal() == wx.ID_OK:
-  artist = related[dlg.GetSelection()].get('artistId', None)
+  artist = related[dlg.GetSelection()].get('artistId')
+  dlg.Destroy()
   if not artist:
    return # No clue...
-  wx.CallAfter(frame.add_results, top_tracks(artist), True)
- dlg.Destroy()
+  try:
+   tracks = top_tracks(artist)
+  except RE as e:
+   return wx.MessageBox(*format_requests_error(e))
+  wx.CallAfter(frame.add_results, tracks, True)
 
 def all_playlist_tracks(event):
  """Add every track from every playlist."""
  frame = application.main_frame
  tracks = [] # The final results.
- for p in application.mobile_api.get_all_playlists():
-  tracks += [x['track'] for x in application.mobile_api.get_shared_playlist_contents(p['shareToken'])]
+ try:
+  playlists = application.mobile_api.get_all_playlists()
+ except RE as e:
+  return wx.MessageBox(*format_requests_error(e))
+ for p in playlists:
+  try:
+   t = application.mobile_api.get_shared_playlist_contents(p['shareToken'])
+  except RE as e:
+   return wx.MessageBox(*format_requests_error(e))
+  tracks += [x['track'] for x in t]
  wx.CallAfter(frame.add_results, tracks)
 
 def queue_result(event):
@@ -400,11 +470,11 @@ def add_to_playlist(event = None, playlist = None):
   return wx.Bell() # No item selected.
  id = get_id(frame.get_results()[cr])
  if not playlist:
-  playlist = select_playlist(interactive = False).get('id')
+  playlist = select_playlist(interactive = False)
  application.main_frame.add_to_playlist = playlist
  if playlist:
   try:
-   application.mobile_api.add_songs_to_playlist(playlist, id)
+   application.mobile_api.add_songs_to_playlist(playlist.get('id'), id)
   except Exception as e:
    return wx.MessageBox('Error adding songs to the %s playlist: %s' % (playlist.get('name', 'Unnamed'), str(e)), 'Error')
 
@@ -439,27 +509,38 @@ def delete(event):
    source = 'library'
    func = application.mobile_api.delete_songs
   if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(name), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
-   func(track['id'])
-   frame.delete_result(cr)
+   try:
+    func(track['id'])
+    frame.delete_result(cr)
+   except RE as e:
+    return wx.MessageBox(*format_requests_error(e))
 
 def delete_thing(event):
  """Deletes the current playlist, station or saved result."""
  frame = application.main_frame
  if frame.current_playlist:
   # We are working on a playlist.
-  if wx.MessageBox('Are you sure you want to delete the %s playlist?' % frame.current_playlist.get('name', 'Untitled'), 'Are You Sure', style = wx.YES_NO) == wx.YES:
-   wx.MessageBox('Deleted the %s playlist with ID %s.' % (frame.current_playlist['name'], application.mobile_api.delete_playlist(frame.current_playlist['id'])), 'Playlist Deleted')
+  name = '%s playlist' % frame.current_playlist.get('name', 'Untitled')
+  func = application.mobile_api.delete_playlist
+  thing = frame.current_playlist['id']
  elif frame.current_station:
   # We are working on a radio station.
-  if wx.MessageBox('Are you sure you want to delete the %s station?' % frame.current_station.get('name', 'Unnamed'), 'Are You Sure', style = wx.YES_NO) == wx.YES:
-   wx.MessageBox('Deleted the %s station with ID %s.' % (frame.current_station['name'], application.mobile_api.delete_stations(frame.current_station['id'])[0]), 'Station Deleted')
+  name = '%s station' % frame.current_station.get('name', 'Unnamed')
+  func = application.mobile_api.delete_stations
+  thing = frame.current_station['id']
  elif frame.current_saved_result:
   # We are working with a saved result.
-  if wx.MessageBox('Are you sure you want to delete the %s saved result?' % frame.current_saved_result, 'Are you sure', style = wx.YES_NO) == wx.YES:
-   frame.delete_saved_result(frame.current_saved_result)
+  name = '%s saved result' % frame.current_saved_result
+  func = frame.delete_saved_result
+  thing = frame.current_saved_result
  else:
   # There is no playlist or station selected.
-  wx.Bell()
+  return wx.Bell()
+ if wx.MessageBox('Are you sure you want to delete the %s?' % name, 'Are You Sure', style = wx.YES_NO) == wx.YES:
+  try:
+   func(thing)
+  except Exception as e:
+   return wx.MessageBox('Error deleting the %% (%s).' % (name, str(e)), 'Error')
 
 def station_from_result(event):
  """Creates a station from the current result."""
@@ -470,9 +551,13 @@ def station_from_result(event):
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('title', 'Untitled Track')))
  if dlg.ShowModal() and dlg.GetValue():
-  id = application.mobile_api.create_station(dlg.GetValue(), track_id = get_id(track))
-  select_station(station = id, interactive = True)
- dlg.Destroy()
+  name = dlg.GetValue()
+  dlg.Destroy()
+  try:
+   id = application.mobile_api.create_station(value, track_id = get_id(track))
+   select_station(station = id, interactive = True)
+  except RE as e:
+   return wx.MessageBox(*format_request_error(e))
 
 def station_from_artist(event):
  """Create a station based on the currently selected artist."""
@@ -483,9 +568,13 @@ def station_from_artist(event):
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s' % (track.get('artist', 'Unknown Artist')))
  if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
-  id = application.mobile_api.create_station(dlg.GetValue(), artist_id = get_id(track))
-  select_station(station = id, interactive = True)
- dlg.Destroy()
+  value = dlg.GetValue()
+  dlg.Destroy()
+  try:
+   id = application.mobile_api.create_station(value, artist_id = get_id(track))
+   select_station(station = id, interactive = True)
+  except RE as e:
+   return wx.MessageBox(*format_request_error(e))
 
 def station_from_album(event):
  """Create a station from the currently selected album."""
@@ -496,26 +585,35 @@ def station_from_album(event):
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('album', 'Unknown Album')))
  if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
-  id = application.mobile_api.create_station(dlg.GetValue(), album_id = get_id(track))
-  select_station(station = id, interactive = True)
- dlg.Destroy()
+  value = dlg.GetValue()
+  dlg.Destroy()
+  try:
+   id = application.mobile_api.create_station(value, album_id = get_id(track))
+   select_station(station = id, interactive = True)
+  except RE as e:
+   return wx.MessageBox(*format_request_error(e))
 
 def station_from_genre(event):
  """Creates a station based on a genre."""
  frame = application.main_frame
- genres = application.mobile_api.get_genres()
+ try:
+  genres = application.mobile_api.get_genres()
+ except RE as e:
+  return wx.MessageBox(*format_request_error(e))
  dlg = wx.SingleChoiceDialog(frame, 'Select a genre to build a station', 'Select A Genre', [g['name'] for g in genres])
  if dlg.ShowModal() == wx.ID_OK:
+  value = dlg.GetValue()
+  dlg.Destroy()
   genre = genres[dlg.GetSelection()]
- else:
-  genre = None
- dlg.Destroy()
- if genre:
   dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Genre station for %s' % genre['name'])
   if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
-   id = application.mobile_api.create_station(dlg.GetValue(), genre_id = genre['id'])
-   select_station(station = id, interactive = True)
-  dlg.Destroy()
+   value = dlg.GetValue()
+   dlg.Destroy()
+   try:
+    id = application.mobile_api.create_station(value, genre_id = genre['id'])
+    select_station(station = id, interactive = True)
+   except RE as e:
+    return wx.MessageBox(*format_request_error(e))
 
 def reset_fx(event):
  """Resets pan and frequency to defaults."""
@@ -540,7 +638,13 @@ def top_tracks(artist = None, interactive = False):
   if cr == -1:
    return wx.Bell()
   artist = select_artist(frame.get_results()[cr].get('artistId', []))
- tracks = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks')).get('topTracks', [])
+ try:
+  tracks = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks')).get('topTracks', [])
+ except RE as e:
+  if interactive:
+   return wx.MessageBox(*format_request_error(e))
+  else:
+   return []
  if interactive:
   wx.CallAfter(frame.add_results, tracks, clear = True)
  else:
@@ -565,3 +669,7 @@ def results_history_forward(event):
  if i >= len(application.results_history):
   return wx.Bell()
  frame.select_results_history(i)
+
+def format_requests_error(err, title = 'Connection Error'):
+ """Formats an error into a string to complain about connection problems."""
+ return ['No connection could be made. Please ensure you are connected to the internet (%s).' % str(err), title]

@@ -680,6 +680,11 @@ class MainFrame(wx.Frame):
    except gmusicapi.exceptions.CallFailure as e:
     application.device_id = None
     return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
+   except functions.RE as e:
+    if self.current_track:
+     self.current_track.set_position(self.current_track.get_length() - 1)
+     self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+    return wx.MessageBox(*functions.format_requests_error(e))
    try:
     track = URLStream(url = url)
    except BassError as e:
@@ -707,12 +712,15 @@ class MainFrame(wx.Frame):
    self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   else:
    self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
-  application.mobile_api.increment_song_playcount(id)
-  self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
   try:
-   self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))
-  except wx.PyDeadObjectError:
-   pass # The frame has been deleted.
+   application.mobile_api.increment_song_playcount(id)
+   self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
+   try:
+    self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))
+   except wx.PyDeadObjectError:
+    pass # The frame has been deleted.
+  except functions.RE:
+   pass # We are not connected to the internet, but we can still play stuff.
  
  def set_volume(self, event):
   """Sets the volume with the slider."""
@@ -742,7 +750,7 @@ class MainFrame(wx.Frame):
       self.track_position.SetValue(i)
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
-   except wx.PyDeadObjectError, requests.ConnectionError:
+   except wx.PyDeadObjectError:
     pass # The window has probably closed.
  
  def get_current_result(self, ctrl = None):

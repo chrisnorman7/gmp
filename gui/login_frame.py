@@ -1,9 +1,9 @@
 """Login frame for Google Music Player."""
 
-import wx, application
+import wx, application, requests
 from wx.lib.sized_controls import SizedFrame as SF
 from threading import Thread
-from requests import ConnectionError
+from functions import format_requests_error
 
 class LoginFrame(SF):
  """Frame to log in with."""
@@ -65,8 +65,8 @@ class LoginFrame(SF):
     wx.CallAfter(self.uid.SetSelection, 0, -1)
     wx.CallAfter(self.pwd.SetSelection, 0, -1)
     self.processing = False
-  except ConnectionError:
-   wx.MessageBox('No connection could be made. Please make sure you are connected to the internet.', 'Connection Unsuccessful')
+  except requests.exceptions.RequestException as e:
+   wx.MessageBox(*format_requests_error(e))
    application.main_frame.Close(True)
    return self.Close(True)
  
