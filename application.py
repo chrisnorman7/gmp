@@ -1,3 +1,4 @@
+version = '0.7'
 devel = True
 
 from confmanager import ConfManager, parser
@@ -39,7 +40,6 @@ app_id = '1234567890abcdef'
 
 device_id = None
 
-version = '0.6'
 name = 'Google Music Player'
 url = 'www.code-metropolis.com/gmplayer'
 description = 'An app for playing tracks from Google Play Music (account required).'
@@ -150,6 +150,8 @@ app.SetVendorName(vendor_name)
 app.SetVendorDisplayName(vendor_name)
 from gui.main_frame import MainFrame
 main_frame = MainFrame()
+lyrics_frame = None # The lyrics viewer.
+
 track_extension = '.mp3'
 
 library_file = os.path.join(directory, 'library.json')

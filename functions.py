@@ -4,6 +4,7 @@ import application, wx, os, requests, sys, random
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
 from sound_lib.main import BassError
 from time import time
+from gui.lyrics_viewer import LyricsViewer
 
 id_fields = [
  'storeId',
@@ -270,12 +271,15 @@ def id_to_path(id):
 def download_file(id, url, timestamp):
  """Download the track from url, add it to the library database, and store it with a filename derived from id."""
  path = id_to_path(id)
- g = requests.get(url)
- with open(path, 'wb') as f:
-  f.write(g.content)
- application.library[id] = timestamp
- while len(os.listdir(application.media_directory)) > application.config.get('library', 'save_tracks'):
-  prune_library()
+ try:
+  g = requests.get(url)
+  with open(path, 'wb') as f:
+   f.write(g.content)
+  application.library[id] = timestamp
+  while len(os.listdir(application.media_directory)) > application.config.get('library', 'save_tracks'):
+   prune_library()
+ except Exception:
+  pass # Let the GUI handle it.
 
 def track_seek(event):
  """Get the value of the seek slider and move the track accordingly."""
@@ -673,3 +677,18 @@ def results_history_forward(event):
 def format_requests_error(err, title = 'Connection Error'):
  """Formats an error into a string to complain about connection problems."""
  return ['No connection could be made. Please ensure you are connected to the internet (%s).' % str(err), title]
+
+def get_lyrics(event, track = None):
+ """Loads up a lyrics viewer frame with the lyrics of the supplied track, or the currently playing track if None is provided."""
+ if not track:
+  frame = application.main_frame
+  cr = frame.get_current_result()
+  if cr == -1:
+   return wx.Bell()
+  track = frame.get_results()[cr]
+ artist = track.get('artist')
+ title = track.get('title')
+ if application.lyrics_frame:
+  Thread(target = application.lyrics_frame, args = [artist, title]).start()
+ else:
+  application.lyrics_frame = LyricsViewer(artist, title)

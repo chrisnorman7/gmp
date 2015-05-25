@@ -264,6 +264,13 @@ class MainFrame(wx.Frame):
   '&Focus Current',
   'Focus the currently playing track.'
   ))
+  view_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 'l',
+  functions.get_lyrics,
+  'View &Lyrics',
+  'View lyrics for the currently selected result.'
+  ))
   mb.Append(view_menu, '&View')
   source_menu = wx.Menu()
   source_menu.Append(
@@ -702,6 +709,8 @@ class MainFrame(wx.Frame):
    if history:
     self.add_history(self.get_current_track())
   self._current_track = item
+  if application.lyrics_frame:
+   Thread(target = application.lyrics_frame.populate_lyrics, args = [item.get('artist'), item.get('title')]).start()
   self.current_track = track
   self.SetTitle()
   self.current_track.set_volume(application.config.get('sound', 'volume'))
