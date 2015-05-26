@@ -901,6 +901,6 @@ class MainFrame(wx.Frame):
  def update_hotkey_area(self):
   """Updates the value of self.hotkey_area."""
   if self.current_track:
-   self.hotkey_area.SetValue('(%s / %s): %s' % (columns.parse_durationMillis(self.current_pos), self.duration, self.title))
+   self.hotkey_area.SetValue(application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title))
   else:
    self.hotkey_area.SetValue('No track playing.')
