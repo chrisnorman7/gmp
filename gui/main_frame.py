@@ -606,14 +606,15 @@ class MainFrame(wx.Frame):
   self.current_library = library
   self.current_saved_result = saved_result
   if clear:
-   self.artists.SetItems(['All Artists'])
    self.clear_results()
   map(self.add_result, results)
   self.results.SetFocus()
  
  def clear_results(self):
   """Clears the results table."""
+  self.artists.SetItems(['All Artists'])
   self._results = []
+  self._full_results = []
   self.results.DeleteAllItems()
  
  def init_results(self, event = None):
