@@ -2,6 +2,7 @@
 
 import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys
 from threading import Thread, Event
+from time import sleep
 from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
@@ -31,6 +32,9 @@ class MainFrame(wx.Frame):
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
+  self.current_pos = 0.0 # The position in the currently playing track for the Winamp-style control.
+  self.duration = None # The duration of the track as a string.
+  self.title = None # The title of the current track.
   self.add_to_playlist = None
   self._accelerator_table = [] # The raw accelerator table as a list. Add entries with add_accelerator.
   self.accelerator_table = {} # The human-readable accelerator table.
@@ -135,9 +139,8 @@ class MainFrame(wx.Frame):
    self.set_artist_bio = lambda value: self.artist_bio.SetValue(value)
   s.Add(self.artist_bio, 1, wx.GROW)
   s4 = wx.BoxSizer(wx.HORIZONTAL)
-  self.winamp_label = wx.StaticText(p, label = application.config.get('windows', 'winamp_label'))
-  s4.Add(self.winamp_label, 1, wx.GROW)
-  self.hotkey_area = wx.TextCtrl(p, style = wx.TE_READONLY)
+  s4.Add(wx.StaticText(p, label = application.config.get('windows', 'now_playing_label')), 0, wx.GROW)
+  self.hotkey_area = wx.TextCtrl(p)
   self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
   s4.Add(self.hotkey_area, 1, wx.GROW)
   s.Add(s4, 0, wx.GROW)
@@ -617,9 +620,14 @@ class MainFrame(wx.Frame):
  def SetTitle(self, value = None):
   """Sets the title."""
   if value == None:
-   value = functions.format_title(self.get_current_track())
-  self.winamp_label.SetLabel('%s: %s' % (application.config.get('windows', 'winamp_label'), value))
-  return super(MainFrame, self).SetTitle('%s (%s)' % (application.name, value))
+   self.title = functions.format_title(self.get_current_track()) if self.get_current_track() else None
+  else:
+   self.title = value
+  self.hotkey_area.SetValue(self.title)
+  title = application.name
+  if self.title:
+   title += ' (%s)' % self.title
+  return super(MainFrame, self).SetTitle(title)
  
  def select_item(self, event):
   """Play the track under the mouse."""
@@ -713,6 +721,8 @@ class MainFrame(wx.Frame):
    Thread(target = application.lyrics_frame.populate_lyrics, args = [item.get('artist'), item.get('title')]).start()
   self.current_track = track
   self.SetTitle()
+  self.duration = columns.parse_durationMillis(self.get_current_track().get('durationMillis'))
+  self.update_hotkey_area()
   self.current_track.set_volume(application.config.get('sound', 'volume'))
   self.current_track.set_pan(application.config.get('sound', 'pan'))
   self.set_frequency()
@@ -753,12 +763,17 @@ class MainFrame(wx.Frame):
   """Move track progress bars and play queued tracks."""
   while not self._thread.should_stop.is_set():
    try:
+    self.update_hotkey_area()
     if self.current_track:
-     i = min(self.current_track.get_length(), int(self.current_track.get_position() / (self.current_track.get_length() / 100.0)))
+     p = self.current_track.get_position()
+     l = self.current_track.get_length()
+     self.current_pos = p / (l / int(self.get_current_track().get('durationMillis')))
+     i = min(l, int(p / (l / 100.0)))
      if not self.track_position.HasFocus() and i != self.track_position.GetValue():
       self.track_position.SetValue(i)
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
+    sleep(1)
    except wx.PyDeadObjectError:
     pass # The window has probably closed.
  
@@ -882,3 +897,10 @@ class MainFrame(wx.Frame):
   del self.saved_results_indices[name]
   del application.saved_results[name]
  
+ 
+ def update_hotkey_area(self):
+  """Updates the value of self.hotkey_area."""
+  if self.current_track:
+   self.hotkey_area.SetValue('(%s / %s): %s' % (columns.parse_durationMillis(self.current_pos), self.duration, self.title))
+  else:
+   self.hotkey_area.SetValue('No track playing.')

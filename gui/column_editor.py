@@ -31,10 +31,10 @@ class ColumnEditor(SizedFrame):
   self.width = IntCtrl(p, min = -1, max = 1500)
   wx.Button(p, label = 'Move &Up').Bind(wx.EVT_BUTTON, self.do_move_up)
   wx.Button(p, label = 'Move &Down').Bind(wx.EVT_BUTTON, self.do_move_down)
-  self.apply = wx.Button(p, label = '&Apply')
-  self.apply.Bind(wx.EVT_BUTTON, self.do_apply)
-  self.apply.SetDefault()
-  wx.Button(p, label = '&Close').Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
+  wx.Button(p, label = '&Set Default').Bind(wx.EVT_BUTTON, lambda event: self.init_columns(setattr(self, '_columns', application.default_columns)) if wx.MessageBox('Are you sure you want to set the layout of all columns to their default values?', 'Are You Sure', style = wx.YES_NO) == wx.YES else None)
+  self.close = wx.Button(p, label = 'Close &Window')
+  self.close.Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
+  self.close.SetDefault()
   self.Maximize(True)
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.do_close)
@@ -66,16 +66,19 @@ class ColumnEditor(SizedFrame):
  
  def do_apply(self, event = None):
   """Writes the current column to the columns list. Suppress bell sound if silent is set. Update the results table in the main frame if update is True."""
+  self.populate_column(None)
   application.columns = self._columns
   try:
    application.main_frame.reload_results()
   except Exception as e:
    wx.MessageBox('Can\'t update results table: %s.' % str(e), 'Error')
  
- def init_columns(self):
+ def init_columns(self, event = None):
   """Get the table ready and populate it with the columns in their correct order."""
   self.columns.DeleteAllItems()
-  for x, y in self._columns:
+  for x in self._columns:
+   print '%s: %s.' % (len(x), x)
+   x, y = x
    x = y.get('friendly_name', 'Unknown')
    if application.platform == 'darwin':
     self.columns.AppendItem([x])

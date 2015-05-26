@@ -558,7 +558,7 @@ def station_from_result(event):
   name = dlg.GetValue()
   dlg.Destroy()
   try:
-   id = application.mobile_api.create_station(value, track_id = get_id(track))
+   id = application.mobile_api.create_station(name, track_id = get_id(track))
    select_station(station = id, interactive = True)
   except RE as e:
    return wx.MessageBox(*format_request_error(e))

@@ -45,7 +45,10 @@ class LyricsViewer(wx.Frame):
    else:
     break
   raw_artist = ''
-  for x in artist.replace(' ', '').replace('&', 'and').lower():
+  temp_artist = artist.replace(' ', '').replace('&', 'and').lower()
+  if 'feat' in temp_artist:
+   temp_artist = temp_artist[:temp_artist.index('feat')]
+  for x in temp_artist:
    if x not in symbols:
     raw_artist += x
    else:
