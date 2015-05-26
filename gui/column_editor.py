@@ -77,7 +77,6 @@ class ColumnEditor(SizedFrame):
   """Get the table ready and populate it with the columns in their correct order."""
   self.columns.DeleteAllItems()
   for x in self._columns:
-   print '%s: %s.' % (len(x), x)
    x, y = x
    x = y.get('friendly_name', 'Unknown')
    if application.platform == 'darwin':

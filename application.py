@@ -71,7 +71,7 @@ config.set('library', 'history_length', 100, title = 'The number of previous res
 
 config.add_section('windows')
 config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
-config.set('windows', 'now_playing_format', '({pos} / {duration}): {title}', title = 'The format for the status display in the now playing field')
+config.set('windows', 'now_playing_format', u'({pos} / {duration}): {title}', title = 'The format for the status display in the now playing field')
 config.set('windows', 'move_cursor', False, title = 'Move cursor back and forth in the now playing bar (can fix braille refresh on systems running Jaws)')
 config.set('windows', 'confirm_quit', True, title = 'Confirm before quitting the program')
 config.set('windows', 'uid_label', '&Username', title = 'The label for the username field')

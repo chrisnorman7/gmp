@@ -76,6 +76,13 @@ class MainFrame(wx.Frame):
   self.bypass_history = False # Bypass the results history on the next insertion.
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
+  s0 = wx.BoxSizer(wx.HORIZONTAL)
+  s0.Add(wx.StaticText(p, label = 'Select &Artist'), 0, wx.GROW)
+  self._full_results = [] # The unadulterated results.
+  self.artists = wx.Choice(p)
+  self.artists.Bind(wx.EVT_CHOICE, self.select_artist)
+  s0.Add(self.artists, 1, wx.GROW)
+  s.Add(s0, 0, wx.GROW)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
   if application.platform == 'darwin':
    self.results = dv.DataViewListCtrl(p) # User friendly track list.
@@ -563,6 +570,10 @@ class MainFrame(wx.Frame):
  
  def add_result(self, result):
   """Given a list item from Google, add it to self._results, and add data to the table."""
+  self._full_results.append(result)
+  a = result.get('artist')
+  if a not in self.artists.GetItems():
+   self.artists.AppendItems([result.get('artist')])
   self._results.append(result)
   stuff = []
   for spec, column in application.columns:
@@ -595,6 +606,7 @@ class MainFrame(wx.Frame):
   self.current_library = library
   self.current_saved_result = saved_result
   if clear:
+   self.artists.SetItems(['All Artists'])
    self.clear_results()
   map(self.add_result, results)
   self.results.SetFocus()
@@ -910,3 +922,18 @@ class MainFrame(wx.Frame):
     self.hotkey_area.SetValue('No track playing.')
   except wx.PyDeadObjectError:
    pass # The window has been destroyed.
+ 
+ def select_artist(self, event):
+  """Select an artist from the popup button."""
+  e = event.GetSelection()
+  i = self.artists.GetItems()
+  res = self.artists.GetItems()[e]
+  r = list(self._full_results)
+  if e:
+   results = [x for x in r if x.get('artist') == res]
+  else:
+   results = r
+  self.add_results(results, clear = True, bypass_history = True)
+  self._full_results = r
+  self.artists.SetItems(i)
+  self.artists.SetSelection(e)
