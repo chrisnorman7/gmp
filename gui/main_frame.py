@@ -761,7 +761,8 @@ class MainFrame(wx.Frame):
  
  def track_thread(self):
   """Move track progress bars and play queued tracks."""
-  while not self._thread.should_stop.is_set():
+  thread = self._thread
+  while not thread.should_stop.is_set():
    try:
     self.update_hotkey_area()
     if self.current_track:
@@ -900,7 +901,12 @@ class MainFrame(wx.Frame):
  
  def update_hotkey_area(self):
   """Updates the value of self.hotkey_area."""
-  if self.current_track:
-   self.hotkey_area.SetValue(application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title))
-  else:
-   self.hotkey_area.SetValue('No track playing.')
+  try:
+   if self.current_track:
+    if application.config.get('windows', 'move_cursor'):
+     self.hotkey_area.SetInsertionPoint(0 if self.hotkey_area.GetInsertionPoint() else 1)
+    self.hotkey_area.SetValue(application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title))
+   else:
+    self.hotkey_area.SetValue('No track playing.')
+  except wx.PyDeadObjectError:
+   pass # The window has been destroyed.
