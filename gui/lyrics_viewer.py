@@ -8,7 +8,7 @@ class LyricsViewer(wx.Frame):
  def __init__(self, artist, title):
   """Takes an artist and a title and populates the frame with the lyrics, if available."""
   self.url = None
-  super(LyricsViewer, self).__init__(None, title = 'Lyrics for %s - %s' % (artist, title))
+  super(LyricsViewer, self).__init__(application.main_frame, title = 'Lyrics for %s - %s' % (artist, title))
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -63,7 +63,7 @@ class LyricsViewer(wx.Frame):
   except (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError) as e:
    wx.CallAfter(self.lyrics.write, '\n\nCould not get lyrics: %s.' % str(e))
   if res.status_code != 200:
-   self.lyrics.write('\n\nNo lyrics found.')
+   wx.CallAfter(self.lyrics.write, '\n\nNo lyrics found.')
    wx.CallAfter(self.browse.Disable)
   else:
    l = res.content
