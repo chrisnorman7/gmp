@@ -99,9 +99,9 @@ class MainFrame(wx.Frame):
   self.init_results_columns()
   for x, y in enumerate(['Name', 'Artist', 'Album', 'Duration']):
    if application.platform == 'darwin':
-    self.queue.AppendTextColumn(y)
+    self.queue.AppendTextColumn(y, width = 500)
    else:
-    self.queue.InsertColumn(x, y)
+    self.queue.InsertColumn(x, y, width = 500)
   s1.Add(self.results, 7, wx.GROW)
   s1.Add(self.queue, 3, wx.GROW)
   s.Add(s1, 7, wx.GROW)
@@ -803,7 +803,6 @@ class MainFrame(wx.Frame):
  
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
-  print 'Hello dicky.'
   if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
    self._thread.should_stop.set()
    event.Skip()

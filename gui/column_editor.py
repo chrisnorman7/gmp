@@ -8,6 +8,8 @@ class ColumnEditor(wx.Frame):
  def __init__(self):
   """Creates the frame."""
   super(ColumnEditor, self).__init__(application.main_frame, title = 'Column Editor')
+  n = 'Column Name'
+  w = 500
   self._columns = application.columns
   self.current_column = -1 # The index of the last column.
   self.column_spec = None # The short name of the current column.
@@ -17,11 +19,11 @@ class ColumnEditor(wx.Frame):
   if application.platform == 'darwin':
    self.columns = dv.DataViewListCtrl(p)
    self.columns.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, self.populate_column)
-   self.columns.AppendTextColumn('Column')
+   self.columns.AppendTextColumn(n, width = w)
   else:
    self.columns = wx.ListCtrl(p, style = wx.LC_REPORT)
    self.columns.Bind(wx.EVT_LIST_ITEM_FOCUSED, self.populate_column)
-   self.columns.InsertColumn(0, 'Column')
+   self.columns.InsertColumn(0, n, width = w)
   self.init_columns()
   s1.Add(self.columns, 1, wx.GROW)
   s2 = wx.BoxSizer(wx.VERTICAL)

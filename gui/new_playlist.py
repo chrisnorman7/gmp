@@ -19,7 +19,6 @@ class NewPlaylist(SizedFrame):
   self.cancel.Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
   self.ok = wx.Button(p, label = application.config.get('windows', 'ok_label'))
   self.ok.Bind(wx.EVT_BUTTON, self.do_create)
-  self.Maximize(True)
   self.Raise()
  
  def do_create(self, event):
@@ -37,3 +36,9 @@ class NewPlaylist(SizedFrame):
    except Exception as e:
     return wx.MessageBox('Error %sing playlist: %s.' % ('creat' if not self.playlist else 'edit', str(e)), 'Error')
   self.Close(True)
+ 
+ def Show(self, value = True):
+  """Shows the frame."""
+  s = super(NewPlaylist, self).Show(value)
+  self.Maximize(True)
+  return s
