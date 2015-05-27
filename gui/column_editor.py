@@ -1,19 +1,19 @@
 """The column editor."""
 
 import wx, wx.dataview as dv, application
-from wx.lib.sized_controls import SizedFrame
 from wx.lib.intctrl import IntCtrl
 
-class ColumnEditor(SizedFrame):
+class ColumnEditor(wx.Frame):
  """The Column Editor frame."""
  def __init__(self):
   """Creates the frame."""
-  super(ColumnEditor, self).__init__(None, title = 'Column Editor')
+  super(ColumnEditor, self).__init__(application.main_frame, title = 'Column Editor')
   self._columns = application.columns
   self.current_column = -1 # The index of the last column.
   self.column_spec = None # The short name of the current column.
-  p = self.GetContentsPane()
-  p.SetSizerType('form')
+  p = wx.Panel(self)
+  s = wx.BoxSizer(wx.VERTICAL)
+  s1 = wx.BoxSizer(wx.HORIZONTAL)
   if application.platform == 'darwin':
    self.columns = dv.DataViewListCtrl(p)
    self.columns.Bind(dv.EVT_DATAVIEW_SELECTION_CHANGED, self.populate_column)
@@ -23,21 +23,47 @@ class ColumnEditor(SizedFrame):
    self.columns.Bind(wx.EVT_LIST_ITEM_FOCUSED, self.populate_column)
    self.columns.InsertColumn(0, 'Column')
   self.init_columns()
+  s1.Add(self.columns, 1, wx.GROW)
+  s2 = wx.BoxSizer(wx.VERTICAL)
   self.include = wx.CheckBox(p, label = '&Include')
-  wx.StaticText(p, label = '&Friendly Name')
+  s2.Add(self.include, 1, wx.GROW)
+  self.move_up = wx.Button(p, label = 'Move &Up')
+  s2.Add(self.move_up, 1, wx.GROW)
+  self.move_up.Bind(wx.EVT_BUTTON, self.do_move_up)
+  self.move_down = wx.Button(p, label = 'Move &Down')
+  s2.Add(self.move_down, 1, wx.GROW)
+  self.move_down.Bind(wx.EVT_BUTTON, self.do_move_down)
+  s1.Add(s2, 0, wx.GROW)
+  s.Add(s1, 1, wx.GROW)
+  s3 = wx.BoxSizer(wx.HORIZONTAL)
+  s3.Add(wx.StaticText(p, label = '&Friendly Name'), 0, wx.GROW)
   self.friendly_name = wx.TextCtrl(p, style = wx.TE_PROCESS_ENTER)
+  s3.Add(self.friendly_name, 1, wx.GROW)
   self.friendly_name.Bind(wx.EVT_TEXT_ENTER, self.do_apply)
-  wx.StaticText(p, label = 'Column &Width')
+  s.Add(s3, 0, wx.GROW)
+  s4 = wx.BoxSizer(wx.HORIZONTAL)
+  s4.Add(wx.StaticText(p, label = '&Column Width'), 0, wx.GROW)
   self.width = IntCtrl(p, min = -1, max = 1500)
-  wx.Button(p, label = 'Move &Up').Bind(wx.EVT_BUTTON, self.do_move_up)
-  wx.Button(p, label = 'Move &Down').Bind(wx.EVT_BUTTON, self.do_move_down)
-  wx.Button(p, label = '&Set Default').Bind(wx.EVT_BUTTON, lambda event: self.init_columns(setattr(self, '_columns', application.default_columns)) if wx.MessageBox('Are you sure you want to set the layout of all columns to their default values?', 'Are You Sure', style = wx.YES_NO) == wx.YES else None)
+  s4.Add(self.width, 1, wx.GROW)
+  s.Add(s4, 0, wx.GROW)
+  s5 = wx.BoxSizer(wx.HORIZONTAL)
+  self.set_default = wx.Button(p, label = '&Set Default')
+  s5.Add(self.set_default, 1, wx.GROW)
+  self.set_default.Bind(wx.EVT_BUTTON, lambda event: self.init_columns(setattr(self, '_columns', application.default_columns)) if wx.MessageBox('Are you sure you want to set the layout of all columns to their default values?', 'Are You Sure', style = wx.YES_NO) == wx.YES else None)
   self.close = wx.Button(p, label = 'Close &Window')
+  s5.Add(self.close, 1, wx.GROW)
   self.close.Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
   self.close.SetDefault()
-  self.Maximize(True)
+  s.Add(s5, 0, wx.GROW)
+  p.SetSizerAndFit(s)
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.do_close)
+ 
+ def Show(self, value = True):
+  """Shows the window, maximizing first."""
+  s = super(ColumnEditor, self).Show(value)
+  self.Maximize(True)
+  return s
  
  def get_current_column(self):
   """Returns the current result."""
@@ -104,5 +130,8 @@ class ColumnEditor(SizedFrame):
  
  def do_close(self, event):
   """Applies, and closes the window."""
-  self.do_apply()
-  return event.Skip(True)
+  try:
+   self.do_apply()
+  except Exception:
+   pass # Ignore any failures, they're probably down to quit being issued anyways.
+  return event.Skip()

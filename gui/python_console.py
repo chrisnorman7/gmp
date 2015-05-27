@@ -7,7 +7,7 @@ class PythonConsole(wx.Frame):
  def __init__(self):
   self.stdout = sys.stdout
   self.stderr = sys.stderr
-  super(PythonConsole, self).__init__(None, title = 'Python Console')
+  super(PythonConsole, self).__init__(application.main_frame, title = 'Python Console')
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
   self.output = wx.TextCtrl(p, style = wx.TE_MULTILINE|wx.TE_READONLY)
@@ -24,7 +24,6 @@ class PythonConsole(wx.Frame):
   s1.Add(self.close_button, 0, wx.GROW)
   s.Add(s1, 0, wx.GROW)
   p.SetSizerAndFit(s)
-  self.Maximize()
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.on_close)
  
@@ -33,7 +32,9 @@ class PythonConsole(wx.Frame):
   if value == True:
    sys.stdout = self.output
    sys.stderr = self.output
-  return super(PythonConsole, self).Show(value)
+  s = super(PythonConsole, self).Show(value)
+  self.Maximize(True)
+  return s
  
  def on_close(self, event):
   """Closes the window."""

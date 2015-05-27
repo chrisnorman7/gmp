@@ -240,7 +240,8 @@ class MainFrame(wx.Frame):
   wx.ACCEL_CTRL, 'q',
   lambda event: self.Close(True),
   'E&xit',
-  'Quit the program.'
+  'Quit the program.',
+  id = wx.ID_EXIT
   ))
   mb.Append(file_menu, '&File')
   edit_menu = wx.Menu()
@@ -802,6 +803,7 @@ class MainFrame(wx.Frame):
  
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
+  print 'Hello dicky.'
   if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
    self._thread.should_stop.set()
    event.Skip()

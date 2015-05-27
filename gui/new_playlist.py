@@ -4,7 +4,7 @@ from wx.lib.sized_controls import SizedFrame
 class NewPlaylist(SizedFrame):
  """Use this frame to create a new playlist."""
  def __init__(self, playlist = {}):
-  super(NewPlaylist, self).__init__(None, title = 'Edit Playlist' if playlist else 'Create A Playlist')
+  super(NewPlaylist, self).__init__(application.main_frame, title = 'Edit Playlist' if playlist else 'Create A Playlist')
   p = self.GetContentsPane()
   self.playlist = playlist
   p.SetSizerType('form')

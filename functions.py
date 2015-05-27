@@ -456,7 +456,7 @@ def all_playlist_tracks(event):
   except RE as e:
    return wx.MessageBox(*format_requests_error(e))
   tracks += [x['track'] for x in t]
- wx.CallAfter(frame.add_results, tracks)
+ wx.CallAfter(frame.add_results, tracks, clear = True)
 
 def queue_result(event):
  """Adds the current result to the queue."""

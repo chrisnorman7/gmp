@@ -24,11 +24,12 @@ class LyricsViewer(wx.Frame):
   s2.Add(self.browse, 1, wx.GROW)
   self.browse.Bind(wx.EVT_BUTTON, self.do_browse)
   s.Add(s2, 0, wx.GROW)
+  p.SetSizerAndFit(s)
   self.Bind(wx.EVT_CLOSE, self.do_close)
   Thread(target = self.populate_lyrics, args = [artist, title]).start()
   self.Raise()
-  self.Maximize()
   self.Show(True)
+  self.Maximize(True)
  
  def do_close(self, event):
   """Makes sure the frame property of this module gets set to None before the frame closes."""
