@@ -1,0 +1,3 @@
+#!/bin/sh
+cd Desktop/gmp
+python main.py &

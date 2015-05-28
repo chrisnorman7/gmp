@@ -1,12 +1,12 @@
 """A Python console for Google Music Player."""
 
-import wx, sys, application, os, functions
+import wx, sys, application, os, functions, copy
 
 class PythonConsole(wx.Frame):
  """A python console."""
  def __init__(self):
-  self.stdout = sys.stdout
-  self.stderr = sys.stderr
+  self.stdout = copy.copy(sys.stdout)
+  self.stderr = copy.copy(sys.stderr)
   super(PythonConsole, self).__init__(application.main_frame, title = 'Python Console')
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
