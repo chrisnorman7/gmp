@@ -245,7 +245,10 @@ def fastforward(event):
   wx.Bell()
  else:
   pos = min(track.get_position() + application.config.get('sound', 'rewind_amount'), track.get_length())
-  track.set_position(pos)
+  try:
+   track.set_position(pos)
+  except Exception as e:
+   return wx.Bell() # Something went wrong.
 
 def prune_library():
  """Delete the oldest track from the library."""
