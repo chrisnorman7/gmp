@@ -48,7 +48,7 @@ class LoginFrame(SF):
  def _do_login(self):
   """Actually perform the login."""
   try:
-   if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue(), application.app_id):
+   if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue()):
     application.config.set('login', 'uid', self.uid.GetValue())
     if self.remember.GetValue():
      application.config.set('login', 'pwd', self.pwd.GetValue())

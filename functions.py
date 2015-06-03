@@ -410,7 +410,7 @@ def artist_album(event):
   albums = application.mobile_api.get_artist_info(artist).get('albums', [])
  except RE as e:
   return wx.MessageBox(*format_requests_error(e))
- dlg = wx.SingleChoiceDialog(frame, 'Select an album', 'Album Selection', [x.get('name', 'Unnamed') for x in albums])
+ dlg = wx.SingleChoiceDialog(frame, 'Select an album', 'Album Selection', ['%s (%s)' % (x.get('name', 'Unnamed'), x.get('year')) for x in albums])
  if dlg.ShowModal() == wx.ID_OK:
   res = dlg.GetSelection()
   dlg.Destroy()
