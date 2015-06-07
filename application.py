@@ -23,7 +23,8 @@ columns = [
  ['discNumber', {'friendly_name': 'Disc Number', 'include': True, 'width': 20}],
  ['durationMillis', {'friendly_name': 'Duration', 'include': True, 'width': 50}],
  ['genre', {'friendly_name': 'Genre', 'include': True, 'width': 150}],
- ['year', {'friendly_name': 'Year', 'include': True, 'width': 100}]
+ ['year', {'friendly_name': 'Year', 'include': True, 'width': 100}],
+ ['playCount', {'friendly_name': 'Play Count', 'include': True}]
 ]
 
 default_columns = columns
