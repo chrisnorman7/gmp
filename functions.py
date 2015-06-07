@@ -504,18 +504,14 @@ def delete(event):
   library = frame.current_library
   if (not playlist and not library) or cr == -1:
    return wx.Bell()
+  track = frame.get_results()[cr]
   if playlist: # Deal with the playlist side of things first.
-   track = playlist['tracks'][cr]
-   name = track.get('track', {})
    source = '%s playlist' % playlist.get('name', 'Unnamed')
    func = application.mobile_api.remove_entries_from_playlist
-  else:
-   # Now the library:
-   track = library[cr] # Library is just a list of tracks.
-   name = track
+  else: # Now the library:
    source = 'library'
    func = application.mobile_api.delete_songs
-  if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(name), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
+  if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(track), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
    try:
     func(track['id'])
     frame.delete_result(cr)
