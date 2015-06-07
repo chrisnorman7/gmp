@@ -505,15 +505,22 @@ def delete(event):
   if (not playlist and not library) or cr == -1:
    return wx.Bell()
   track = frame.get_results()[cr]
+  form = lambda value: value # The lambda to format the values as required.
   if playlist: # Deal with the playlist side of things first.
    source = '%s playlist' % playlist.get('name', 'Unnamed')
+   for t in playlist.get('tracks', []):
+    if t.get('track', {}).get('nid') == track.get('nid'):
+     form = lambda value: [t.get('id')]
+     break
+   else:
+    return wx.MessageBox('Cannot find that track in %s.' % source, 'Error')
    func = application.mobile_api.remove_entries_from_playlist
   else: # Now the library:
    source = 'library'
    func = application.mobile_api.delete_songs
   if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(track), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
    try:
-    func(track['id'])
+    func(form(track.get('id', get_id(track))))
     frame.delete_result(cr)
    except RE as e:
     return wx.MessageBox(*format_requests_error(e))
