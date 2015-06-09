@@ -290,6 +290,13 @@ class MainFrame(wx.Frame):
   'View &Lyrics',
   'View lyrics for the currently selected result.'
   ))
+  view_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'j',
+  lambda event: ColumnEditor().Show(True),
+  '&View Options...',
+  'Configure the columns for the table of results.'
+  ))
   mb.Append(view_menu, '&View')
   source_menu = wx.Menu()
   source_menu.Append(
@@ -517,13 +524,6 @@ class MainFrame(wx.Frame):
   lambda event: Thread(target = functions.select_output, args = [event]).start(),
   '&Select sound output...',
   'Select a new output device for sound playback.'
-  ))
-  options_menu.Append(
-  *self.add_accelerator(
-  wx.ACCEL_CTRL, 'j',
-  lambda event: ColumnEditor().Show(True),
-  '&View Options...',
-  'Configure the columns for the table of results.'
   ))
   options_menu.Append(
   *self.add_accelerator(
