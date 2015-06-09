@@ -249,7 +249,7 @@ class MainFrame(wx.Frame):
   edit_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_CTRL, 'f',
-  lambda event: Thread(target = functions.do_search, args = [event]).start(),
+  functions.do_search,
   '&Find...',
   'Find a song.'
   ))
