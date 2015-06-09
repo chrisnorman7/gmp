@@ -1,3 +1,5 @@
+"""The search frame for gmp."""
+
 import wx, application, functions
 from wx.lib.sized_controls import SizedFrame
 from threading import Thread
@@ -39,6 +41,7 @@ class SearchFrame(SizedFrame):
  def Show(self, value = True):
   """Sow the window and maximize."""
   s = super(SearchFrame, self).Show(value)
+  self.Raise(True)
   self.Maximize(True)
   return s
  
