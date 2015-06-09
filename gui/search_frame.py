@@ -41,7 +41,7 @@ class SearchFrame(SizedFrame):
  def Show(self, value = True):
   """Sow the window and maximize."""
   s = super(SearchFrame, self).Show(value)
-  self.Raise(True)
+  self.Raise()
   self.Maximize(True)
   return s
  
