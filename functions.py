@@ -5,6 +5,7 @@ RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
 from sound_lib.main import BassError
 from time import time
 from gui.lyrics_viewer import LyricsViewer
+from gui.search_frame import SearchFrame
 
 id_fields = [
  'storeId',
@@ -87,15 +88,16 @@ def add_to_library(event):
   return wx.MessageBox(*format_requests_error(e))
  wx.MessageBox('Added %s to your library.' % format_title(track), 'Track Added')
 
-def select_playlist(event = None, playlist = None, interactive = True):
+def select_playlist(event = None, playlists = None, playlist = None, interactive = True):
  frame = application.main_frame
- try:
-  playlists = application.mobile_api.get_all_user_playlist_contents()
- except RE as e:
-  if interactive:
-   return wx.MessageBox(*format_requests_error(e))
-  else:
-   return None
+ if not playlists:
+  try:
+   playlists = application.mobile_api.get_all_user_playlist_contents()
+  except RE as e:
+   if interactive:
+    return wx.MessageBox(*format_requests_error(e))
+   else:
+    return None
  if playlist:
   for p in playlists:
    if p['id'] == playlist:
@@ -294,25 +296,23 @@ def track_seek(event):
   except BassError:
    pass # Don't care.
 
-def do_search(event = None, search = None):
+def do_search(event = None, search = None, type = 0, interactive = True):
  """Search google music."""
  frame = application.main_frame
  if not search:
-  dlg = wx.TextEntryDialog(frame, 'Find', 'Search Google Music', frame.last_search)
-  if dlg.ShowModal() == wx.ID_OK:
-   search = dlg.GetValue()
-   frame.last_search = search
-  dlg.Destroy()
- if search:
-  try:
-   results = application.mobile_api.search_all_access(search, max_results = application.config.get('library', 'max_results'))['song_hits']
-  except RE as e:
-   return wx.MessageBox(*format_requests_error(e))
-  if not results:
-   wx.MessageBox('No results found for %s.' % frame.last_search, 'Error')
-   do_search()
-  else:
-   wx.CallAfter(frame.add_results, [x['track'] for x in results], True)
+  search = frame.last_search
+ if not type:
+  type = frame.last_search_type
+ s = SearchFrame(search, type)
+ if interactive:
+  s.Show(True)
+ else:
+  s.do_search()
+
+def do_search_again(event):
+ """Repeat the previous search."""
+ frame = application.main_frame
+ return do_search(search = frame.last_search, type = frame.last_search_type, interactive = False)
 
 def select_output(event = None):
  """Selects a new audio output."""
@@ -396,20 +396,21 @@ def current_album(event):
   return wx.MessageBox(*format_requests_error(e))
  wx.CallAfter(frame.add_results, songs, True)
 
-def artist_album(event):
+def artist_album(event, albums = None):
  """Selects a particular artist album."""
  frame = application.main_frame
- cr = frame.get_current_result()
- if cr == -1:
-  return wx.Bell()
- artists = frame.get_results()[cr]['artistId']
- artist = select_artist(artists)
- if not artist:
-  return
- try:
-  albums = application.mobile_api.get_artist_info(artist).get('albums', [])
- except RE as e:
-  return wx.MessageBox(*format_requests_error(e))
+ if not albums:
+  cr = frame.get_current_result()
+  if cr == -1:
+   return wx.Bell()
+  artists = frame.get_results()[cr]['artistId']
+  artist = select_artist(artists)
+  if not artist:
+   return
+  try:
+   albums = application.mobile_api.get_artist_info(artist).get('albums', [])
+  except RE as e:
+   return wx.MessageBox(*format_requests_error(e))
  dlg = wx.SingleChoiceDialog(frame, 'Select an album', 'Album Selection', ['%s (%s)' % (x.get('name', 'Unnamed'), x.get('year')) for x in albums])
  if dlg.ShowModal() == wx.ID_OK:
   res = dlg.GetSelection()

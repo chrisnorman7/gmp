@@ -81,6 +81,7 @@ config.set('windows', 'remember_label', '&Store my password in plain text', titl
 config.set('windows', 'login_label', '&Login', title = 'The label for the login button')
 config.set('windows', 'ok_label', '&OK', title = 'The label for OK buttons')
 config.set('windows', 'cancel_label', '&Cancel', title = 'The label for cancel buttons')
+config.set('windows', 'search_label', '&Find', title = 'The label for find buttons')
 config.set('windows', 'close_label', '&Close', title = 'The label for close buttons')
 config.set('windows', 'volume_label', '&Volume', title = 'The label for the volume bar')
 config.set('windows', 'frequency_label', '&Frequency', title = 'The label for the frequency slider')

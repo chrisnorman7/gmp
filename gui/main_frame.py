@@ -58,11 +58,12 @@ class MainFrame(wx.Frame):
    (0, ord('I')): self.frequency_up,
    (0, ord('K')): self.frequency_down,
    (0, ord('F')): functions.do_search,
-   (0, ord('G')): lambda event: functions.do_search(search = self.last_search),
+   (0, ord('G')): functions.do_search_again,
    (0, ord('8')): lambda event: Thread(target = functions.add_again_to_playlist, args = [event]).start(),
    (0, wx.WXK_RETURN): functions.focus_playing
   }
   self.last_search = '' # Whatever the user last searched for.
+  self.last_search_type = 0 # The type of the previous search.
   self.current_playlist = None # The current playlist
   self.current_station = None # The current radio station.
   self.current_library = None # The library in it's current state.
@@ -255,7 +256,7 @@ class MainFrame(wx.Frame):
   edit_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_CTRL, 'g',
-  lambda event: Thread(target = functions.do_search, args = [event, self.last_search]).start(),
+  functions.do_search_again,
   'Find &Again',
   'Repeat the previous search.'
   ))
