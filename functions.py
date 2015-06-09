@@ -305,7 +305,7 @@ def do_search(event = None, search = None, type = 0, interactive = True):
   type = frame.last_search_type
  s = SearchFrame(search, type)
  if interactive:
-  s.Show(True)
+  wx.CallAfter(s.Show, True)
  else:
   s.do_search()
 
