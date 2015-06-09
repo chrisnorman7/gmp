@@ -57,7 +57,7 @@ class MainFrame(wx.Frame):
    (0, ord('L')): self.pan_right,
    (0, ord('I')): self.frequency_up,
    (0, ord('K')): self.frequency_down,
-   (0, ord('F')): functions.do_search,
+   (0, ord('F')): functions.do_search_quick,
    (0, ord('G')): functions.do_search_again,
    (0, ord('8')): lambda event: Thread(target = functions.add_again_to_playlist, args = [event]).start(),
    (0, wx.WXK_RETURN): functions.focus_playing
@@ -249,9 +249,16 @@ class MainFrame(wx.Frame):
   edit_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_CTRL, 'f',
+  functions.do_search_quick,
+  '&Quick Find...',
+  'Search the Google Music catalog for songs.'
+  ))
+  edit_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 'f',
   functions.do_search,
-  '&Find...',
-  'Find a song.'
+  '&Advanced Find...',
+  'Search the Google Music catalog.'
   ))
   edit_menu.Append(
   *self.add_accelerator(

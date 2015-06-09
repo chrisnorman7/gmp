@@ -5,7 +5,8 @@ RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
 from sound_lib.main import BassError
 from time import time
 from gui.lyrics_viewer import LyricsViewer
-from gui.search_frame import SearchFrame
+from gui.search_frame import SearchFrame, songs
+from copy import copy
 
 id_fields = [
  'storeId',
@@ -296,16 +297,16 @@ def track_seek(event):
   except BassError:
    pass # Don't care.
 
-def do_search(event = None, search = None, type = 0, interactive = True):
+def do_search(event = None, search = None, type = None, interactive = True):
  """Search google music."""
  frame = application.main_frame
  if not search:
   search = frame.last_search
- if not type:
+ if type == None:
   type = frame.last_search_type
  s = SearchFrame(search, type)
  if interactive:
-  wx.CallAfter(s.Show, True)
+  s.Show(True)
  else:
   s.do_search()
 
@@ -313,6 +314,19 @@ def do_search_again(event):
  """Repeat the previous search."""
  frame = application.main_frame
  return do_search(search = frame.last_search, type = frame.last_search_type, interactive = False)
+
+def do_search_quick(event):
+ """Search quickly."""
+ frame = application.main_frame
+ old_search_string = copy(frame.last_search)
+ old_search_type = copy(frame.last_search_type)
+ dlg = wx.TextEntryDialog(frame, 'Search for songs', 'Quick Search', old_search_string)
+ if dlg.ShowModal() == wx.ID_OK:
+  old_search_string = dlg.GetValue()
+  do_search(search = old_search_string, type = songs, interactive = False)
+ dlg.Destroy()
+ frame.last_search = old_search_string
+ frame.last_search_type = old_search_type
 
 def select_output(event = None):
  """Selects a new audio output."""
