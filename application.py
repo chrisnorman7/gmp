@@ -1,5 +1,6 @@
 version = '0.7'
 devel = True
+compress = False
 
 from confmanager import ConfManager, parser
 from sys import platform
