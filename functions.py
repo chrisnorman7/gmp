@@ -30,8 +30,8 @@ def config_update(config, section, option, value):
   elif option == 'stop_after':
    frame.stop_after.Check(value)
  elif section == 'windows':
-  if option == 'column_width':
-   frame.reload_results()
+  if option == 'play_controls_show':
+   frame.play_controls_func(value)
 
 def get_id(item):
  """Return the ID for the provided item."""

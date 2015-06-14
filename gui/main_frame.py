@@ -125,7 +125,8 @@ class MainFrame(wx.Frame):
   self.frequency.Bind(wx.EVT_SLIDER, self.set_frequency)
   self.frequency.SetValue(application.config.get('sound', 'frequency'))
   s2.Add(self.frequency, 1, wx.GROW)
-  s.Add(s2, 1, wx.GROW)
+  self.s2 = s2
+  s.Add(self.s2, 0, wx.GROW)
   s3 = wx.BoxSizer(wx.HORIZONTAL)
   s3.Add(wx.StaticText(p, label = application.config.get('windows', 'volume_label')), 0, wx.GROW)
   self.volume = wx.Slider(p, style = wx.SL_VERTICAL|wx.SL_INVERSE)
@@ -137,7 +138,8 @@ class MainFrame(wx.Frame):
   self.pan.SetValue((application.config.get('sound', 'pan') + 1.0) * 50.0)
   self.pan.Bind(wx.EVT_SLIDER, self.set_pan)
   s3.Add(self.pan, 1, wx.GROW)
-  s.Add(s3, 1, wx.GROW)
+  self.s3 = s3
+  s.Add(self.s3, 0, wx.GROW)
   l = 'No song playing.'
   if application.platform == 'darwin':
    self.artist_bio = wx.StaticText(p, label = l)
@@ -153,6 +155,7 @@ class MainFrame(wx.Frame):
   s4.Add(self.hotkey_area, 1, wx.GROW)
   s.Add(s4, 0, wx.GROW)
   p.SetSizerAndFit(s)
+  self.main_sizer = s
   mb = wx.MenuBar()
   file_menu = wx.Menu()
   file_menu.Append(
@@ -297,6 +300,17 @@ class MainFrame(wx.Frame):
   '&View Options...',
   'Configure the columns for the table of results.'
   ))
+  self.play_controls_check = view_menu.AppendCheckItem(
+  wx.ID_ANY,
+  '&Show / Hide Player Controls',
+  'Show and hide the track seek and playback controls.'
+  )
+  self.play_controls_func(application.config.get('windows', 'play_controls_show'))
+  self.Bind(
+  wx.EVT_MENU,
+  lambda event: self.play_controls_func(event.GetSelection()),
+  self.play_controls_check
+  )
   mb.Append(view_menu, '&View')
   source_menu = wx.Menu()
   source_menu.Append(
@@ -947,3 +961,16 @@ class MainFrame(wx.Frame):
   self._full_results = r
   self.artists.SetItems(i)
   self.artists.SetSelection(e)
+ 
+ def play_controls_func(self, c):
+  """Shows or hides play controls."""
+  application.config.set('windows', 'play_controls_show', c)
+  self.play_controls_check.Check(c)
+  if c:
+   self.s2.Show(True)
+   self.s3.Show(True)
+  else:
+   self.s2.Hide(True)
+   self.s3.Hide(True)
+  self.s2.Layout()
+  self.s3.Layout()

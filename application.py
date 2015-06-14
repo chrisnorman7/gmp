@@ -1,6 +1,7 @@
-version = '0.7'
+version = '1.0'
 devel = True
 compress = False
+add_to_site = ['Crypto', 'certifi', 'pkg_resources']
 
 from confmanager import ConfManager, parser
 from sys import platform
@@ -76,6 +77,7 @@ config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format
 config.set('windows', 'now_playing_format', u'({pos} / {duration}): {title}', title = 'The format for the status display in the now playing field')
 config.set('windows', 'move_cursor', False, title = 'Move cursor back and forth in the now playing bar (can fix braille refresh on systems running Jaws)')
 config.set('windows', 'confirm_quit', True, title = 'Confirm before quitting the program')
+config.set('windows', 'play_controls_show', True, title = 'Show player controls')
 config.set('windows', 'uid_label', '&Username', title = 'The label for the username field')
 config.set('windows', 'pwd_label', '&Password', title = 'The label for the password field')
 config.set('windows', 'remember_label', '&Store my password in plain text', title = 'The label for the remember password checkbox')
