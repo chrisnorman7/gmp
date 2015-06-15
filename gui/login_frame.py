@@ -1,6 +1,6 @@
 """Login frame for Google Music Player."""
 
-import wx, application, requests
+import wx, application, requests, functions
 from wx.lib.sized_controls import SizedFrame as SF
 from threading import Thread
 from functions import format_requests_error
@@ -37,7 +37,7 @@ class LoginFrame(SF):
  def do_login(self, event = None):
   """Starts the thread that performs the login, so the GUI doesn't freeze."""
   if self.processing:
-   return wx.Bell()
+   return functions.bell()()
   self.processing = True
   self.login.SetLabel('Logging in...')
   self.login.Disable()
@@ -48,7 +48,7 @@ class LoginFrame(SF):
  def _do_login(self):
   """Actually perform the login."""
   try:
-   if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue()):
+   if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue(), application.mobile_api.FROM_MAC_ADDRESS):
     application.config.set('login', 'uid', self.uid.GetValue())
     if self.remember.GetValue():
      application.config.set('login', 'pwd', self.pwd.GetValue())
@@ -61,7 +61,7 @@ class LoginFrame(SF):
     wx.CallAfter(self.login.Enable)
     wx.CallAfter(self.uid.Enable)
     wx.CallAfter(self.pwd.Enable)
-    wx.CallAfter(wx.MessageBox, 'Login unsuccessful', 'Error')
+    wx.CallAfter(wx.MessageBox, 'Login unsuccessful. If this is your first time logging in, please try again, and report if the error persists.', 'Error')
     wx.CallAfter(self.uid.SetSelection, 0, -1)
     wx.CallAfter(self.pwd.SetSelection, 0, -1)
     self.processing = False
@@ -72,7 +72,10 @@ class LoginFrame(SF):
  
  def do_cancel(self, event = None):
   """Closes this window and application.main_frame."""
-  application.main_frame.Close(True)
+  try:
+   application.main_frame.Close(True)
+  except wx.PyDeadObjectError: #The frame hasn't been opened yet.
+   pass
   return self.Close(True)
  
  def post_login(self):

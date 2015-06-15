@@ -155,6 +155,7 @@ class MainFrame(wx.Frame):
   s4.Add(self.hotkey_area, 1, wx.GROW)
   s.Add(s4, 0, wx.GROW)
   p.SetSizerAndFit(s)
+  self.panel = p
   self.main_sizer = s
   mb = wx.MenuBar()
   file_menu = wx.Menu()
@@ -219,7 +220,7 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_NORMAL, wx.WXK_F2,
-  lambda event: NewPlaylist(self.current_playlist).Show() if self.current_playlist else wx.Bell(),
+  lambda event: NewPlaylist(self.current_playlist).Show() if self.current_playlist else functions.bell()(),
   '&Edit Current Playlist...',
   'Edit the properties of the currently focused playlist.'
   ))
@@ -679,7 +680,7 @@ class MainFrame(wx.Frame):
    return event.Skip()
   id = self.get_current_result(ctrl)
   if id == -1:
-   return wx.Bell()
+   return functions.bell()()
   track = func()[id]
   if ctrl == self.queue:
    self.unqueue_item(id)
@@ -907,7 +908,7 @@ class MainFrame(wx.Frame):
   if not results:
    results = self.get_results()
   if not results:
-   return wx.Bell()
+   return functions.bell()()
   if not name:
    dlg = wx.TextEntryDialog(self, 'Enter a name for this result', 'Save Result')
    if dlg.ShowModal() == wx.ID_OK:
@@ -967,10 +968,12 @@ class MainFrame(wx.Frame):
   application.config.set('windows', 'play_controls_show', c)
   self.play_controls_check.Check(c)
   if c:
-   self.s2.Show(True)
-   self.s3.Show(True)
+   self.s2.ShowItems(True)
+   self.s3.ShowItems(True)
   else:
    self.s2.Hide(True)
    self.s3.Hide(True)
-  self.s2.Layout()
-  self.s3.Layout()
+  #self.s2.Layout()
+  #self.s3.Layout()
+  self.main_sizer.Layout()
+  #self.panel.SetSizerAndFit(self.main_sizer)

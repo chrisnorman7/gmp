@@ -80,7 +80,7 @@ def add_to_library(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if frame.current_library or cr == -1:
-  return wx.Bell() # Can't add stuff in the library to the library, or there's nothing selected to add.
+  return bell() # Can't add stuff in the library to the library, or there's nothing selected to add.
  track = frame.get_results()[cr]
  id = get_id(track)
  try:
@@ -158,7 +158,7 @@ def play_pause(event = None):
    frame.current_track.pause()
    frame.play_pause.SetLabel(application.config.get('windows', 'play_label'))
  else:
-  wx.Bell()
+  bell()
 
 def stop(event):
  """Stop the current track."""
@@ -173,7 +173,7 @@ def volume_up(event):
  frame = application.main_frame
  v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
  if v == 100:
-  wx.Bell()
+  bell()
  frame.volume.SetValue(v)
  frame.set_volume(event)
 
@@ -182,7 +182,7 @@ def volume_down(event):
  frame = application.main_frame
  v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
  if not v:
-  wx.Bell()
+  bell()
  frame.volume.SetValue(v)
  frame.set_volume(event)
 
@@ -193,7 +193,7 @@ def previous(event):
   if frame.current_track:
    frame.current_track.play(True)
   else:
-   return wx.Bell()
+   return bell()
  else:
   q = frame.get_queue()
   if q:
@@ -215,7 +215,7 @@ def next(event, interactive = True):
    cr = q.index(track) + 1
    if cr == len(q):
     if interactive:
-     return wx.Bell()
+     return bell()
     else:
      if application.config.get('sound', 'repeat') and q:
       q = q[0]
@@ -234,7 +234,7 @@ def rewind(event):
  """Rewind the track a bit."""
  track = application.main_frame.current_track
  if not track:
-  wx.Bell()
+  bell()
  else:
   pos = track.get_position() - application.config.get('sound', 'rewind_amount')
   if pos < 0:
@@ -245,13 +245,13 @@ def fastforward(event):
  """Fastforward the track a bit."""
  track = application.main_frame.current_track
  if not track:
-  wx.Bell()
+  bell()
  else:
   pos = min(track.get_position() + application.config.get('sound', 'rewind_amount'), track.get_length())
   try:
    track.set_position(pos)
   except Exception as e:
-   return wx.Bell() # Something went wrong.
+   return bell() # Something went wrong.
 
 def prune_library():
  """Delete the oldest track from the library."""
@@ -373,7 +373,7 @@ def focus_playing(event):
   else:
    frame.add_results([track], clear = True, bypass_history = True)
  else:
-  return wx.Bell()
+  return bell()
 
 def artist_tracks(event = None, id = None):
  """Get all tracks for a particular artist."""
@@ -381,7 +381,7 @@ def artist_tracks(event = None, id = None):
  if id == None:
   cr = frame.get_current_result()
   if cr == -1:
-   return wx.Bell() # There is no track selected yet.
+   return bell() # There is no track selected yet.
   id = select_artist(frame.get_results()[cr]['artistId'])
  try:
   info = application.mobile_api.get_artist_info(id)
@@ -403,7 +403,7 @@ def current_album(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell() # No row selected.
+  return bell() # No row selected.
  try:
   songs = application.mobile_api.get_album_info(frame.get_results()[cr]['albumId']).get('tracks', [])
  except RE as e:
@@ -416,7 +416,7 @@ def artist_album(event, albums = None):
  if not albums:
   cr = frame.get_current_result()
   if cr == -1:
-   return wx.Bell()
+   return bell()
   artists = frame.get_results()[cr]['artistId']
   artist = select_artist(artists)
   if not artist:
@@ -440,7 +440,7 @@ def related_artists(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell()
+  return bell()
  artist = select_artist(frame.get_results()[cr]['artistId'])
  if not artist:
   return # User canceled.
@@ -481,7 +481,7 @@ def queue_result(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell() # No row selected.
+  return bell() # No row selected.
  frame.queue_track(frame.get_results()[cr])
 
 def add_to_playlist(event = None, playlist = None):
@@ -489,7 +489,7 @@ def add_to_playlist(event = None, playlist = None):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell() # No item selected.
+  return bell() # No item selected.
  id = get_id(frame.get_results()[cr])
  if not playlist:
   playlist = select_playlist(interactive = False)
@@ -511,14 +511,14 @@ def delete(event):
   # They pressed delete from the play queue.
   q = frame.get_current_queue_result()
   if q == -1:
-   return wx.Bell() # There is no item selected.
+   return bell() # There is no item selected.
   frame.unqueue_track(q)
  else:
   cr = frame.get_current_result()
   playlist = frame.current_playlist
   library = frame.current_library
   if (not playlist and not library) or cr == -1:
-   return wx.Bell()
+   return bell()
   track = frame.get_results()[cr]
   form = lambda value: value # The lambda to format the values as required.
   if playlist: # Deal with the playlist side of things first.
@@ -560,7 +560,7 @@ def delete_thing(event):
   thing = frame.current_saved_result
  else:
   # There is no playlist or station selected.
-  return wx.Bell()
+  return bell()
  if wx.MessageBox('Are you sure you want to delete the %s?' % name, 'Are You Sure', style = wx.YES_NO) == wx.YES:
   try:
    func(thing)
@@ -572,7 +572,7 @@ def station_from_result(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell()
+  return bell()
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('title', 'Untitled Track')))
  if dlg.ShowModal() and dlg.GetValue():
@@ -589,7 +589,7 @@ def station_from_artist(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell()
+  return bell()
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s' % (track.get('artist', 'Unknown Artist')))
  if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
@@ -606,7 +606,7 @@ def station_from_album(event):
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
-  return wx.Bell()
+  return bell()
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('album', 'Unknown Album')))
  if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
@@ -661,7 +661,7 @@ def top_tracks(artist = None, interactive = False):
    raise ValueError('Must supply an artist when not in interactive mode.')
   cr = frame.get_current_result()
   if cr == -1:
-   return wx.Bell()
+   return bell()
   artist = select_artist(frame.get_results()[cr].get('artistId', []))
  try:
   tracks = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks')).get('topTracks', [])
@@ -679,20 +679,20 @@ def results_history_back(event):
  """Move back through the results history."""
  frame = application.main_frame
  if not application.results_history:
-  return wx.Bell()
+  return bell()
  i = application.results_history_index - 1
  if i < 0:
-  return wx.Bell() # We're at the start of the history.
+  return bell() # We're at the start of the history.
  frame.select_results_history(i)
 
 def results_history_forward(event):
  """Moves forward through the results history."""
  frame = application.main_frame
  if not application.results_history:
-  return wx.Bell()
+  return bell()
  i = application.results_history_index + 1
  if i >= len(application.results_history):
-  return wx.Bell()
+  return bell()
  frame.select_results_history(i)
 
 def format_requests_error(err, title = 'Connection Error'):
@@ -705,7 +705,7 @@ def get_lyrics(event, track = None):
   frame = application.main_frame
   cr = frame.get_current_result()
   if cr == -1:
-   return wx.Bell()
+   return bell()
   track = frame.get_results()[cr]
  artist = track.get('artist')
  title = track.get('title')
@@ -713,3 +713,7 @@ def get_lyrics(event, track = None):
   Thread(target = application.lyrics_frame, args = [artist, title]).start()
  else:
   application.lyrics_frame = LyricsViewer(artist, title)
+
+def bell():
+ """Play a bell sound."""
+ return wx.Bell() if application.config.get('sound', 'interface_sounds') else None

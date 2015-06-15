@@ -101,6 +101,7 @@ config.set('windows', 'create_label', '&Create', title = 'The label for create b
 
 config.add_section('sound')
 config.set('sound', 'repeat', False, title = 'Repeat')
+config.set('sound', 'interface_sounds', True, title = 'Play interface sound effects')
 config.set('sound', 'stop_after', False, title = 'Stop after the current track has finished playing')
 config.set('sound', 'volume_increment', 10, title = 'The percent to increase the volume by when using the volume hotkey')
 config.set('sound', 'volume_decrement', 10, title = 'The amount to decrement the volume by when using the hotkey')
@@ -185,3 +186,5 @@ while len(os.listdir(media_directory)) > config.get('library', 'save_tracks'):
  functions.prune_library()
 
 config.updateFunc = functions.config_update
+
+gmusicapi_version = '5.1.0-dev'

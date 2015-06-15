@@ -1,6 +1,6 @@
 """The column editor."""
 
-import wx, wx.dataview as dv, application
+import wx, wx.dataview as dv, application, functions
 from wx.lib.intctrl import IntCtrl
 
 class ColumnEditor(wx.Frame):
@@ -117,7 +117,7 @@ class ColumnEditor(wx.Frame):
   self.current_column = -1
   cr = self.get_current_column()
   if cr < 1:
-   return wx.Bell() # It's already at the top.
+   return functions.bell()() # It's already at the top.
   self._columns.insert(cr - 1, self._columns.pop(cr))
   self.init_columns()
  
@@ -126,7 +126,7 @@ class ColumnEditor(wx.Frame):
   self.current_column = -1
   cr = self.get_current_column()
   if cr == (len(self._columns) - 1):
-   return wx.Bell() # It's already at the bottom.
+   return functions.bell()() # It's already at the bottom.
   self._columns.insert(cr + 1, self._columns.pop(cr))
   self.init_columns()
  

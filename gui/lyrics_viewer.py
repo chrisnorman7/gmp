@@ -1,6 +1,6 @@
 """The lyrics viewer for gmp."""
 
-import requests, wx, application, re, webbrowser
+import requests, wx, application, re, webbrowser, functions
 from threading import Thread
 
 class LyricsViewer(wx.Frame):
@@ -83,4 +83,4 @@ class LyricsViewer(wx.Frame):
   if self.url:
    webbrowser.open(self.url)
   else:
-   wx.Bell()
+   functions.bell()()
