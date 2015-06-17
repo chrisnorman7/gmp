@@ -77,13 +77,6 @@ class MainFrame(wx.Frame):
   self.bypass_history = False # Bypass the results history on the next insertion.
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
-  s0 = wx.BoxSizer(wx.HORIZONTAL)
-  s0.Add(wx.StaticText(p, label = 'Select &Artist'), 0, wx.GROW)
-  self._full_results = [] # The unadulterated results.
-  self.artists = wx.Choice(p)
-  self.artists.Bind(wx.EVT_CHOICE, self.select_artist)
-  s0.Add(self.artists, 1, wx.GROW)
-  s.Add(s0, 0, wx.GROW)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
   if application.platform == 'darwin':
    self.results = dv.DataViewListCtrl(p) # User friendly track list.
@@ -153,6 +146,11 @@ class MainFrame(wx.Frame):
   self.hotkey_area = wx.TextCtrl(p)
   self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
   s4.Add(self.hotkey_area, 1, wx.GROW)
+  s4.Add(wx.StaticText(p, label = 'Select &Artist'), 0, wx.GROW)
+  self._full_results = [] # The unadulterated results.
+  self.artists = wx.Choice(p)
+  self.artists.Bind(wx.EVT_CHOICE, self.select_artist)
+  s4.Add(self.artists, 1, wx.GROW)
   s.Add(s4, 0, wx.GROW)
   p.SetSizerAndFit(s)
   self.panel = p

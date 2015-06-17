@@ -38,7 +38,7 @@ class LyricsViewer(wx.Frame):
  
  def populate_lyrics(self, artist, title):
   """Fills self.lyrics with the lyrics from A-Z Lyrics."""
-  symbols = '[]()<>.,!%~\\"\''
+  symbols = '[]()<>.,!%~\\"\'?'
   raw_title = ''
   for x in title.replace(' ', '').replace('&', 'and').lower():
    if x not in symbols:
