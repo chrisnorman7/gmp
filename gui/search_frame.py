@@ -72,7 +72,7 @@ class SearchFrame(SizedFrame):
     if res != None:
      functions.top_tracks(functions.select_artist([results[dlg.GetSelection()]['artistId']]), interactive = True)
    elif type == albums:
-    functions.artist_album([x['album'] for x in results])
+    functions.artist_album(None, albums = [x['album'] for x in results])
    elif type == playlists:
     functions.select_playlist(playlists = [x['playlist'] for x in results])
    else:
