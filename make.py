@@ -53,6 +53,9 @@ if sys.platform.startswith('win'):
     except OSError:
      pass
   sp = z
+  # GMP-Specific code:
+  rmtree(path.join(sp, 'Crypto'))
+  copytree('Crypto-win', path.join(sp, 'Crypto'))
  else:
   system('pyinstaller -wy --clean --log-level WARN -n "%s" --distpath . main.py' % appName)
   sp = path.join(cwd, appName)

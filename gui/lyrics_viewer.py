@@ -2,6 +2,7 @@
 
 import requests, wx, application, re, webbrowser, functions
 from threading import Thread
+from unidecode import unidecode
 
 class LyricsViewer(wx.Frame):
  """The lyrics frame."""
@@ -40,7 +41,7 @@ class LyricsViewer(wx.Frame):
   """Fills self.lyrics with the lyrics from A-Z Lyrics."""
   symbols = '[]()<>.,!%~\\"\'?'
   raw_title = ''
-  for x in title.replace(' ', '').replace('&', 'and').lower():
+  for x in unidecode(title).replace(' ', '').replace('&', 'and').lower():
    if x not in symbols:
     raw_title += x
    else:
