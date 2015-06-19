@@ -1,7 +1,8 @@
-version = '1.0'
+version = '1.6'
 devel = True
 compress = False
-add_to_site = ['Crypto', 'certifi', 'pkg_resources']
+add_to_site = ['certifi', 'pkg_resources']
+update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
 from confmanager import ConfManager, parser
 from sys import platform
@@ -144,6 +145,18 @@ class MyApp(wx.App):
    json.dump(stuff, f, indent = 1)
   with open(library_file, 'wb') as f:
    json.dump(library, f, indent = 1)
+  if devel:
+   with open('version.json', 'w') as f:
+    url = 'http://code-metropolis.com/download/%s-%s-{platform}.zip' % (name, version)
+    j = {}
+    j['name'] = name
+    j['version'] = version
+    urls = {
+     'darwin': url.format(platform = 'darwin'),
+     'win32': url.format(platform = 'win32')
+    }
+    j['urls'] = urls
+    json.dump(j, f)
   return l
 
 if devel:
