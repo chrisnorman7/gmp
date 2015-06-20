@@ -1,5 +1,5 @@
 from updatecheck import UpdateCheckFrame as _Frame
-import json, application
+import application, wx
 
 class UpdateFrame(_Frame):
  def __init__(self):
@@ -16,16 +16,18 @@ class UpdateFrame(_Frame):
  def updateCheck(self):
   """Processes the json."""
   try:
-   j = json.loads(self.request.content)
+   j = self.request.json()
   except ValueError:
-   return # The json object is malformed.
+   return # The json object is malformed, or the URL is invalid.
   if j.get('version', application.version) > application.version:
    self.Show(True)
    self.request = j
    self.updateButton.SetDefault()
    return '%s %s is available.' % (j['name'], j['version'])
   else:
-   self.Close(True)
+   if self.Shown:
+    wx.MessageBox('%s %s is already the latest version' % (application.name, application.version), 'No Update Available')
+   wx.CallAfter(self.Close, True)
  
  def onUpdate(self, event):
   """Download the file."""
@@ -35,4 +37,4 @@ class UpdateFrame(_Frame):
    webbrowser.open(urls[sys.platform])
   else:
    wx.MessageBox('Sorry, but no download link could be found for your platform (%s).' % sys.platform, 'No URL Found')
-  self.Close(True)
+  wx.CallAfter(self.Close, True)

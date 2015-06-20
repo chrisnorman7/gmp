@@ -9,6 +9,7 @@ from sound_lib.main import BassError
 from gui.python_console import PythonConsole
 from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
+from gui.update_frame import UpdateFrame
 
 keys = {} # Textual key names.
 mods = {} # Textual modifiers
@@ -562,6 +563,14 @@ class MainFrame(wx.Frame):
   '&About...',
   'About the program.',
   id = wx.ID_ABOUT
+  ))
+  self.Bind(
+  wx.EVT_MENU,
+  lambda event: UpdateFrame().Show(True),
+  help_menu.Append(
+  wx.ID_ANY,
+  'Check For &Updates',
+  'Check for updates to the program.'
   ))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)
