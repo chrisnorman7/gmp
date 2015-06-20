@@ -1,8 +1,10 @@
-version = '1.6'
+version = '1.7'
 devel = True
 compress = False
 add_to_site = ['certifi', 'pkg_resources']
 update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
+
+errors_frame = None
 
 from confmanager import ConfManager, parser
 from sys import platform
@@ -37,7 +39,7 @@ from sound_lib.output import Output
 from my_mobileclient import MyMobileclient
 sound_output = Output()
 
-mobile_api = MyMobileclient()
+mobile_api = MyMobileclient(debug_logging = devel)
 app_id = '1234567890abcdef'
 
 device_id = None
@@ -157,12 +159,14 @@ class MyApp(wx.App):
     }
     j['urls'] = urls
     json.dump(j, f)
+  import errors
+  l = errors.log.log
+  if not devel and l:
+   with open('errors.log', 'w') as f:
+    f.write(''.join([x[1] for x in l]))
   return l
 
-if devel:
- app = MyApp(False)
-else:
- app = MyApp(True, os.path.join(directory, name + '.log'))
+app = MyApp(False)
 app.SetAppDisplayName('%s (v %s)' % (name, version))
 app.SetAppName(name)
 app.SetVendorName(vendor_name)

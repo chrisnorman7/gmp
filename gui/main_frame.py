@@ -6,7 +6,6 @@ from time import sleep
 from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
-from gui.python_console import PythonConsole
 from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
 from gui.update_frame import UpdateFrame
@@ -539,13 +538,6 @@ class MainFrame(wx.Frame):
   '&Select sound output...',
   'Select a new output device for sound playback.'
   ))
-  options_menu.Append(
-  *self.add_accelerator(
-  wx.ACCEL_NORMAL, wx.WXK_F11,
-  lambda event: PythonConsole().Show(True),
-  '&Python Console...',
-  'Launch a Python console for development purposes.'
-  ))
   self.repeat = options_menu.AppendCheckItem(
   *self.add_accelerator(
   wx.ACCEL_CTRL, 'r',
@@ -571,6 +563,14 @@ class MainFrame(wx.Frame):
   wx.ID_ANY,
   'Check For &Updates',
   'Check for updates to the program.'
+  ))
+  self.Bind(
+  wx.EVT_MENU,
+  functions.show_errors_frame,
+  help_menu.Append(
+  wx.ID_ANY,
+  '&View Error Log',
+  'View the error log for the application.'
   ))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)

@@ -6,6 +6,7 @@ from sound_lib.main import BassError
 from time import time
 from gui.lyrics_viewer import LyricsViewer
 from gui.search_frame import SearchFrame, songs
+from gui.errors_frame import ErrorsFrame
 from copy import copy
 
 id_fields = [
@@ -720,3 +721,11 @@ def get_lyrics(event, track = None):
 def bell():
  """Play a bell sound."""
  return wx.Bell() if application.config.get('sound', 'interface_sounds') else None
+
+def show_errors_frame(event = None):
+ """Show the errors frame."""
+ if application.errors_frame:
+  application.errors_frame.Raise()
+  application.errors_frame.Show(True)
+ else:
+  ErrorsFrame()
