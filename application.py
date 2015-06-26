@@ -1,5 +1,5 @@
 version = '1.7'
-devel = True
+devel = False
 compress = False
 add_to_site = ['certifi', 'pkg_resources']
 update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
@@ -204,4 +204,4 @@ while len(os.listdir(media_directory)) > config.get('library', 'save_tracks'):
 
 config.updateFunc = functions.config_update
 
-gmusicapi_version = '5.1.0-dev'
+gmusicapi_version = '7.0.0-dev'

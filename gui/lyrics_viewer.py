@@ -4,6 +4,9 @@ import requests, wx, application, re, webbrowser, functions
 from threading import Thread
 from unidecode import unidecode
 
+abort_symbols = '[]()<>.,!%~\\"?'
+avoid_symbols = '\''
+
 class LyricsViewer(wx.Frame):
  """The lyrics frame."""
  def __init__(self, artist, title):
@@ -37,24 +40,24 @@ class LyricsViewer(wx.Frame):
   application.lyrics_frame = None
   return event.Skip()
  
+ def format_string(self, value):
+  """Strips all unnecessaries out of a string."""
+  raw_value = ''
+  for x in unidecode(unicode(value)).replace(' ', '').replace('&', 'and').lower():
+   if x not in abort_symbols:
+    if x not in avoid_symbols:
+     raw_value += x
+   else:
+    break
+  return raw_value
+ 
  def populate_lyrics(self, artist, title):
   """Fills self.lyrics with the lyrics from A-Z Lyrics."""
-  symbols = '[]()<>.,!%~\\"\'?'
-  raw_title = ''
-  for x in unidecode(title).replace(' ', '').replace('&', 'and').lower():
-   if x not in symbols:
-    raw_title += x
-   else:
-    break
-  raw_artist = ''
-  temp_artist = unidecode(artist).replace(' ', '').replace('&', 'and').lower()
-  if 'feat' in temp_artist:
-   temp_artist = temp_artist[:temp_artist.index('feat')]
-  for x in temp_artist:
-   if x not in symbols:
-    raw_artist += x
-   else:
-    break
+  raw_title = self.format_string(title)
+  raw_artist = unidecode(artist).replace(' ', '').replace('&', 'and').lower()
+  if 'feat' in raw_artist:
+   raw_artist = raw_artist[:raw_artist.index('feat')]
+  raw_artist = self.format_string(raw_artist)
   if raw_artist.startswith('the'):
    raw_artist = raw_artist[3:]
   self.url = 'http://www.azlyrics.com/lyrics/%s/%s.html' % (raw_artist, raw_title)
