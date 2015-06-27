@@ -1,6 +1,6 @@
 """The main frame for Google Music Player"""
 
-import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys
+import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys, server
 from threading import Thread, Event
 from time import sleep
 from inspect import getdoc
@@ -62,6 +62,8 @@ class MainFrame(wx.Frame):
    (0, ord('8')): lambda event: Thread(target = functions.add_again_to_playlist, args = [event]).start(),
    (0, wx.WXK_RETURN): functions.focus_playing
   }
+  self.http_server = None
+  Thread(target = self.reload_http_server).start()
   self.last_search = '' # Whatever the user last searched for.
   self.last_search_type = 0 # The type of the previous search.
   self.current_playlist = None # The current playlist
@@ -835,6 +837,8 @@ class MainFrame(wx.Frame):
   """Closes the window after shutting down the track thread."""
   if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
    self._thread.should_stop.set()
+   if self.http_server:
+    Thread(target = self.http_server.shutdown).start()
    event.Skip()
  
  def init_results_columns(self):
@@ -984,3 +988,15 @@ class MainFrame(wx.Frame):
   #self.s3.Layout()
   self.main_sizer.Layout()
   #self.panel.SetSizerAndFit(self.main_sizer)
+ 
+ def reload_http_server(self):
+  """Reload the http server."""
+  if self.http_server:
+   self.http_server.shutdown()
+  if application.config.get('http', 'enabled'):
+   self.http_server = server.get_server()
+   self.server_thread = Thread(target = self.http_server.serve_forever)
+   self.server_thread.start()
+  else:
+   self.http_server = None
+   self.server_thread = None

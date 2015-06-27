@@ -5,7 +5,7 @@ from threading import Thread
 from unidecode import unidecode
 
 abort_symbols = '[]()<>.,!%~\\"?'
-avoid_symbols = '\''
+avoid_symbols = '\'#'
 
 class LyricsViewer(wx.Frame):
  """The lyrics frame."""

@@ -8,6 +8,7 @@ from gui.lyrics_viewer import LyricsViewer
 from gui.search_frame import SearchFrame, songs
 from gui.errors_frame import ErrorsFrame
 from copy import copy
+from threading import Thread
 
 id_fields = [
  'storeId',
@@ -33,6 +34,8 @@ def config_update(config, section, option, value):
  elif section == 'windows':
   if option == 'play_controls_show':
    frame.play_controls_func(value)
+ elif section == 'http':
+  Thread(target = frame.reload_http_server).start()
 
 def get_id(item):
  """Return the ID for the provided item."""
@@ -161,7 +164,7 @@ def play_pause(event = None):
  else:
   bell()
 
-def stop(event):
+def stop(event = None):
  """Stop the current track."""
  frame = application.main_frame
  if frame.current_track:
@@ -169,7 +172,7 @@ def stop(event):
   frame.current_track.set_position(0) # Pause instead of stopping.
   frame.play_pause.SetLabel(application.config.get('windows', 'play_label'))
 
-def volume_up(event):
+def volume_up(event = None):
  """Turn up the playing song."""
  frame = application.main_frame
  v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
@@ -178,7 +181,7 @@ def volume_up(event):
  frame.volume.SetValue(v)
  frame.set_volume(event)
 
-def volume_down(event):
+def volume_down(event = None):
  """Turn down the playing song."""
  frame = application.main_frame
  v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
@@ -187,7 +190,7 @@ def volume_down(event):
  frame.volume.SetValue(v)
  frame.set_volume(event)
 
-def previous(event):
+def previous(event = None):
  """Select the previous track."""
  frame = application.main_frame
  if not frame.track_history:
@@ -202,7 +205,7 @@ def previous(event):
   frame.queue_tracks(q, True)
   frame.play(frame.track_history.pop(-1))
 
-def next(event, interactive = True):
+def next(event = None, interactive = True):
  """Plays the next track."""
  frame = application.main_frame
  q = frame.get_queue()

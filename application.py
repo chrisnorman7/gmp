@@ -114,6 +114,11 @@ config.set('sound', 'frequency', 50, title = 'The frequency to play songs at (50
 config.set('sound', 'volume', 1.0, title = 'The volume to play tracks at (between 0.0 and 1.0)')
 config.set('sound', 'pan', 0.0, title = 'The left and right stereo balance to play songs at')
 
+config.add_section('http')
+config.set('http', 'enabled', False, title = 'Enable the web server')
+config.set('http', 'hostname', '0.0.0.0', title = 'The address to bind the web server to')
+config.set('http', 'port', 4673, title = 'The port the web server should run on')
+
 config_file = os.path.join(directory, 'config.json')
 
 if os.path.isfile(config_file):
