@@ -1,4 +1,4 @@
-version = '1.7'
+version = '1.8'
 devel = False
 compress = False
 add_to_site = ['certifi', 'pkg_resources']
@@ -118,6 +118,8 @@ config.add_section('http')
 config.set('http', 'enabled', False, title = 'Enable the web server')
 config.set('http', 'hostname', '0.0.0.0', title = 'The address to bind the web server to')
 config.set('http', 'port', 4673, title = 'The port the web server should run on')
+config.set('http', 'uid', 'gmp', title = 'A username which must be entered to login to the web server')
+config.set('http', 'pwd', 'LetMeIn', title = 'A password which must be entered to login to the web server')
 
 config_file = os.path.join(directory, 'config.json')
 

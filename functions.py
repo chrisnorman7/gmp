@@ -34,7 +34,7 @@ def config_update(config, section, option, value):
  elif section == 'windows':
   if option == 'play_controls_show':
    frame.play_controls_func(value)
- elif section == 'http':
+ elif section == 'http' and option in ['enabled', 'hostname', 'port']:
   Thread(target = frame.reload_http_server).start()
 
 def get_id(item):
