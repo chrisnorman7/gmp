@@ -1,4 +1,4 @@
-import BaseHTTPServer, functions, functions, application
+import BaseHTTPServer, functions, functions, application, json
 from base64 import decodestring
 
 urls = {
@@ -9,6 +9,30 @@ urls = {
  'stop': functions.stop,
  'volume_up': functions.volume_up
 }
+
+urls_js = """
+$(document).ready(function() {
+ setInterval(function() {
+  $.ajax({
+   url: "getjson",
+   dataType: "json",
+   success: function(stuff) {
+    if ("title" in stuff) {
+     document.title = stuff.title;
+    }
+    if ("volume" in stuff) {
+     $("#volume").html(stuff.volume + "%");
+    }
+    if ("nowplaying" in stuff) {
+     $("#nowplaying").html(stuff.nowplaying);
+    }
+   }
+  })
+ }, 1000);
+"""
+for k in urls.keys():
+ urls_js += """ $("#%s").click(function() {$.ajax({url: "%s", async: true})});\n""" % (k, k)
+urls_js += ' }\n);\n'
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
  def do_HEAD(self, authorized = False):
@@ -28,6 +52,9 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
    (uid, pwd) = decodestring(auth[6:]).split(':')
    if uid == application.config.get('http', 'uid') and pwd == application.config.get('http', 'pwd'):
     self.do_HEAD(True)
+    if self.path == '/getjson':
+     self.wfile.write(json.dumps(dict(title = frame.GetTitle(), volume = frame.volume.GetValue(), nowplaying = frame.hotkey_area.GetValue())))
+     return
     urls.get(self.path[1:], lambda: None)()
     self.wfile.write(u"""
     <!doctype html>
@@ -38,7 +65,10 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     border: 1px solid black;
     }
     </style>
-    <title>%s</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script>%s</script>
+    <title></title>
     </head>
     <body>
     <h1>%s: Web Interface</h1>
@@ -47,16 +77,17 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     <p>Disable the server in the application's Preferences.</p>
     </div>
     <div role = "main">
+    <h2 id="nowplaying">Now playing</h2>
     <table>
     <tr>
-    <td><a href = "previous">Previous</a></td>
-    <td><a href = "play">Play / Pause</a></td>
-    <td><a href = "next">Next</a></td>
+    <td><button id = "previous">Previous</button></td>
+    <td><button id = "play">Play / Pause</button></td>
+    <td><button id = "next">Next</button></td>
     </tr>
     <tr>
-    <td><a href = "volume_down">Volume Down</a></td>
-    <td>Volume: %s%%</td>
-    <td><a href = "volume_up">Volume Up</a></td>
+    <td><button id = "volume_down">Volume Down</button></td>
+    <td id = "volume">0%%</td>
+    <td><button id = "volume_up">Volume Up</button></td>
     </tr>
     </table>
     </div>
@@ -66,7 +97,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     </body>
     </html>
     """ %
-    (frame.GetTitle(), application.name, frame.volume.GetValue(), self.server_version, self.sys_version)
+    (urls_js, application.name, self.server_version, self.sys_version)
     )
     return
   self.do_HEAD(False) # Not authenticated.

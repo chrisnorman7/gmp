@@ -10,7 +10,6 @@ class Log(object):
  
  def write(self, text):
   """Write an item to the log."""
-  functions.bell()
   v = [time(), text]
   self.log.append(v)
   if application.errors_frame:
