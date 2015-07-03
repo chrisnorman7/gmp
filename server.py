@@ -17,18 +17,27 @@ $(document).ready(function() {
    url: "getjson",
    dataType: "json",
    success: function(stuff) {
-    if ("title" in stuff) {
+    if ("title" in stuff && document.title != stuff.title) {
      document.title = stuff.title;
     }
-    if ("volume" in stuff) {
-     $("#volume").html(stuff.volume + "%");
+    if ("volume" in stuff && stuff.volume != $("#volume").html()) {
+     $("#volume").html(stuff.volume);
     }
-    if ("nowplaying" in stuff) {
+    if ("playpause" in stuff && stuff.playpause != $("#play").html()) {
+     $("#play").html(stuff.playpause)
+    }
+    if ("nowplaying" in stuff && stuff.nowplaying != $("#nowplaying").html()) {
      $("#nowplaying").html(stuff.nowplaying);
+    }
+    if ("nexttrack" in stuff && stuff.nexttrack != $("#nexttrack").html()) {
+     $("#next").html(stuff.nexttrack);
+    }
+    if ("previoustrack" in stuff && stuff.previoustrack != $("#previous").html()) {
+     $("#previous").html(stuff.previoustrack);
     }
    }
   })
- }, 1000);
+ }, 100);
 """
 for k in urls.keys():
  urls_js += """ $("#%s").click(function() {$.ajax({url: "%s", async: true})});\n""" % (k, k)
@@ -53,7 +62,26 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
    if uid == application.config.get('http', 'uid') and pwd == application.config.get('http', 'pwd'):
     self.do_HEAD(True)
     if self.path == '/getjson':
-     self.wfile.write(json.dumps(dict(title = frame.GetTitle(), volume = frame.volume.GetValue(), nowplaying = frame.hotkey_area.GetValue())))
+     next_track = application.config.get('windows', 'next_label').strip('&')
+     n = functions.get_next_song()
+     if n:
+      next_track += ' (%s)' % functions.format_title(n)
+     previous_track = application.config.get('windows', 'previous_label').strip('&')
+     p = functions.get_previous_song()
+     if p:
+      previous_track += ' (%s)' % functions.format_title(p)
+     self.wfile.write(
+      json.dumps(
+       dict(
+        nexttrack = next_track,
+        previoustrack = previous_track,
+        title = frame.GetTitle(),
+        volume = '%s%%' % frame.volume.GetValue(),
+        nowplaying = frame.hotkey_area.GetValue(),
+        playpause = frame.play_pause.GetLabel()
+       )
+      )
+      )
      return
     urls.get(self.path[1:], lambda: None)()
     self.wfile.write(u"""
@@ -81,7 +109,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     <table>
     <tr>
     <td><button id = "previous">Previous</button></td>
-    <td><button id = "play">Play / Pause</button></td>
+    <td><button id = "play">Play</button></td>
     <td><button id = "next">Next</button></td>
     </tr>
     <tr>

@@ -108,7 +108,7 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
    if p['id'] == playlist:
     playlist = p
  else:
-  dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', ['%s - %s' % (x['ownerName'], x['name']) for x in playlists])
+  dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', [x['name'] for x in playlists])
   if dlg.ShowModal() == wx.ID_OK:
    playlist = playlists[dlg.GetSelection()]
   dlg.Destroy()
@@ -190,6 +190,14 @@ def volume_down(event = None):
  frame.volume.SetValue(v)
  frame.set_volume(event)
 
+def get_previous_song(alter = False):
+ """Get the song which will be played when the previous button is pressed. If alter is True, actually remove the track from the history buffer."""
+ frame = application.main_frame
+ if frame.track_history:
+  return frame.track_history[-1]
+  if alter:
+   del frame.track_history[-1]
+
 def previous(event = None):
  """Select the previous track."""
  frame = application.main_frame
@@ -203,36 +211,41 @@ def previous(event = None):
   if q:
    q.insert(0, frame.get_current_track())
   frame.queue_tracks(q, True)
-  frame.play(frame.track_history.pop(-1))
+  frame.play(get_previous_song())
 
-def next(event = None, interactive = True):
- """Plays the next track."""
+def get_next_song(clear = False):
+ """Get the next song from the play queue or list of results. If clear is True, unqueue the resulting track."""
  frame = application.main_frame
  q = frame.get_queue()
  if q:
-  q = q[0]
-  frame.unqueue_track(0)
+  if clear:
+   frame.unqueue_track(0)
+  return q[0]
  else:
   q = frame.get_results()
   track = frame.get_current_track()
   if track in q:
    cr = q.index(track) + 1
    if cr == len(q):
-    if interactive:
-     return bell()
+    if application.config.get('sound', 'repeat') and q:
+     return q[0]
     else:
-     if application.config.get('sound', 'repeat') and q:
-      q = q[0]
-     else:
-      return # User has not selected repeat or there are no results there.
+     return # User has not selected repeat or there are no results there.
    else:
-    q = q[cr]
+    return q[cr]
   else:
    if q:
-    q = q[0]
+    return q[0]
    else:
     return # There are no results.
- frame.play(q)
+
+def next(event = None, interactive = True):
+ """Plays the next track."""
+ q = get_next_song(True)
+ if q:
+  application.main_frame.play(q)
+ else:
+  return Bell() if interactive else None
 
 def rewind(event):
  """Rewind the track a bit."""
