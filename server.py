@@ -20,20 +20,20 @@ $(document).ready(function() {
     if ("title" in stuff && document.title != stuff.title) {
      document.title = stuff.title;
     }
-    if ("volume" in stuff && stuff.volume != $("#volume").html()) {
-     $("#volume").html(stuff.volume);
+    if ("volume" in stuff && stuff.volume != $("#volume").text()) {
+     $("#volume").text(stuff.volume);
     }
-    if ("playpause" in stuff && stuff.playpause != $("#play").html()) {
-     $("#play").html(stuff.playpause)
+    if ("playpause" in stuff && stuff.playpause != $("#play").text()) {
+     $("#play").text(stuff.playpause)
     }
-    if ("nowplaying" in stuff && stuff.nowplaying != $("#nowplaying").html()) {
-     $("#nowplaying").html(stuff.nowplaying);
+    if ("nowplaying" in stuff && stuff.nowplaying != $("#nowplaying").text()) {
+     $("#nowplaying").text(stuff.nowplaying);
     }
-    if ("nexttrack" in stuff && stuff.nexttrack != $("#nexttrack").html()) {
-     $("#next").html(stuff.nexttrack);
+    if ("nexttrack" in stuff && stuff.nexttrack != $("#nexttrack").text()) {
+     $("#next").text(stuff.nexttrack);
     }
-    if ("previoustrack" in stuff && stuff.previoustrack != $("#previous").html()) {
-     $("#previous").html(stuff.previoustrack);
+    if ("previoustrack" in stuff && stuff.previoustrack != $("#previous").text()) {
+     $("#previous").text(stuff.previoustrack);
     }
    }
   })
