@@ -12,7 +12,7 @@ class LyricsViewer(wx.Frame):
  def __init__(self, artist, title):
   """Takes an artist and a title and populates the frame with the lyrics, if available."""
   self.url = None
-  super(LyricsViewer, self).__init__(application.main_frame, title = 'Lyrics for %s - %s' % (artist, title))
+  super(LyricsViewer, self).__init__(application.main_frame)
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
@@ -53,6 +53,7 @@ class LyricsViewer(wx.Frame):
  
  def populate_lyrics(self, artist, title):
   """Fills self.lyrics with the lyrics from A-Z Lyrics."""
+  self.SetTitle('Lyrics for %s - %s' % (artist, title))
   raw_title = self.format_string(title)
   raw_artist = unidecode(artist).replace(' ', '').replace('&', 'and').lower()
   if 'feat' in raw_artist:
