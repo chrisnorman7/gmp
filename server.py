@@ -22,7 +22,7 @@ $(document).ready(function() {
      async: false
     });
    }
-  }, 10);
+  }, 100);
  }).blur(function(){
   clearInterval(volpulse);
  });
@@ -139,7 +139,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     </tr>
     <tr>
     <td><button id = "volume_down">Volume Down</button></td>
-    <td><input type = "range" id = "volume" value = "0" min = "0" max = "100">%%</td>
+    <td><input type = "range" step = "5" id = "volume" value = "0" min = "0" max = "100">%%</td>
     <td><button id = "volume_up">Volume Up</button></td>
     </tr>
     </table>
