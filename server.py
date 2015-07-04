@@ -11,7 +11,21 @@ urls = {
 }
 
 urls_js = """
+var vol, volpulse;
 $(document).ready(function() {
+ $("#volume").focus(function() {
+  volpulse = setInterval(function(){
+   if (vol != $("#volume").val()) {
+    vol = $("#volume").val();
+    $.ajax({
+     url: "volume/" + $("#volume").val(),
+     async: false
+    });
+   }
+  }, 10);
+ }).blur(function(){
+  clearInterval(volpulse);
+ });
  setInterval(function() {
   $.ajax({
    url: "getjson",
@@ -20,17 +34,9 @@ $(document).ready(function() {
     if ("title" in stuff && document.title != stuff.title) {
      document.title = stuff.title;
     }
-    if ("volume" in stuff) {
-     if ($("#volume").is(":focus")) {
-      $.ajax({
-       url: "volume/" + $("#volume").val(),
-       async: true
-      });
-     } else {
-      if (stuff.volume != $("#volume").val()) {
-       $("#volume").val(stuff.volume);
-      }
-     }
+    if ("volume" in stuff && new String(stuff.volume) != new String($("#volume").val())) {
+     vol = stuff.volume;
+     $("#volume").val(stuff.volume);
     }
     if ("playpause" in stuff && stuff.playpause != $("#play").text()) {
      $("#play").text(stuff.playpause)
