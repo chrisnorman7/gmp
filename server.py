@@ -20,8 +20,17 @@ $(document).ready(function() {
     if ("title" in stuff && document.title != stuff.title) {
      document.title = stuff.title;
     }
-    if ("volume" in stuff && stuff.volume != $("#volume").text()) {
-     $("#volume").text(stuff.volume);
+    if ("volume" in stuff) {
+     if ($("#volume").is(":focus")) {
+      $.ajax({
+       url: "volume/" + $("#volume").val(),
+       async: true
+      });
+     } else {
+      if (stuff.volume != $("#volume").val()) {
+       $("#volume").val(stuff.volume);
+      }
+     }
     }
     if ("playpause" in stuff && stuff.playpause != $("#play").text()) {
      $("#play").text(stuff.playpause)
@@ -59,31 +68,41 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
   frame = application.main_frame
   if auth and auth.lower().startswith('basic '):
    (uid, pwd) = decodestring(auth[6:]).split(':')
-   if uid == application.config.get('http', 'uid') and pwd == application.config.get('http', 'pwd'):
-    self.do_HEAD(True)
-    if self.path == '/getjson':
-     next_track = application.config.get('windows', 'next_label').strip('&')
-     n = functions.get_next_song()
-     if n:
-      next_track += ' (%s)' % functions.format_title(n)
-     previous_track = application.config.get('windows', 'previous_label').strip('&')
-     p = functions.get_previous_song()
-     if p:
-      previous_track += ' (%s)' % functions.format_title(p)
-     self.wfile.write(
-      json.dumps(
-       dict(
-        nexttrack = next_track,
-        previoustrack = previous_track,
-        title = frame.GetTitle(),
-        volume = '%s%%' % frame.volume.GetValue(),
-        nowplaying = frame.hotkey_area.GetValue(),
-        playpause = frame.play_pause.GetLabel()
-       )
+  else:
+   (uid, pwd) = None, None
+  if uid == application.config.get('http', 'uid') and pwd == application.config.get('http', 'pwd'):
+   self.do_HEAD(True)
+   if self.path == '/getjson':
+    next_track = application.config.get('windows', 'next_label').strip('&')
+    n = functions.get_next_song()
+    if n:
+     next_track += ' (%s)' % functions.format_title(n)
+    previous_track = application.config.get('windows', 'previous_label').strip('&')
+    p = functions.get_previous_song()
+    if p:
+     previous_track += ' (%s)' % functions.format_title(p)
+    self.wfile.write(
+     json.dumps(
+      dict(
+       nexttrack = next_track,
+       previoustrack = previous_track,
+       title = frame.GetTitle(),
+       volume = frame.volume.GetValue(),
+       nowplaying = frame.hotkey_area.GetValue(),
+       playpause = frame.play_pause.GetLabel()
       )
-      )
-     return
-    urls.get(self.path[1:], lambda: None)()
+     )
+     )
+   elif self.path.startswith('/volume/'):
+    v = self.path.split('/')
+    try:
+     v = int(v[-1])
+     functions.set_volume(v)
+    except ValueError as e:
+     self.wfile.write(str(e))
+   elif self.path[1:] in urls:
+    urls[self.path[1:]]()
+   elif self.path == '/':
     self.wfile.write(u"""
     <!doctype html>
     <html lang = "en">
@@ -114,7 +133,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     </tr>
     <tr>
     <td><button id = "volume_down">Volume Down</button></td>
-    <td id = "volume">0%%</td>
+    <td><input type = "range" id = "volume" value = "0" min = "0" max = "100">%%</td>
     <td><button id = "volume_up">Volume Up</button></td>
     </tr>
     </table>
@@ -127,9 +146,9 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """ %
     (urls_js, application.name, self.server_version, self.sys_version)
     )
-    return
-  self.do_HEAD(False) # Not authenticated.
-  self.wfile.write('Not authenticated.')
+  else:
+   self.do_HEAD(False) # Not authenticated.
+   self.wfile.write('Not authenticated.')
 
 server_class = BaseHTTPServer.HTTPServer
 
