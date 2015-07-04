@@ -95,7 +95,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
        title = frame.GetTitle(),
        volume = frame.volume.GetValue(),
        nowplaying = frame.hotkey_area.GetValue(),
-       playpause = frame.play_pause.GetLabel()
+       playpause = frame.play_pause.GetLabel().strip('&')
       )
      )
      )
@@ -139,7 +139,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     </tr>
     <tr>
     <td><button id = "volume_down">Volume Down</button></td>
-    <td><input type = "range" step = "5" id = "volume" value = "0" min = "0" max = "100">%%</td>
+    <td><input type = "range" step = "5" id = "volume" value = "0" min = "0" max = "100"></td>
     <td><button id = "volume_up">Volume Up</button></td>
     </tr>
     </table>
