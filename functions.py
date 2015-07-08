@@ -1,6 +1,7 @@
 """Various functions used in the program."""
 
 import application, wx, os, requests, sys, random
+from eyed3 import load
 from shutil import copy as shcopy
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
 from sound_lib.main import BassError
@@ -775,12 +776,25 @@ def save_result(event = None):
   dlg = wx.FileDialog(frame, defaultDir = os.path.expanduser('~'), wildcard = '*%s' % application.track_extension, defaultFile = format_title(track).replace('\\', ',').replace('/', ','), style = wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
   if dlg.ShowModal() == wx.ID_OK:
    new_path = dlg.GetPath()
+  else:
+   new_path = None
+  dlg.Destroy()
+  if new_path:
    try:
     if not new_path.endswith(application.track_extension):
      new_path += application.track_extension
     shcopy(path, new_path)
    except Exception as e:
-    return wx.MessageBox(str(e), 'Error')
-  dlg.Destroy()
+    wx.MessageBox(str(e), 'Error')
+   f = load(new_path)
+   f.initTag()
+   t = f.tag
+   t.album = track.get('album')
+   t.artist = track.get('artist')
+   t.genre = track.get('genre')
+   t.title = track.get('title')
+   t.track_num = track.get('trackNumber')
+   t.disc_num = track.get('discNumber')
+   t.save()
  else:
   return wx.MessageBox('That track is not downloaded. Please check your library settings and try playing the track again.', 'File Not Downloaded')

@@ -159,7 +159,7 @@ class MyApp(wx.App):
    l = errors.log.log
    if l:
     with open('errors.log', 'w') as f:
-     f.write(''.join([x[1] for x in l]))
+     f.write('\n'.join([x[1] for x in l]))
   return res
 
 app = MyApp(False)
