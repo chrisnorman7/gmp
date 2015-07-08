@@ -92,7 +92,7 @@ elif sys.platform == 'darwin':
 else:
  quit("Don't know how to run on %s." % sys.platform)
 
-def copy(origin, dest):
+def _copy(origin, dest):
  print 'Copying to %s.' % dest
  if path.exists(dest):
   if path.isfile(dest):
@@ -114,7 +114,7 @@ for d in listdir('xtras'):
  origin = path.join(cwd, 'xtras', d)
  dest = path.join((sp if d in appAddToSite else xd), d)
  print 'Copying %s to %s.' % (d, dest)
- if not copy(origin, dest):
+ if not _copy(origin, dest):
   print 'Error copying.'
 
 print 'Creating Zipfile...'

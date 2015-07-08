@@ -36,7 +36,9 @@ $(document).ready(function() {
     }
     if ("volume" in stuff && new String(stuff.volume) != new String($("#volume").val())) {
      vol = stuff.volume;
-     $("#volume").val(stuff.volume);
+     if (!($("#volume").is("focus"))) {
+      $("#volume").val(vol);
+     }
     }
     if ("playpause" in stuff && stuff.playpause != $("#play").text()) {
      $("#play").text(stuff.playpause)

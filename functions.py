@@ -308,10 +308,10 @@ def download_file(id, url, timestamp):
   with open(path, 'wb') as f:
    f.write(g.content)
   application.library[id] = timestamp
-  while len(os.listdir(application.media_directory)) > application.config.get('library', 'save_tracks'):
-   prune_library()
  except Exception:
   pass # Let the GUI handle it.
+ while get_size(application.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
+  prune_library()
 
 def track_seek(event):
  """Get the value of the seek slider and move the track accordingly."""
@@ -754,3 +754,12 @@ def show_errors_frame(event = None):
   application.errors_frame.Show(True)
  else:
   ErrorsFrame()
+
+def get_size(start_path = '.'):
+ total_size = 0
+ for dirpath, dirnames, filenames in os.walk(start_path):
+  for f in filenames:
+   fp = os.path.join(dirpath, f)
+   total_size += os.path.getsize(fp)
+ return total_size
+

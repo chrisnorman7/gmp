@@ -1,7 +1,7 @@
 version = '1.8'
 devel = False
 compress = False
-add_to_site = ['certifi', 'pkg_resources']
+add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py']
 update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
 errors_frame = None
@@ -70,7 +70,7 @@ config.set('login', 'pwd', '', 'The password to log in with (stored in plain tex
 config.set('login', 'remember', False, title = 'Remember credentials across restarts')
 
 config.add_section('library')
-config.set('library', 'save_tracks', 1000, title = 'The number of tracks to save in the library before the oldest are deleted')
+config.set('library', 'library_size', 1024, title = 'The size of the library in megabytes before the oldest tracks are deleted')
 config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retrieve when getting artist info')
 config.set('library', 'max_results', 50, title = 'Maximum results to display')
 config.set('library', 'history_length', 100, title = 'The number of previous results to save')
@@ -141,7 +141,7 @@ if os.path.isfile(config_file):
 class MyApp(wx.App):
  def MainLoop(self, *args, **kwargs):
   """Overrides wx.App.MainLoop, to save the config at the end."""
-  l = super(MyApp, self).MainLoop(*args, **kwargs)
+  res = super(MyApp, self).MainLoop(*args, **kwargs)
   sound_output.stop()
   stuff = {
    'saved_results': saved_results,
@@ -154,24 +154,13 @@ class MyApp(wx.App):
    json.dump(stuff, f, indent = 1)
   with open(library_file, 'wb') as f:
    json.dump(library, f, indent = 1)
-  if devel:
-   with open('version.json', 'w') as f:
-    url = 'http://code-metropolis.com/download/%s-%s-{platform}.zip' % (name, version)
-    j = {}
-    j['name'] = name
-    j['version'] = version
-    urls = {
-     'darwin': url.format(platform = 'darwin'),
-     'win32': url.format(platform = 'win32')
-    }
-    j['urls'] = urls
-    json.dump(j, f)
-  import errors
-  l = errors.log.log
-  if not devel and l:
-   with open('errors.log', 'w') as f:
-    f.write(''.join([x[1] for x in l]))
-  return l
+  if not devel:
+   import errors
+   l = errors.log.log
+   if l:
+    with open('errors.log', 'w') as f:
+     f.write(''.join([x[1] for x in l]))
+  return res
 
 app = MyApp(False)
 app.SetAppDisplayName('%s (v %s)' % (name, version))
@@ -205,9 +194,6 @@ for x in os.listdir(media_directory):
 for l in library.keys():
  if not os.path.isfile(os.path.join(media_directory, l + track_extension)):
   del library[l]
-
-while len(os.listdir(media_directory)) > config.get('library', 'save_tracks'):
- functions.prune_library()
 
 config.updateFunc = functions.config_update
 

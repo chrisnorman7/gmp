@@ -1,3 +1,4 @@
+mechanicalsoup
 certifi
 future
 hg+http://hg.q-continuum.net/libloader#egg=libloader

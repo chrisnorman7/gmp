@@ -10,9 +10,11 @@ class Log(object):
  
  def write(self, text):
   """Write an item to the log."""
-  v = [time(), text]
-  self.log.append(v)
-  if application.errors_frame:
-   application.errors_frame.append_item(v)
+  for t in text.split('\n'):
+   if t:
+    v = [time(), t]
+    self.log.append(v)
+    if application.errors_frame:
+     application.errors_frame.append_item(v)
 
 log = Log()

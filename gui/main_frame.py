@@ -63,7 +63,6 @@ class MainFrame(wx.Frame):
    (0, wx.WXK_RETURN): functions.focus_playing
   }
   self.http_server = None
-  Thread(target = self.reload_http_server).start()
   self.last_search = '' # Whatever the user last searched for.
   self.last_search_type = 0 # The type of the previous search.
   self.current_playlist = None # The current playlist
@@ -658,6 +657,7 @@ class MainFrame(wx.Frame):
  def Show(self, value = True):
   """Shows the frame."""
   res = super(MainFrame, self).Show(value)
+  Thread(target = self.reload_http_server).start()
   self._thread.start()
   if not self._results:
    wx.CallAfter(self.init_results)
@@ -839,6 +839,11 @@ class MainFrame(wx.Frame):
    self._thread.should_stop.set()
    if self.http_server:
     Thread(target = self.http_server.shutdown).start()
+   for f in [application.errors_frame, application.lyrics_frame]:
+    try:
+     f.Close(True)
+    except (wx.PyDeadObjectError, AttributeError):
+     pass # It's not open.
    event.Skip()
  
  def init_results_columns(self):
