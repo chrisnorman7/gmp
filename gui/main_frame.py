@@ -172,6 +172,13 @@ class MainFrame(wx.Frame):
   '&Save Results...',
   'Save the current results to the saved results list.'
   ))
+  file_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 's',
+  lambda event: Thread(target = functions.save_result).start(),
+  'S&ave The Current Track...',
+  'Save the currently selected track with a human-readable name.'
+  ))
   station_menu = wx.Menu()
   station_menu.Append(
   *self.add_accelerator(

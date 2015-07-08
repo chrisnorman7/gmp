@@ -1,6 +1,7 @@
 """Various functions used in the program."""
 
 import application, wx, os, requests, sys, random
+from shutil import copy as shcopy
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
 from sound_lib.main import BassError
 from time import time
@@ -763,3 +764,23 @@ def get_size(start_path = '.'):
    total_size += os.path.getsize(fp)
  return total_size
 
+def save_result(event = None):
+ """Save the current result."""
+ frame = application.main_frame
+ track = frame.get_current_track()
+ if not track:
+  return wx.Bell()
+ path = id_to_path(get_id(track))
+ if os.path.isfile(path):
+  dlg = wx.FileDialog(frame, defaultDir = os.path.expanduser('~'), wildcard = '*%s' % application.track_extension, defaultFile = format_title(track).replace('\\', ',').replace('/', ','), style = wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+  if dlg.ShowModal() == wx.ID_OK:
+   new_path = dlg.GetPath()
+   try:
+    if not new_path.endswith(application.track_extension):
+     new_path += application.track_extension
+    shcopy(path, new_path)
+   except Exception as e:
+    return wx.MessageBox(str(e), 'Error')
+  dlg.Destroy()
+ else:
+  return wx.MessageBox('That track is not downloaded. Please check your library settings and try playing the track again.', 'File Not Downloaded')

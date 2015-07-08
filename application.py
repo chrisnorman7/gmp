@@ -1,4 +1,4 @@
-version = '1.8'
+version = '1.9'
 devel = False
 compress = False
 add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py']
