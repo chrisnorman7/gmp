@@ -8,6 +8,7 @@ class UpdateFrame(_Frame):
  
  def Show(self, value = True):
   """Show the frame."""
+  self.status.SetWindowStyle(wx.TE_READONLY|wx.TE_MULTILINE)
   res = super(UpdateFrame, self).Show(value)
   self.Raise()
   self.Maximize(True)
@@ -23,7 +24,7 @@ class UpdateFrame(_Frame):
    self.Show(True)
    self.request = j
    self.updateButton.SetDefault()
-   return '%s %s is available.' % (j['name'], j['version'])
+   return '%s %s is available.\n\nChangelog for this version:\n%s' % (j['name'], j['version'], j.get('changelog', 'No changelog available.'))
   else:
    if self.Shown:
     wx.MessageBox('%s %s is already the latest version' % (application.name, application.version), 'No Update Available')
