@@ -787,14 +787,15 @@ def save_result(event = None):
    except Exception as e:
     wx.MessageBox(str(e), 'Error')
    f = load(new_path)
-   f.initTag()
-   t = f.tag
-   t.album = track.get('album')
-   t.artist = track.get('artist')
-   t.genre = track.get('genre')
-   t.title = track.get('title')
-   t.track_num = track.get('trackNumber')
-   t.disc_num = track.get('discNumber')
-   t.save()
+   if f:
+    f.initTag()
+    t = f.tag
+    t.album = track.get('album')
+    t.artist = track.get('artist')
+    t.genre = track.get('genre')
+    t.title = track.get('title')
+    t.track_num = track.get('trackNumber')
+    t.disc_num = track.get('discNumber')
+    t.save()
  else:
   return wx.MessageBox('That track is not downloaded. Please check your library settings and try playing the track again.', 'File Not Downloaded')
