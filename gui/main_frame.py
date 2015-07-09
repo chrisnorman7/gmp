@@ -492,6 +492,14 @@ class MainFrame(wx.Frame):
   'Shuffle &Queue',
   'Shuffle the play queue.'
   ))
+  self.repeat = play_menu.AppendCheckItem(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'r',
+  self.toggle_repeat,
+  '&Repeat',
+  'Repeat tracks.'
+  ))
+  self.repeat.Check(application.config.get('sound', 'repeat'))
   play_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_SHIFT, wx.WXK_UP,
@@ -546,14 +554,6 @@ class MainFrame(wx.Frame):
   '&Select sound output...',
   'Select a new output device for sound playback.'
   ))
-  self.repeat = options_menu.AppendCheckItem(
-  *self.add_accelerator(
-  wx.ACCEL_CTRL, 'r',
-  self.toggle_repeat,
-  '&Repeat',
-  'Repeat tracks.'
-  ))
-  self.repeat.Check(application.config.get('sound', 'repeat'))
   mb.Append(options_menu, '&Options')
   help_menu = wx.Menu()
   help_menu.Append(
@@ -757,7 +757,7 @@ class MainFrame(wx.Frame):
     track = URLStream(url = url)
    except BassError as e:
     error = e # Just store it for later alerting.
-   Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)]).start()
+   Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)], kwargs = dict(info = item)).start()
   else:
    try:
     track = FileStream(file = path)

@@ -11,6 +11,7 @@ from gui.search_frame import SearchFrame, songs
 from gui.errors_frame import ErrorsFrame
 from copy import copy
 from threading import Thread
+from accessibility import output as announce
 
 id_fields = [
  'storeId',
@@ -155,6 +156,7 @@ def select_station(event = None, station = None, interactive = True):
 
 def play_pause(event = None):
  """Play or pause the music."""
+ announce('Play Pause')
  frame = application.main_frame
  if frame.current_track:
   if frame.current_track.is_paused or frame.current_track.is_stopped:
@@ -168,6 +170,7 @@ def play_pause(event = None):
 
 def stop(event = None):
  """Stop the current track."""
+ announce('Stop.')
  frame = application.main_frame
  if frame.current_track:
   frame.current_track.pause()
@@ -176,6 +179,7 @@ def stop(event = None):
 
 def volume_up(event = None):
  """Turn up the playing song."""
+ announce('Volume Up.')
  frame = application.main_frame
  v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
  if v == 100:
@@ -184,6 +188,7 @@ def volume_up(event = None):
 
 def volume_down(event = None):
  """Turn down the playing song."""
+ announce('Volume Down.')
  frame = application.main_frame
  v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
  if not v:
@@ -211,6 +216,7 @@ def get_previous_song(alter = False):
 
 def previous(event = None):
  """Select the previous track."""
+ announce('Previous.')
  frame = application.main_frame
  if not frame.track_history:
   if frame.current_track:
@@ -252,6 +258,7 @@ def get_next_song(clear = False):
 
 def next(event = None, interactive = True):
  """Plays the next track."""
+ announce('Next.')
  q = get_next_song(True)
  if q:
   application.main_frame.play(q)
@@ -260,6 +267,7 @@ def next(event = None, interactive = True):
 
 def rewind(event):
  """Rewind the track a bit."""
+ announce('Rewind.')
  track = application.main_frame.current_track
  if not track:
   bell()
@@ -271,6 +279,7 @@ def rewind(event):
 
 def fastforward(event):
  """Fastforward the track a bit."""
+ announce('Fast Forward.')
  track = application.main_frame.current_track
  if not track:
   bell()
@@ -302,13 +311,24 @@ def id_to_path(id):
  """Returns the path to the file suggested by id."""
  return os.path.join(application.media_directory, id + application.track_extension)
 
-def download_file(id, url, timestamp):
+def download_file(id, url, timestamp, info = {}):
  """Download the track from url, add it to the library database, and store it with a filename derived from id."""
  path = id_to_path(id)
  try:
   g = requests.get(url)
   with open(path, 'wb') as f:
    f.write(g.content)
+   mp3 = load(path)
+   if mp3:
+    mp3.initTag()
+    t = mp3.tag
+    t.album = info.get('album')
+    t.artist = info.get('artist')
+    t.genre = info.get('genre')
+    t.title = info.get('title')
+    t.track_num = info.get('trackNumber')
+    t.disc_num = info.get('discNumber')
+    t.save()
   application.library[id] = timestamp
  except Exception:
   pass # Let the GUI handle it.
@@ -340,6 +360,7 @@ def do_search(event = None, search = None, type = None, interactive = True):
 
 def do_search_again(event):
  """Repeat the previous search."""
+ announce('Find Again.')
  frame = application.main_frame
  return do_search(search = frame.last_search, type = frame.last_search_type, interactive = False)
 
@@ -388,6 +409,7 @@ def promoted_songs(event):
 
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
+ announce('Focus Playing.')
  frame = application.main_frame
  track = frame.get_current_track()
  if track:
@@ -405,6 +427,7 @@ def focus_playing(event):
 
 def artist_tracks(event = None, id = None):
  """Get all tracks for a particular artist."""
+ announce('Artist Tracks.')
  frame = application.main_frame
  if id == None:
   cr = frame.get_current_result()
@@ -428,6 +451,7 @@ def artist_tracks(event = None, id = None):
 
 def current_album(event):
  """Selects the current album."""
+ announce('Current Album.')
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
@@ -493,6 +517,7 @@ def related_artists(event):
 
 def all_playlist_tracks(event):
  """Add every track from every playlist."""
+ announce('Load All Playlist Tracks.')
  frame = application.main_frame
  tracks = [] # The final results.
  try:
@@ -509,6 +534,7 @@ def all_playlist_tracks(event):
 
 def queue_result(event):
  """Adds the current result to the queue."""
+ announce('Queue Result.')
  frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
@@ -533,6 +559,7 @@ def add_to_playlist(event = None, playlist = None):
 
 def add_again_to_playlist(event):
  """Adds again to the last playlist used."""
+ announce('Add To Previous Playlist.')
  add_to_playlist(playlist = application.main_frame.add_to_playlist)
 
 def delete(event):
@@ -673,6 +700,7 @@ def station_from_genre(event):
 
 def reset_fx(event):
  """Resets pan and frequency to defaults."""
+ announce('Reset FX.')
  frame = application.main_frame
  frame.frequency.SetValue(50)
  frame.set_frequency()
@@ -681,11 +709,13 @@ def reset_fx(event):
 
 def shuffle(stuff):
  """Shuffles things, and returns them, allowing shuffle to be used from a lambda."""
+ announce('Shuffle.')
  random.shuffle(stuff)
  return stuff
 
 def top_tracks(artist = None, interactive = False):
  """Returns top tracks for an artist."""
+ announce('Top Tracks.')
  frame = application.main_frame
  if not artist:
   if not interactive:
@@ -708,6 +738,7 @@ def top_tracks(artist = None, interactive = False):
 
 def results_history_back(event):
  """Move back through the results history."""
+ announce('Back.')
  frame = application.main_frame
  if not application.results_history:
   return bell()
@@ -718,6 +749,7 @@ def results_history_back(event):
 
 def results_history_forward(event):
  """Moves forward through the results history."""
+ announce('Forward.')
  frame = application.main_frame
  if not application.results_history:
   return bell()
@@ -786,16 +818,5 @@ def save_result(event = None):
     shcopy(path, new_path)
    except Exception as e:
     wx.MessageBox(str(e), 'Error')
-   f = load(new_path)
-   if f:
-    f.initTag()
-    t = f.tag
-    t.album = track.get('album')
-    t.artist = track.get('artist')
-    t.genre = track.get('genre')
-    t.title = track.get('title')
-    t.track_num = track.get('trackNumber')
-    t.disc_num = track.get('discNumber')
-    t.save()
  else:
   return wx.MessageBox('That track is not downloaded. Please check your library settings and try playing the track again.', 'File Not Downloaded')

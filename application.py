@@ -121,6 +121,9 @@ config.set('http', 'port', 4673, title = 'The port the web server should run on'
 config.set('http', 'uid', 'gmp', title = 'A username which must be entered to login to the web server')
 config.set('http', 'pwd', 'LetMeIn', title = 'A password which must be entered to login to the web server')
 
+config.add_section('accessibility')
+config.set('accessibility', 'announcements', False, title = 'Enable Accessibility Announcements')
+
 config_file = os.path.join(directory, 'config.json')
 
 if os.path.isfile(config_file):
