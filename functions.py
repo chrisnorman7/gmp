@@ -156,7 +156,7 @@ def select_station(event = None, station = None, interactive = True):
 
 def play_pause(event = None):
  """Play or pause the music."""
- announce('Play Pause')
+ #announce('Play Pause')
  frame = application.main_frame
  if frame.current_track:
   if frame.current_track.is_paused or frame.current_track.is_stopped:
@@ -170,7 +170,7 @@ def play_pause(event = None):
 
 def stop(event = None):
  """Stop the current track."""
- announce('Stop.')
+ #announce('Stop.')
  frame = application.main_frame
  if frame.current_track:
   frame.current_track.pause()
@@ -179,7 +179,7 @@ def stop(event = None):
 
 def volume_up(event = None):
  """Turn up the playing song."""
- announce('Volume Up.')
+ #announce('Volume Up.')
  frame = application.main_frame
  v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
  if v == 100:
@@ -188,7 +188,7 @@ def volume_up(event = None):
 
 def volume_down(event = None):
  """Turn down the playing song."""
- announce('Volume Down.')
+ #announce('Volume Down.')
  frame = application.main_frame
  v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
  if not v:
@@ -216,7 +216,7 @@ def get_previous_song(alter = False):
 
 def previous(event = None):
  """Select the previous track."""
- announce('Previous.')
+ #announce('Previous.')
  frame = application.main_frame
  if not frame.track_history:
   if frame.current_track:
@@ -258,7 +258,7 @@ def get_next_song(clear = False):
 
 def next(event = None, interactive = True):
  """Plays the next track."""
- announce('Next.')
+ #announce('Next.')
  q = get_next_song(True)
  if q:
   application.main_frame.play(q)
@@ -267,7 +267,7 @@ def next(event = None, interactive = True):
 
 def rewind(event):
  """Rewind the track a bit."""
- announce('Rewind.')
+ #announce('Rewind.')
  track = application.main_frame.current_track
  if not track:
   bell()
@@ -279,7 +279,7 @@ def rewind(event):
 
 def fastforward(event):
  """Fastforward the track a bit."""
- announce('Fast Forward.')
+ #announce('Fast Forward.')
  track = application.main_frame.current_track
  if not track:
   bell()
@@ -409,7 +409,7 @@ def promoted_songs(event):
 
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
- announce('Focus Playing.')
+ #announce('Focus Playing.')
  frame = application.main_frame
  track = frame.get_current_track()
  if track:
@@ -700,7 +700,7 @@ def station_from_genre(event):
 
 def reset_fx(event):
  """Resets pan and frequency to defaults."""
- announce('Reset FX.')
+ #announce('Reset FX.')
  frame = application.main_frame
  frame.frequency.SetValue(50)
  frame.set_frequency()

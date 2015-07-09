@@ -9,6 +9,7 @@ from sound_lib.main import BassError
 from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
 from gui.update_frame import UpdateFrame
+from accessibility import output as announce
 
 keys = {} # Textual key names.
 mods = {} # Textual modifiers
@@ -884,12 +885,16 @@ class MainFrame(wx.Frame):
  def toggle_stop_after(self, event):
   """Toggles the stop after menu item."""
   application.config.toggle('sound', 'stop_after')
-  self.stop_after.Check(application.config.get('sound', 'stop_after'))
+  c = application.config.get('sound', 'stop_after')
+  self.stop_after.Check(c)
+  announce('%s after.' % ('Stop' if c else 'Don\'t stop'))
  
  def toggle_repeat(self, event):
   """Toggles the repeat setting."""
   application.config.toggle('sound', 'repeat')
-  self.repeat.Check(application.config.get('sound', 'repeat'))
+  c = application.config.get('sound', 'repeat')
+  self.repeat.Check(c)
+  announce('Repeat %s.' % ('on' if c else 'off'))
  
  def add_accelerator(self, modifiers, key, func, title, description = None, id = None):
   """Adds an accelerator to the table."""
