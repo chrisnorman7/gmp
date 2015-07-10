@@ -11,7 +11,6 @@ from gui.search_frame import SearchFrame, songs
 from gui.errors_frame import ErrorsFrame
 from copy import copy
 from threading import Thread
-from accessibility import output as announce
 
 id_fields = [
  'storeId',
@@ -263,7 +262,7 @@ def next(event = None, interactive = True):
  if q:
   application.main_frame.play(q)
  else:
-  return Bell() if interactive else None
+  return bell() if interactive else None
 
 def rewind(event):
  """Rewind the track a bit."""
@@ -820,3 +819,7 @@ def save_result(event = None):
     wx.MessageBox(str(e), 'Error')
  else:
   return wx.MessageBox('That track is not downloaded. Please check your library settings and try playing the track again.', 'File Not Downloaded')
+
+def announce(stuff):
+ """Accessible alerts as were."""
+ return wx.MessageBox(stuff, 'Alert') if application.config.get('accessibility', 'announcements') else None

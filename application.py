@@ -1,7 +1,7 @@
 version = '1.9'
 devel = False
 compress = False
-add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py']
+add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py', 'pywintypes27.dll', 'pythoncom27.dll']
 update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
 errors_frame = None
