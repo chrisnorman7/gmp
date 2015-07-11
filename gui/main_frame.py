@@ -785,7 +785,7 @@ class MainFrame(wx.Frame):
   else:
    self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
   try:
-   application.mobile_api.increment_song_playcount(id)
+   Thread(target = application.mobile_api.increment_song_playcount, args = [id]).start()
    self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])
    try:
     self.set_artist_bio(self.artist_info.get('artistBio', 'No information available.'))

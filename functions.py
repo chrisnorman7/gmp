@@ -227,7 +227,7 @@ def previous(event = None):
   if q:
    q.insert(0, frame.get_current_track())
   frame.queue_tracks(q, True)
-  frame.play(get_previous_song())
+  frame.play(get_previous_song(), history = False)
 
 def get_next_song(clear = False):
  """Get the next song from the play queue or list of results. If clear is True, unqueue the resulting track."""
