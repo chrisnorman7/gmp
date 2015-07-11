@@ -1,8 +1,9 @@
 """The lyrics viewer for gmp."""
 
-import requests, wx, application, re, webbrowser, functions
-from threading import Thread
+import wx, requests, application, re, webbrowser, functions
+from lyrics import lyricwikiurl, getlyrics
 from unidecode import unidecode
+from threading import Thread
 
 abort_symbols = '[]()<>,!%~\\"?'
 avoid_symbols = '.\'#'
@@ -52,36 +53,50 @@ class LyricsViewer(wx.Frame):
   return raw_value
  
  def populate_lyrics(self, artist, title):
-  """Fills self.lyrics with the lyrics from A-Z Lyrics."""
+  """Fills self.lyrics with the lyrics from the included lyrics package."""
   self.SetTitle('Lyrics for %s - %s' % (artist, title))
-  raw_title = self.format_string(title)
-  raw_artist = unidecode(artist).replace(' ', '').replace('&', 'and').lower()
-  if 'feat' in raw_artist:
-   raw_artist = raw_artist[:raw_artist.index('feat')]
-  raw_artist = self.format_string(raw_artist)
-  if raw_artist.startswith('the'):
-   raw_artist = raw_artist[3:]
-  self.url = 'http://www.azlyrics.com/lyrics/%s/%s.html' % (raw_artist, raw_title)
-  wx.CallAfter(self.lyrics.SetValue, 'Lyrics URL: %s' % self.url)
+  self.url = lyricwikiurl(artist, title)
+  error = True
   try:
-   res = requests.get(self.url)
-  except (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError) as e:
-   wx.CallAfter(self.lyrics.write, '\n\nCould not get lyrics: %s.' % str(e))
-  if res.status_code != 200:
-   wx.CallAfter(self.lyrics.write, '\n\nNo lyrics found.')
+   l = getlyrics(artist, title)
+   error = False
+  except IOError:
+   raw_title = self.format_string(title)
+   raw_artist = unidecode(artist).replace(' ', '').replace('&', 'and').lower()
+   if 'feat' in raw_artist:
+    raw_artist = raw_artist[:raw_artist.index('feat')]
+   raw_artist = self.format_string(raw_artist)
+   if raw_artist.startswith('the'):
+    raw_artist = raw_artist[3:]
+   self.url = 'http://www.azlyrics.com/lyrics/%s/%s.html' % (raw_artist, raw_title)
+   try:
+    res = requests.get(self.url)
+   except (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError) as e:
+    l = 'Could not get lyrics: %s.' % str(e)
+   if res.status_code != 200:
+    l = 'No lyrics found.'
+   else:
+    l = res.content
+    start = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
+    end = '</div>'
+    if start in l:
+     l = l[l.index(start) + len(start):].replace('<br>', '')
+     if end in l:
+      l = l[:l.index(end)]
+      l = re.sub(r'\<[^>]+\>', '', l)
+      while l.startswith('\n') or l.startswith('\r'):
+       l = l[1:]
+      error = False
+    else:
+     l = 'Error in HTML. Place marker not found.'
+  if error:
+   wx.CallAfter(self.lyrics.SetValue, '')
    wx.CallAfter(self.browse.Disable)
   else:
-   l = res.content
-   start = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
-   end = '</div>'
-   if start in l:
-    l = l[l.index(start) + len(start):].replace('<br>', '')
-    if end in l:
-     l = l[:l.index(end)]
-     wx.CallAfter(self.lyrics.write, re.sub(r'\<[^>]+\>', '', l))
-     return wx.CallAfter(self.lyrics.SetInsertionPoint, 0)
-   wx.MessageBox('Error in HTML. Place marker not found.', 'Error')
-   self.Close(True)
+   wx.CallAfter(self.lyrics.SetValue, 'Lyrics URL: %s\n\n' % self.url)
+   wx.CallAfter(self.browse.Enable)
+  wx.CallAfter(self.lyrics.write, l)
+  wx.CallAfter(self.lyrics.SetInsertionPoint, 0)
  
  def do_browse(self, event):
   """Opens the URL in the web browser."""

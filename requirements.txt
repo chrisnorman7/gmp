@@ -10,3 +10,5 @@ git+https://github.com/simon-weber/Unofficial-Google-Music-API.git
 git+https://github.com/chrisnorman7/updatecheck.git
 unidecode
 hg+https://bitbucket.org/nicfit/eyed3#egg=eyed3
+lxml
+cssselect
