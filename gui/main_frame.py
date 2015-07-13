@@ -32,6 +32,7 @@ class MainFrame(wx.Frame):
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
+  functions.frame = self # Save typing in the functions.
   self.current_pos = 0.0 # The position in the currently playing track for the Winamp-style control.
   self.duration = None # The duration of the track as a string.
   self.title = None # The title of the current track.
@@ -171,6 +172,13 @@ class MainFrame(wx.Frame):
   lambda event: self.add_saved_result(),
   '&Save Results...',
   'Save the current results to the saved results list.'
+  ))
+  file_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_ALT, 'l',
+  lambda event: Thread(target = functions.results_to_library, args = [event]).start(),
+  'Add Results To &Library',
+  'Add all results currently showing to the library.'
   ))
   file_menu.Append(
   *self.add_accelerator(

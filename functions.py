@@ -12,6 +12,8 @@ from gui.errors_frame import ErrorsFrame
 from copy import copy
 from threading import Thread
 
+frame = None # The main frame (save typing frame = application.main_frame the whole time).
+
 id_fields = [
  'storeId',
  'id',
@@ -27,7 +29,6 @@ def format_title(track):
 
 def config_update(config, section, option, value):
  """Ran when apply or OK is clicked in the options window."""
- frame = application.main_frame
  if section == 'sound':
   if option == 'repeat':
    frame.repeat.Check(value)
@@ -38,6 +39,8 @@ def config_update(config, section, option, value):
    frame.play_controls_func(value)
  elif section == 'http' and option in ['enabled', 'hostname', 'port']:
   Thread(target = frame.reload_http_server).start()
+
+application.config.updateFunc = config_update
 
 def get_id(item):
  """Return the ID for the provided item."""
@@ -83,7 +86,6 @@ def reveal_media(event):
 
 def add_to_library(event):
  """Adds the current result to the library."""
- frame = application.main_frame
  cr = frame.get_current_result()
  if frame.current_library or cr == -1:
   return bell() # Can't add stuff in the library to the library, or there's nothing selected to add.
@@ -96,7 +98,6 @@ def add_to_library(event):
  wx.MessageBox('Added %s to your library.' % format_title(track), 'Track Added')
 
 def select_playlist(event = None, playlists = None, playlist = None, interactive = True):
- frame = application.main_frame
  if not playlists:
   try:
    playlists = application.mobile_api.get_all_user_playlist_contents()
@@ -126,7 +127,6 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
 
 def select_station(event = None, station = None, interactive = True):
  """Select a radio station."""
- frame = application.main_frame
  try:
   stations = application.mobile_api.get_all_stations()
  except RE as e:
@@ -156,7 +156,6 @@ def select_station(event = None, station = None, interactive = True):
 def play_pause(event = None):
  """Play or pause the music."""
  #announce('Play Pause')
- frame = application.main_frame
  if frame.current_track:
   if frame.current_track.is_paused or frame.current_track.is_stopped:
    frame.current_track.play()
@@ -170,7 +169,6 @@ def play_pause(event = None):
 def stop(event = None):
  """Stop the current track."""
  #announce('Stop.')
- frame = application.main_frame
  if frame.current_track:
   frame.current_track.pause()
   frame.current_track.set_position(0) # Pause instead of stopping.
@@ -179,7 +177,6 @@ def stop(event = None):
 def volume_up(event = None):
  """Turn up the playing song."""
  #announce('Volume Up.')
- frame = application.main_frame
  v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
  if v == 100:
   bell()
@@ -188,7 +185,6 @@ def volume_up(event = None):
 def volume_down(event = None):
  """Turn down the playing song."""
  #announce('Volume Down.')
- frame = application.main_frame
  v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
  if not v:
   bell()
@@ -199,7 +195,6 @@ def set_volume(v):
  if v < 0 or v > 100:
   return False
  else:
-  frame = application.main_frame
   frame.volume.SetValue(v)
   frame.set_volume(None)
   return True
@@ -207,7 +202,6 @@ def set_volume(v):
 
 def get_previous_song(alter = False):
  """Get the song which will be played when the previous button is pressed. If alter is True, actually remove the track from the history buffer."""
- frame = application.main_frame
  if frame.track_history:
   return frame.track_history[-1]
   if alter:
@@ -216,7 +210,6 @@ def get_previous_song(alter = False):
 def previous(event = None):
  """Select the previous track."""
  #announce('Previous.')
- frame = application.main_frame
  if not frame.track_history:
   if frame.current_track:
    frame.current_track.play(True)
@@ -231,7 +224,6 @@ def previous(event = None):
 
 def get_next_song(clear = False):
  """Get the next song from the play queue or list of results. If clear is True, unqueue the resulting track."""
- frame = application.main_frame
  q = frame.get_queue()
  if q:
   if clear:
@@ -336,7 +328,6 @@ def download_file(id, url, timestamp, info = {}):
 
 def track_seek(event):
  """Get the value of the seek slider and move the track accordingly."""
- frame = application.main_frame
  track = frame.current_track
  if track:
   try:
@@ -346,7 +337,6 @@ def track_seek(event):
 
 def do_search(event = None, search = None, type = None, interactive = True):
  """Search google music."""
- frame = application.main_frame
  if not search:
   search = frame.last_search
  if type == None:
@@ -360,12 +350,10 @@ def do_search(event = None, search = None, type = None, interactive = True):
 def do_search_again(event):
  """Repeat the previous search."""
  announce('Find Again.')
- frame = application.main_frame
  return do_search(search = frame.last_search, type = frame.last_search_type, interactive = False)
 
 def do_search_quick(event):
  """Search quickly."""
- frame = application.main_frame
  old_search_string = copy(frame.last_search)
  old_search_type = copy(frame.last_search_type)
  dlg = wx.TextEntryDialog(frame, 'Search for songs', 'Quick Search', old_search_string)
@@ -378,7 +366,6 @@ def do_search_quick(event):
 
 def select_output(event = None):
  """Selects a new audio output."""
- frame = application.main_frame
  o = application.sound_output
  p = getattr(o, '__class__')
  dlg = wx.SingleChoiceDialog(frame, 'Select Output Device', 'Select an output device from the list', o.get_device_names())
@@ -409,7 +396,6 @@ def promoted_songs(event):
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
  #announce('Focus Playing.')
- frame = application.main_frame
  track = frame.get_current_track()
  if track:
   if track in frame.get_results():
@@ -427,7 +413,6 @@ def focus_playing(event):
 def artist_tracks(event = None, id = None):
  """Get all tracks for a particular artist."""
  announce('Artist Tracks.')
- frame = application.main_frame
  if id == None:
   cr = frame.get_current_result()
   if cr == -1:
@@ -451,7 +436,6 @@ def artist_tracks(event = None, id = None):
 def current_album(event):
  """Selects the current album."""
  announce('Current Album.')
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell() # No row selected.
@@ -463,7 +447,6 @@ def current_album(event):
 
 def artist_album(event, albums = None):
  """Selects a particular artist album."""
- frame = application.main_frame
  if albums:
   show_artists = True
  else:
@@ -491,7 +474,6 @@ def artist_album(event, albums = None):
 
 def related_artists(event):
  """Selects and views tracks for a related artist."""
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell()
@@ -517,7 +499,6 @@ def related_artists(event):
 def all_playlist_tracks(event):
  """Add every track from every playlist."""
  announce('Load All Playlist Tracks.')
- frame = application.main_frame
  tracks = [] # The final results.
  try:
   playlists = application.mobile_api.get_all_playlists()
@@ -534,7 +515,6 @@ def all_playlist_tracks(event):
 def queue_result(event):
  """Adds the current result to the queue."""
  announce('Queue Result.')
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell() # No row selected.
@@ -542,7 +522,6 @@ def queue_result(event):
 
 def add_to_playlist(event = None, playlist = None):
  """Add the current result to a playlist."""
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell() # No item selected.
@@ -563,7 +542,6 @@ def add_again_to_playlist(event):
 
 def delete(event):
  """Deletes an item from the focused playlist, or the library if that is focused."""
- frame = application.main_frame
  if frame.queue.HasFocus():
   # They pressed delete from the play queue.
   q = frame.get_current_queue_result()
@@ -599,7 +577,6 @@ def delete(event):
 
 def delete_thing(event):
  """Deletes the current playlist, station or saved result."""
- frame = application.main_frame
  if frame.current_playlist:
   # We are working on a playlist.
   name = '%s playlist' % frame.current_playlist.get('name', 'Untitled')
@@ -626,7 +603,6 @@ def delete_thing(event):
 
 def station_from_result(event):
  """Creates a station from the current result."""
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell()
@@ -643,7 +619,6 @@ def station_from_result(event):
 
 def station_from_artist(event):
  """Create a station based on the currently selected artist."""
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell()
@@ -660,7 +635,6 @@ def station_from_artist(event):
 
 def station_from_album(event):
  """Create a station from the currently selected album."""
- frame = application.main_frame
  cr = frame.get_current_result()
  if cr == -1:
   return bell()
@@ -677,7 +651,6 @@ def station_from_album(event):
 
 def station_from_genre(event):
  """Creates a station based on a genre."""
- frame = application.main_frame
  try:
   genres = application.mobile_api.get_genres()
  except RE as e:
@@ -700,7 +673,6 @@ def station_from_genre(event):
 def reset_fx(event):
  """Resets pan and frequency to defaults."""
  #announce('Reset FX.')
- frame = application.main_frame
  frame.frequency.SetValue(50)
  frame.set_frequency()
  frame.pan.SetValue(50)
@@ -715,7 +687,6 @@ def shuffle(stuff):
 def top_tracks(artist = None, interactive = False):
  """Returns top tracks for an artist."""
  announce('Top Tracks.')
- frame = application.main_frame
  if not artist:
   if not interactive:
    raise ValueError('Must supply an artist when not in interactive mode.')
@@ -738,7 +709,6 @@ def top_tracks(artist = None, interactive = False):
 def results_history_back(event):
  """Move back through the results history."""
  announce('Back.')
- frame = application.main_frame
  if not application.results_history:
   return bell()
  i = application.results_history_index - 1
@@ -749,7 +719,6 @@ def results_history_back(event):
 def results_history_forward(event):
  """Moves forward through the results history."""
  announce('Forward.')
- frame = application.main_frame
  if not application.results_history:
   return bell()
  i = application.results_history_index + 1
@@ -764,7 +733,6 @@ def format_requests_error(err, title = 'Connection Error'):
 def get_lyrics(event, track = None):
  """Loads up a lyrics viewer frame with the lyrics of the supplied track, or the currently playing track if None is provided."""
  if not track:
-  frame = application.main_frame
   cr = frame.get_current_result()
   if cr == -1:
    return bell()
@@ -798,7 +766,6 @@ def get_size(start_path = '.'):
 
 def save_result(event = None):
  """Save the current result."""
- frame = application.main_frame
  track = frame.get_current_track()
  if not track:
   return wx.Bell()
@@ -823,3 +790,20 @@ def save_result(event = None):
 def announce(stuff):
  """Accessible alerts as were."""
  return wx.MessageBox(stuff, 'Alert') if application.config.get('accessibility', 'announcements') else None
+
+def results_to_library(event = None):
+ """Adds everything in the current list of results to the library."""
+ if frame.current_library:
+  return bell()
+ results = frame.get_results()
+ l = len(results)
+ dlg = wx.ProgressDialog('Add To Library', 'Adding %s songs to your library.' % l, l, frame, wx.PD_APP_MODAL|wx.PD_AUTO_HIDE|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME|wx.PD_ESTIMATED_TIME)
+ for i, r in enumerate(results):
+  i += 1
+  cont, skip = dlg.Update(i, '(%s/%s) Adding %s to library.' % (i, l, format_title(r)))
+  application.mobile_api.add_aa_track(get_id(r))
+  if not cont:
+   wx.CallAfter(dlg.Update, l, 'Finishing up...')
+   wx.CallAfter(dlg.Destroy)
+   break
+ wx.CallAfter(dlg.Destroy)

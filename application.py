@@ -34,7 +34,7 @@ columns = [
 
 default_columns = columns
 
-import wx, os, json, functions
+import wx, os, json
 from sound_lib.output import Output
 from my_mobileclient import MyMobileclient
 sound_output = Output()
@@ -197,7 +197,5 @@ for x in os.listdir(media_directory):
 for l in library.keys():
  if not os.path.isfile(os.path.join(media_directory, l + track_extension)):
   del library[l]
-
-config.updateFunc = functions.config_update
 
 gmusicapi_version = '7.0.0-dev'
