@@ -148,12 +148,18 @@ class MainFrame(wx.Frame):
   self.hotkey_area = wx.TextCtrl(p)
   self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
   s4.Add(self.hotkey_area, 1, wx.GROW)
-  s4.Add(wx.StaticText(p, label = 'Select &Artist'), 0, wx.GROW)
-  self._full_results = [] # The unadulterated results.
-  self.artists = wx.Choice(p)
-  self.artists.Bind(wx.EVT_CHOICE, self.select_artist)
-  s4.Add(self.artists, 1, wx.GROW)
   s.Add(s4, 0, wx.GROW)
+  self._full_results = [] # The unadulterated results.
+  s5 = wx.BoxSizer(wx.HORIZONTAL)
+  s5.Add(wx.StaticText(p, label = '&Artists'), 0, wx.GROW)
+  self.artists = wx.Choice(p, style = wx.CB_SORT)
+  self.artists.Bind(wx.EVT_CHOICE, self.filter_results)
+  s5.Add(self.artists, 1, wx.GROW)
+  s5.Add(wx.StaticText(p, label = 'A&lbums'), 0, wx.GROW)
+  self.albums = wx.Choice(p, style = wx.CB_SORT)
+  self.albums.Bind(wx.EVT_CHOICE, self.filter_results)
+  s5.Add(self.albums, 1, wx.GROW)
+  s.Add(s5, 0, wx.GROW)
   p.SetSizerAndFit(s)
   self.panel = p
   self.main_sizer = s
@@ -175,7 +181,7 @@ class MainFrame(wx.Frame):
   ))
   file_menu.Append(
   *self.add_accelerator(
-  wx.ACCEL_ALT, 'l',
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, '/',
   lambda event: Thread(target = functions.results_to_library, args = [event]).start(),
   'Add Results To &Library',
   'Add all results currently showing to the library.'
@@ -615,13 +621,17 @@ class MainFrame(wx.Frame):
   """Clears the track history."""
   self.track_history = []
  
- def add_result(self, result):
+ def add_result(self, result, update_filters = False):
   """Given a list item from Google, add it to self._results, and add data to the table."""
   self._full_results.append(result)
-  a = result.get('artist')
-  if a not in self.artists.GetItems():
-   self.artists.AppendItems([result.get('artist')])
   self._results.append(result)
+  if update_filters:
+   a = result.get('artist', 'Unknown Artist')
+   if a not in self.artists.GetItems():
+    self.artists.Append(a)
+   a = result.get('album', 'Unknonw Album')
+   if a not in self.albums.GetItems():
+    self.albums.Append(a)
   stuff = []
   for spec, column in application.columns:
    if type(column) != dict:
@@ -635,10 +645,23 @@ class MainFrame(wx.Frame):
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
   self.results.DeleteItem(result)
-  #self._results.remove(self.get_results()[result])
+  del self._results[result]
  
- def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None):
-  """Adds multiple results using self.add_result. If playlist is provided, store the ID of the current playlist so we can perform operations on it."""
+ def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None, artists = None, albums = None):
+  """
+  Adds multiple results using self.add_result.
+  
+  Arguments:
+  clear - If True, first clear the results list.
+  bypass_history - If True, don't add this result set to the history list.
+  scroll_history - If True, jump to the end of the history list.
+  playlist - The ID of the current playlist or None if this result set is not a playlist.
+  station - The ID of the station or None if the current result set is not a station.
+  library - True or False depending on whether the current result set is the library or not.
+  saved_result - The name of the current saved result this result set is made from or None.
+  artists - The list of artists for this result set. Defaults to the artists of all the songs in the set.
+  albums - The list of albums for this result set. Defaults to all the albums of all the tracks in the set.
+  """
   if not self.bypass_history:
    r = self.get_results()
    if r and (not application.results_history or r != application.results_history[-1]): # Don't save blank or duplicate results.
@@ -655,11 +678,20 @@ class MainFrame(wx.Frame):
   if clear:
    self.clear_results()
   map(self.add_result, results)
+  if artists:
+   self.artists.SetItems(artists)
+  else:
+   self.artists.SetItems(sorted(set([x.get('artist', 'Unknown Artist') for x in self.get_results()] + ['  All Artists  '])))
+  self.artists.SetSelection(0)
+  if albums:
+   self.albums.SetItems(albums)
+  else:
+   self.albums.SetItems(sorted(set([x.get('album', 'Unknown Album') for x in self.get_results()] + ['  All Albums  '])))
+  self.albums.SetSelection(0)
   self.results.SetFocus()
  
  def clear_results(self):
   """Clears the results table."""
-  self.artists.SetItems(['All Artists'])
   self._results = []
   self._full_results = []
   self.results.DeleteAllItems()
@@ -770,7 +802,8 @@ class MainFrame(wx.Frame):
    try:
     track = FileStream(file = path)
    except BassError as e:
-    error = e # Same as above.
+    del application.library[id]
+    return self.play(item) # Try again... File's probably not there or something...
   if error:
    return wx.MessageBox(str(e), 'Error')
   if self.current_track:
@@ -983,20 +1016,29 @@ class MainFrame(wx.Frame):
   except wx.PyDeadObjectError:
    pass # The window has been destroyed.
  
- def select_artist(self, event):
-  """Select an artist from the popup button."""
-  e = event.GetSelection()
-  i = self.artists.GetItems()
-  res = self.artists.GetItems()[e]
-  r = list(self._full_results)
-  if e:
-   results = [x for x in r if x.get('artist') == res]
+ def filter_results(self, event):
+  """Filter results based on the selections from self.artists and self.albums."""
+  artists = self.artists.GetItems()
+  artist_index = self.artists.GetSelection()
+  if artist_index:
+   artist = artists[artist_index].lower()
   else:
-   results = r
-  self.add_results(results, clear = True, bypass_history = True)
+   artist = None
+  album_index = self.albums.GetSelection()
+  if album_index:
+   album = self.albums.GetItems()[album_index].lower()
+  else:
+   album = None
+  r = self._full_results
+  results = []
+  for x in r:
+   if not artist or x.get('artist', artist).lower() == artist:
+    if not album or x.get('album', album).lower() == album:
+     results.append(x)
+  self.add_results(results, clear = True, bypass_history = True, artists = artists)
   self._full_results = r
-  self.artists.SetItems(i)
-  self.artists.SetSelection(e)
+  self.artists.SetSelection(artist_index)
+  self.albums.SetStringSelection(album) if album else None
  
  def play_controls_func(self, c):
   """Shows or hides play controls."""
