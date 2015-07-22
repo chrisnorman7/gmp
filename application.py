@@ -1,13 +1,17 @@
 version = '1.9'
 devel = False
 compress = False
-add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py', 'pywintypes27.dll', 'pythoncom27.dll']
+add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py', 'pywintypes27.dll', 'pythoncom27.dll', 'cssselect']
 update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
 errors_frame = None
 
 from confmanager import ConfManager, parser
 from sys import platform
+
+def id_to_path(id):
+ """Returns the path to the file suggested by id."""
+ return os.path.join(media_directory, id + track_extension)
 
 saved_results = {}
 results_history = []
@@ -194,8 +198,8 @@ for x in os.listdir(media_directory):
   os.remove(os.path.join(media_directory, x))
 
 # Delete all the entries without files.
-for l in library.keys():
- if not os.path.isfile(os.path.join(media_directory, l + track_extension)):
-  del library[l]
+for k, t in library.items():
+ if not os.path.isfile(id_to_path(k)) or t == None:
+  del library[k]
 
 gmusicapi_version = '7.0.0-dev'

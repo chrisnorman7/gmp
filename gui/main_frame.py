@@ -782,28 +782,31 @@ class MainFrame(wx.Frame):
   error = None # Any error that occured.
   fname = id + application.track_extension
   path = functions.id_to_path(id)
-  if id not in application.library or (application.library[id] and application.library[id] != item.get('lastModifiedTimestamp', application.library[id])): # Our version is older, download again
-   try:
-    url = application.mobile_api.get_stream_url(id)
-   except gmusicapi.exceptions.CallFailure as e:
-    application.device_id = None
-    return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
-   except functions.RE as e:
-    if self.current_track:
-     self.current_track.set_position(self.current_track.get_length() - 1)
-     self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
-    return wx.MessageBox(*functions.format_requests_error(e))
-   try:
-    track = URLStream(url = url)
-   except BassError as e:
-    error = e # Just store it for later alerting.
-   Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)], kwargs = dict(info = item)).start()
-  else:
+  if id in application.library and application.library[id] == item.get('lastModifiedTimestamp', application.library[id]): # The file has been downloaded, play the local copy.
    try:
     track = FileStream(file = path)
    except BassError as e:
     del application.library[id]
-    return self.play(item) # Try again... File's probably not there or something...
+    return self.play(item, history = history, play = play) # Try again... File's probably not there or something...
+  else:
+   if id in application.library: # Track is downloading...
+    return wx.MessageBox('The track %s has not yet finished downloading. Please wait for the download to complete before playing again.' % functions.format_title(item), 'Not Downloaded Yet')
+   else:
+    try:
+     url = application.mobile_api.get_stream_url(id)
+    except gmusicapi.exceptions.CallFailure as e:
+     application.device_id = None
+     return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
+    except functions.RE as e:
+     if self.current_track:
+      self.current_track.set_position(self.current_track.get_length() - 1)
+      self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+     return wx.MessageBox(*functions.format_requests_error(e))
+    try:
+     track = URLStream(url = url)
+    except BassError as e:
+     error = e # Just store it for later alerting.
+    Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)], kwargs = dict(info = item)).start()
   if error:
    return wx.MessageBox(str(e), 'Error')
   if self.current_track:

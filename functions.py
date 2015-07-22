@@ -3,7 +3,7 @@
 import application, wx, os, requests, sys, random
 from eyed3 import load
 from shutil import copy as shcopy
-RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError)
+RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError, IOError)
 from sound_lib.main import BassError
 from time import time
 from gui.lyrics_viewer import LyricsViewer
@@ -298,14 +298,13 @@ def prune_library():
   del application.library[id]
   return id
 
-def id_to_path(id):
- """Returns the path to the file suggested by id."""
- return os.path.join(application.media_directory, id + application.track_extension)
+id_to_path = application.id_to_path # Can't import it from here because the bit at the top kicks off.
 
 def download_file(id, url, timestamp, info = {}):
  """Download the track from url, add it to the library database, and store it with a filename derived from id."""
  path = id_to_path(id)
  try:
+  application.library[id] = None
   g = requests.get(url)
   with open(path, 'wb') as f:
    f.write(g.content)
@@ -322,6 +321,7 @@ def download_file(id, url, timestamp, info = {}):
     t.save()
   application.library[id] = timestamp
  except Exception:
+  del application.library[id]
   pass # Let the GUI handle it.
  while get_size(application.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
   prune_library()
