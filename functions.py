@@ -1,6 +1,6 @@
 """Various functions used in the program."""
 
-import application, wx, os, requests, sys, random
+import application, wx, os, requests, sys, random, library
 from eyed3 import load
 from shutil import copy as shcopy
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError, IOError)
@@ -10,7 +10,7 @@ from gui.lyrics_viewer import LyricsViewer
 from gui.search_frame import SearchFrame, songs
 from gui.errors_frame import ErrorsFrame
 from copy import copy
-from threading import Thread
+from threading import Thread, current_thread
 
 frame = None # The main frame (save typing frame = application.main_frame the whole time).
 
@@ -283,32 +283,28 @@ def fastforward(event):
 
 def prune_library():
  """Delete the oldest track from the library."""
- id = None # The id of the track to delete.
- path = None # The path to the file to be deleted.
- stamp = time() # The last modified time stamp of the file.
- for x in os.listdir(application.media_directory):
-  p = os.path.join(application.media_directory, x)
-  fstamp = os.path.getctime(p) # The created time of the current file.
-  if fstamp < stamp:
-   id = x[:len(application.track_extension) * -1]
-   stamp = fstamp
-   path = p
- if path:
-  os.remove(path)
-  del application.library[id]
-  return id
+ t = library.session.query(library.Track).filter_by(library.Track.downloaded).first()
+ if t:
+  print t.filename
+ else:
+  print 'No tracks.'
 
-id_to_path = application.id_to_path # Can't import it from here because the bit at the top kicks off.
-
-def download_file(id, url, timestamp, info = {}):
+def download_file(url, info):
  """Download the track from url, add it to the library database, and store it with a filename derived from id."""
- path = id_to_path(id)
+ track = library.Track()
+ for k, v in info.items():
+  if hasattr(track, k):
+   setattr(track, k, v)
+ track.id = get_id(info)
+ session = library.create_session()
+ session.add(track)
+ session.commit()
  try:
-  application.library[id] = None
   g = requests.get(url)
-  with open(path, 'wb') as f:
-   f.write(g.content)
-   mp3 = load(path)
+  if g.status_code == 200:
+   with open(track.path, 'wb') as f:
+    f.write(g.content)
+   mp3 = load(track.path)
    if mp3:
     mp3.initTag()
     t = mp3.tag
@@ -319,11 +315,11 @@ def download_file(id, url, timestamp, info = {}):
     t.track_num = info.get('trackNumber')
     t.disc_num = info.get('discNumber')
     t.save()
-  application.library[id] = timestamp
- except Exception:
-  del application.library[id]
+   track.downloaded = time()
+   session.commit()
+ except MemoryError:
   pass # Let the GUI handle it.
- while get_size(application.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
+ while get_size(library.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
   prune_library()
 
 def track_seek(event):
@@ -769,8 +765,8 @@ def save_result(event = None):
  track = frame.get_current_track()
  if not track:
   return wx.Bell()
- path = id_to_path(get_id(track))
- if os.path.isfile(path):
+ track = library.get_track(get_id(track))
+ if track.exists() and track.downloaded:
   dlg = wx.FileDialog(frame, defaultDir = os.path.expanduser('~'), wildcard = '*%s' % application.track_extension, defaultFile = format_title(track).replace('\\', ',').replace('/', ','), style = wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
   if dlg.ShowModal() == wx.ID_OK:
    new_path = dlg.GetPath()

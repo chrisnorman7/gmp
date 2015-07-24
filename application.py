@@ -9,10 +9,6 @@ errors_frame = None
 from confmanager import ConfManager, parser
 from sys import platform
 
-def id_to_path(id):
- """Returns the path to the file suggested by id."""
- return os.path.join(media_directory, id + track_extension)
-
 saved_results = {}
 results_history = []
 columns = [
@@ -61,8 +57,6 @@ info.SetVersion(version)
 info.SetDevelopers(developers)
 
 directory = os.path.join(os.path.expanduser('~'), '.%s' % name)
-media_directory = os.path.join(directory, 'media')
-
 if not os.path.isdir(directory):
  os.mkdir(directory)
 
@@ -159,8 +153,6 @@ class MyApp(wx.App):
   }
   with open(config_file, 'wb') as f:
    json.dump(stuff, f, indent = 1)
-  with open(library_file, 'wb') as f:
-   json.dump(library, f, indent = 1)
   if not devel:
    import errors
    l = errors.log.log
@@ -178,28 +170,24 @@ from gui.main_frame import MainFrame
 main_frame = MainFrame()
 lyrics_frame = None # The lyrics viewer.
 
-track_extension = '.mp3'
-
-library_file = os.path.join(directory, 'library.json')
-# Maintain a database of downloaded files.
-if os.path.isfile(library_file):
- with open(library_file, 'rb') as f:
-  library = json.load(f)
-else:
- library = {}
-
-if not os.path.isdir(media_directory):
- os.mkdir(media_directory)
-
-for x in os.listdir(media_directory):
- # Delete all the files which don't belong here!
- (fname, ext) = os.path.splitext(x)
- if fname not in library:
-  os.remove(os.path.join(media_directory, x))
-
+from library import *
+db_file = os.path.basename(db_path)
 # Delete all the entries without files.
-for k, t in library.items():
- if not os.path.isfile(id_to_path(k)) or t == None:
-  del library[k]
+for t in tracks():
+ if not t.exists():
+  t.delete()
+
+# Delete all the tracks without entries:
+from shutil import rmtree
+session = create_session()
+for x in os.listdir(media_directory):
+ if x == db_file:
+  continue
+ if not session.query(Track).filter(Track.artist == x).count():
+  x = os.path.join(media_directory, x)
+  if os.path.isfile(x):
+   os.remove(x)
+  else:
+   rmtree(x)
 
 gmusicapi_version = '7.0.0-dev'

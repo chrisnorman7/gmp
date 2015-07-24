@@ -1,6 +1,6 @@
 """The main frame for Google Music Player"""
 
-import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys, server
+import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys, server, library
 from threading import Thread, Event
 from time import sleep
 from inspect import getdoc
@@ -71,7 +71,7 @@ class MainFrame(wx.Frame):
   self.current_library = None # The library in it's current state.
   self.current_saved_result = None # The index of the currently focused daved result.
   self.saved_results_indices = {} # IDs of saved results.
-  self._current_track = None # The metadata for the currently playing track.
+  self._current_track = None # the meta data for the currently playing track.
   self.current_track = None
   self._queue = [] # The actual queue of tracks.
   self.track_history = [] # The play history.
@@ -780,33 +780,38 @@ class MainFrame(wx.Frame):
   id = functions.get_id(item)
   track = None # The object to store the track in until it's ready for playing.
   error = None # Any error that occured.
-  fname = id + application.track_extension
-  path = functions.id_to_path(id)
-  if id in application.library and application.library[id] == item.get('lastModifiedTimestamp', application.library[id]): # The file has been downloaded, play the local copy.
+  session = library.create_session()
+  t = session.query(library.Track).filter(library.Track.id == id).first()
+  if not t:
    try:
-    track = FileStream(file = path)
+    url = application.mobile_api.get_stream_url(id)
+   except gmusicapi.exceptions.CallFailure as e:
+    application.device_id = None
+    return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
+   except functions.RE as e:
+    if self.current_track:
+     self.current_track.set_position(self.current_track.get_length() - 1)
+     self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+    return wx.MessageBox(*functions.format_requests_error(e))
+   try:
+    track = URLStream(url = url)
    except BassError as e:
-    del application.library[id]
-    return self.play(item, history = history, play = play) # Try again... File's probably not there or something...
+    error = e # Just store it for later alerting.
+   Thread(target = functions.download_file, args = [url, item]).start()
   else:
-   if id in application.library: # Track is downloading...
+   if not t.downloaded:
     return wx.MessageBox('The track %s has not yet finished downloading. Please wait for the download to complete before playing again.' % functions.format_title(item), 'Not Downloaded Yet')
-   else:
+   elif t.lastModifiedTimestamp == item.get('lastModifiedTimestamp', t.lastModifiedTimestamp): # The file has been downloaded, play the local copy.
     try:
-     url = application.mobile_api.get_stream_url(id)
-    except gmusicapi.exceptions.CallFailure as e:
-     application.device_id = None
-     return wx.MessageBox('Cannot play with that device: %s.' % e, 'Invalid Device')
-    except functions.RE as e:
-     if self.current_track:
-      self.current_track.set_position(self.current_track.get_length() - 1)
-      self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
-     return wx.MessageBox(*functions.format_requests_error(e))
-    try:
-     track = URLStream(url = url)
+     track = FileStream(file = t.path)
     except BassError as e:
-     error = e # Just store it for later alerting.
-    Thread(target = functions.download_file, args = [id, url, item.get('lastModifiedTimestamp', 0)], kwargs = dict(info = item)).start()
+     session.delete(t)
+     session.commit()
+     return self.play(item, history = history, play = play) # Try again... File's probably not there or something...
+   else:
+    session.delete(t)
+    session.commit()
+    return self.play(item, play = play, history = history)
   if error:
    return wx.MessageBox(str(e), 'Error')
   if self.current_track:
