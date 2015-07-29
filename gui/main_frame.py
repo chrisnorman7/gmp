@@ -1,8 +1,10 @@
 """The main frame for Google Music Player"""
 
 import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys, server, library
-from threading import Thread, Event
-from time import sleep
+from threading import Thread
+from copy import copy
+from stoppable_thread import StoppableThread
+from time import time
 from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
@@ -21,17 +23,12 @@ mods[wx.ACCEL_CTRL] = 'CMD' if osx else 'CTRL'
 mods[wx.ACCEL_ALT] = 'OPT' if osx else 'ALT'
 mods[wx.ACCEL_SHIFT] = 'SHIFT'
 
-class TrackThread(Thread):
- """A thread which can be stopped."""
- def __init__(self, *args, **kwargs):
-  super(TrackThread, self).__init__(*args, **kwargs)
-  self.should_stop = Event()
-
 class MainFrame(wx.Frame):
  """The main program interface."""
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
+  self.last_update = 0.0
   functions.frame = self # Save typing in the functions.
   self.current_pos = 0.0 # The position in the currently playing track for the Winamp-style control.
   self.duration = None # The duration of the track as a string.
@@ -68,7 +65,7 @@ class MainFrame(wx.Frame):
   self.last_search_type = 0 # The type of the previous search.
   self.current_playlist = None # The current playlist
   self.current_station = None # The current radio station.
-  self.current_library = None # The library in it's current state.
+  self.current_library = [] # The user's library in it's current state.
   self.current_saved_result = None # The index of the currently focused daved result.
   self.saved_results_indices = {} # IDs of saved results.
   self._current_track = None # the meta data for the currently playing track.
@@ -596,7 +593,7 @@ class MainFrame(wx.Frame):
   #))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)
-  self._thread = TrackThread(target = self.track_thread)
+  self._thread = StoppableThread(target = self.track_thread)
   self.Maximize()
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.do_close)
@@ -698,7 +695,7 @@ class MainFrame(wx.Frame):
  
  def init_results(self, event = None):
   """Initialises the results table."""
-  songs = application.mobile_api.get_all_songs()
+  songs = library.library
   wx.CallAfter(self.add_results, songs, True, library = songs)
  
  def Show(self, value = True):
@@ -706,8 +703,6 @@ class MainFrame(wx.Frame):
   res = super(MainFrame, self).Show(value)
   Thread(target = self.reload_http_server).start()
   self._thread.start()
-  if not self._results:
-   wx.CallAfter(self.init_results)
   return res
  
  def SetTitle(self, value = None):
@@ -776,13 +771,31 @@ class MainFrame(wx.Frame):
    return self.queue.GetFocusedItem()
  
  def play(self, item, history = True, play = True):
-  """Plays the track given in item. If history is True, add any current track to the history."""
+  """
+  Plays the track given in item.
+  
+  If history is True, add any current track to the history.
+  If play is True, play the track immidiately.
+  """
   id = functions.get_id(item)
   track = None # The object to store the track in until it's ready for playing.
   error = None # Any error that occured.
-  session = library.create_session()
-  t = session.query(library.Track).filter(library.Track.id == id).first()
-  if not t:
+  if id in library.downloaded: # The file has already been downloaded.
+   try:
+    track = FileStream(file = library.get_path(item))
+    if self.current_library and item in self.current_library:
+     new_item = copy(item)
+     new_item['playCount'] += 1
+     self.current_library[self.current_library.index(item)] = new_item # Save it with the modified play count so the poll thread doesn't screw anything up.
+   except BassError as e:
+    del library.downloaded[id]
+    return self.play(item, history = history, play = play) # Try again... File's probably not there or something...
+  else:
+   if id in library.downloading:
+    if time() - library.downloading[id] <= application.config.get('library', 'download_timeout'):
+     return wx.MessageBox('This song is still downloading, please wait.', 'Download In Progress')
+    else:
+     del library.downloading[id]
    try:
     url = application.mobile_api.get_stream_url(id)
    except gmusicapi.exceptions.CallFailure as e:
@@ -797,21 +810,7 @@ class MainFrame(wx.Frame):
     track = URLStream(url = url)
    except BassError as e:
     error = e # Just store it for later alerting.
-   Thread(target = functions.download_file, args = [url, item]).start()
-  else:
-   if not t.downloaded:
-    return wx.MessageBox('The track %s has not yet finished downloading. Please wait for the download to complete before playing again.' % functions.format_title(item), 'Not Downloaded Yet')
-   elif t.lastModifiedTimestamp == item.get('lastModifiedTimestamp', t.lastModifiedTimestamp): # The file has been downloaded, play the local copy.
-    try:
-     track = FileStream(file = t.path)
-    except BassError as e:
-     session.delete(t)
-     session.commit()
-     return self.play(item, history = history, play = play) # Try again... File's probably not there or something...
-   else:
-    session.delete(t)
-    session.commit()
-    return self.play(item, play = play, history = history)
+   Thread(target = functions.download_file, args = [url, id, item]).start()
   if error:
    return wx.MessageBox(str(e), 'Error')
   if self.current_track:
@@ -876,9 +875,8 @@ class MainFrame(wx.Frame):
       self.track_position.SetValue(i)
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
-    sleep(1)
    except wx.PyDeadObjectError:
-    pass # The window has probably closed.
+    return # The window has probably closed.
  
  def get_current_result(self, ctrl = None):
   """Returns the current result."""
@@ -1014,15 +1012,16 @@ class MainFrame(wx.Frame):
  
  def update_hotkey_area(self):
   """Updates the value of self.hotkey_area."""
-  try:
+  if time() - self.last_update >= 1.0:
    if self.current_track:
-    if application.config.get('windows', 'move_cursor'):
-     self.hotkey_area.SetInsertionPoint(0 if self.hotkey_area.GetInsertionPoint() else 1)
-    self.hotkey_area.SetValue(application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title))
+    v = application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title)
    else:
-    self.hotkey_area.SetValue('No track playing.')
-  except wx.PyDeadObjectError:
-   pass # The window has been destroyed.
+    v = 'No track playing.'
+   try:
+    self.hotkey_area.SetValue(v)
+    self.last_update = time()
+   except wx.PyDeadObjectError:
+    pass # The window has been destroyed.
  
  def filter_results(self, event):
   """Filter results based on the selections from self.artists and self.albums."""

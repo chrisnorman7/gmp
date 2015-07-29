@@ -1,5 +1,7 @@
 if __name__ == '__main__':
- import certifi, sys, os, errors
+ import logging, errors
+ logging.basicConfig(stream = errors.log, level = logging.INFO)
+ import certifi, sys, os
  #sys.stderr = errors.log
  #sys.stdout = errors.log
  sys.path.insert(0, os.path.join(os.getcwd(), 'library.zip', 'Crypto'))

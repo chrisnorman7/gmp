@@ -1,11 +1,10 @@
 """Various functions used in the program."""
 
-import application, wx, os, requests, sys, random, library
-from eyed3 import load
-from shutil import copy as shcopy
+import application, wx, os, requests, sys, random, library, logging
+from shutil import copy as shcopy, rmtree
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError, IOError)
 from sound_lib.main import BassError
-from time import time
+from time import time, ctime
 from gui.lyrics_viewer import LyricsViewer
 from gui.search_frame import SearchFrame, songs
 from gui.errors_frame import ErrorsFrame
@@ -50,9 +49,9 @@ def get_id(item):
 
 def in_library(id):
  """Checks if the given ID is in the library."""
- lib = application.mobile_api.get_all_songs()
+ lib = library.library
  for l in lib:
-  if l.get('id', '') == id:
+  if get_id(l) == id:
    return True
  return False
 
@@ -99,17 +98,13 @@ def add_to_library(event):
 
 def select_playlist(event = None, playlists = None, playlist = None, interactive = True):
  if not playlists:
-  try:
-   playlists = application.mobile_api.get_all_user_playlist_contents()
-  except RE as e:
-   if interactive:
-    return wx.MessageBox(*format_requests_error(e))
-   else:
-    return None
+  playlists = library.playlists
  if playlist:
   for p in playlists:
    if p['id'] == playlist:
     playlist = p
+  else:
+   return ValueError('Provided playlist does not exist.')
  else:
   dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', [x['name'] for x in playlists])
   if dlg.ShowModal() == wx.ID_OK:
@@ -117,11 +112,8 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
   dlg.Destroy()
  if interactive:
   if playlist:
-   try: 
-    tracks = application.mobile_api.get_shared_playlist_contents(playlist['shareToken'])
-    wx.CallAfter(frame.add_results, [x['track'] for x in tracks], True, playlist = playlist)
-   except RE as e:
-    return wx.MessageBox(*format_requests_error(e))
+   tracks = playlist['tracks']
+   wx.CallAfter(frame.add_results, [x['track'] for x in tracks], True, playlist = playlist)
  else:
   return playlist
 
@@ -283,44 +275,59 @@ def fastforward(event):
 
 def prune_library():
  """Delete the oldest track from the library."""
- t = library.session.query(library.Track).filter_by(library.Track.downloaded).first()
- if t:
-  print t.filename
- else:
-  print 'No tracks.'
+ delete_stamp = time()
+ delete_id = None
+ for id, track in library.downloaded.items():
+  if library.exists(track):
+   t = os.path.getctime(library.get_path(track))
+   if t < delete_stamp:
+    delete_stamp = t
+    delete_id = id
+  else:
+   del library.downloaded[id]
+ if delete_id:
+  delete_path(library.get_path(library.downloaded[delete_id]))
+  del library.downloaded[delete_id]
+  clean_library()
+  return delete_id
 
-def download_file(url, info):
- """Download the track from url, add it to the library database, and store it with a filename derived from id."""
- track = library.Track()
- for k, v in info.items():
-  if hasattr(track, k):
-   setattr(track, k, v)
- track.id = get_id(info)
- session = library.create_session()
- session.add(track)
- session.commit()
+def clean_library():
+ """Erase all the folders that don't have any entries in library.downloaded associated with them."""
+ for artist in os.listdir(library.media_directory):
+  if artist not in [x['artist'] for x in library.downloaded.values()]:
+   delete_path(os.path.join(library.media_directory, artist))
+
+def download_file(url, id, info, callback = lambda info: None):
+ """Download the track from url, add ID to the list of downloaded tracks, and store it in the media directory. Finally call callback with the provided info as the only argument."""
+ t = time()
+ logging.info('Starting download of %s at %s.', format_title(info), ctime(t))
+ library.downloading[id] = t
  try:
   g = requests.get(url)
-  if g.status_code == 200:
-   with open(track.path, 'wb') as f:
-    f.write(g.content)
-   mp3 = load(track.path)
-   if mp3:
-    mp3.initTag()
-    t = mp3.tag
-    t.album = info.get('album')
-    t.artist = info.get('artist')
-    t.genre = info.get('genre')
-    t.title = info.get('title')
-    t.track_num = info.get('trackNumber')
-    t.disc_num = info.get('discNumber')
-    t.save()
-   track.downloaded = time()
-   session.commit()
- except MemoryError:
-  pass # Let the GUI handle it.
- while get_size(library.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
-  prune_library()
+  logging.info('Download completed successfully in %s seconds.', time() - t)
+ except RE as e:
+  logging.info('Download failed...')
+  logging.exception(e)
+ finally:
+  del library.downloading[id]
+ if g.status_code == 200:
+  path = library.get_path(info)
+  with open(path, 'wb') as f:
+   f.write(g.content)
+   logging.info('Dumped file to %s.', path)
+  library.downloaded[id] = dict(
+   artist = info.get('artist', 'Unknown Artist'),
+   album = info.get('album', 'Unknown Album'),
+   title = info.get('title', 'Unnamed'),
+   trackNumber = info.get('trackNumber', 0)
+  )
+  while get_size(library.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
+   prune_library()
+  callback(info)
+  return True
+ else:
+  logging.info('Download failed with status code %s.', g.status_code)
+  return False
 
 def track_seek(event):
  """Get the value of the seek slider and move the track accordingly."""
@@ -495,17 +502,7 @@ def related_artists(event):
 def all_playlist_tracks(event):
  """Add every track from every playlist."""
  announce('Load All Playlist Tracks.')
- tracks = [] # The final results.
- try:
-  playlists = application.mobile_api.get_all_playlists()
- except RE as e:
-  return wx.MessageBox(*format_requests_error(e))
- for p in playlists:
-  try:
-   t = application.mobile_api.get_shared_playlist_contents(p['shareToken'])
-  except RE as e:
-   return wx.MessageBox(*format_requests_error(e))
-  tracks += [x['track'] for x in t]
+ tracks = [x['tracks'] for x in library.playlists] # The final results.
  wx.CallAfter(frame.add_results, tracks, clear = True)
 
 def queue_result(event):
@@ -803,3 +800,10 @@ def results_to_library(event = None):
    wx.CallAfter(dlg.Destroy)
    break
  wx.CallAfter(dlg.Destroy)
+
+def delete_path(path):
+ """Delete something."""
+ if os.path.isfile(path):
+  os.remove(path)
+ else:
+   rmtree(path)

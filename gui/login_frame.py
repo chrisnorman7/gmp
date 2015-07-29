@@ -80,5 +80,7 @@ class LoginFrame(SF):
  
  def post_login(self):
   """Closes this window and opens the main frame."""
+  import library
+  library.poll_thread.start()
   application.main_frame.Show(True)
   self.Close(True)

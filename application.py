@@ -71,13 +71,14 @@ config.add_section('library')
 config.set('library', 'library_size', 1024, title = 'The size of the library in megabytes before the oldest tracks are deleted')
 config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retrieve when getting artist info')
 config.set('library', 'max_results', 50, title = 'Maximum results to display')
-config.set('library', 'history_length', 100, title = 'The number of previous results to save')
+config.set('library', 'history_length', 5, title = 'The number of previous results to save')
+config.set('library', 'poll_time', 5.0, title = 'The time to wait between downloading your library and playlists', kwargs = dict(digits = 1))
+config.set('library', 'download_timeout', 15.0, title = 'The time to wait before retrying a download.', kwargs = dict(digits = 1))
 
 config.add_section('windows')
 config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
 config.set('windows', 'now_playing_format', u'({pos} / {duration}): {title}', title = 'The format for the status display in the now playing field')
-config.set('windows', 'move_cursor', False, title = 'Move cursor back and forth in the now playing bar (can fix braille refresh on systems running Jaws)')
-config.set('windows', 'confirm_quit', True, title = 'Confirm before quitting the program')
+config.set('windows', 'confirm_quit', False, title = 'Confirm before quitting the program')
 config.set('windows', 'play_controls_show', True, title = 'Show player controls')
 config.set('windows', 'uid_label', '&Username', title = 'The label for the username field')
 config.set('windows', 'pwd_label', '&Password', title = 'The label for the password field')
@@ -122,34 +123,19 @@ config.set('http', 'pwd', 'LetMeIn', title = 'A password which must be entered t
 config.add_section('accessibility')
 config.set('accessibility', 'announcements', False, title = 'Enable Accessibility Announcements')
 
-config_file = os.path.join(directory, 'config.json')
-
-if os.path.isfile(config_file):
- with open(config_file, 'rb') as f:
-  try:
-   j = json.load(f)
-   device_id = j.get('device_id', None)
-   for x, y in j.get('saved_results', {}).iteritems():
-    main_frame.add_saved_result(name = x, results = y)
-   results_history = j.get('results_history', [])
-   columns = j.get('columns', columns)
-   if len(columns) != len(default_columns):
-    columns = default_columns
-   parser.parse_json(config, j.get('config', {}))
-  except ValueError as e:
-   pass # They've broken their config file.
-
 class MyApp(wx.App):
  def MainLoop(self, *args, **kwargs):
   """Overrides wx.App.MainLoop, to save the config at the end."""
   res = super(MyApp, self).MainLoop(*args, **kwargs)
   sound_output.stop()
+  library.poll_thread.should_stop.set()
   stuff = {
    'saved_results': saved_results,
    'columns': columns,
    'config': config.get_dump(),
    'device_id': device_id,
-   'results_history': results_history
+   'results_history': results_history,
+   'library': library.downloaded
   }
   with open(config_file, 'wb') as f:
    json.dump(stuff, f, indent = 1)
@@ -170,24 +156,29 @@ from gui.main_frame import MainFrame
 main_frame = MainFrame()
 lyrics_frame = None # The lyrics viewer.
 
-from library import *
-db_file = os.path.basename(db_path)
-# Delete all the entries without files.
-for t in tracks():
- if not t.exists():
-  t.delete()
+import library
 
-# Delete all the tracks without entries:
-from shutil import rmtree
-session = create_session()
-for x in os.listdir(media_directory):
- if x == db_file:
-  continue
- if not session.query(Track).filter(Track.artist == x).count():
-  x = os.path.join(media_directory, x)
-  if os.path.isfile(x):
-   os.remove(x)
-  else:
-   rmtree(x)
+config_file = os.path.join(directory, 'config.json')
+
+if os.path.isfile(config_file):
+ with open(config_file, 'rb') as f:
+  try:
+   j = json.load(f)
+   library.downloaded = j.get('library', {})
+   if type(library.downloaded) != dict:
+    library.downloaded = {} # Better to clear the user's library than have them suffer tracebacks.
+   device_id = j.get('device_id', None)
+   for x, y in j.get('saved_results', {}).iteritems():
+    main_frame.add_saved_result(name = x, results = y)
+   results_history = j.get('results_history', [])
+   columns = j.get('columns', columns)
+   if len(columns) != len(default_columns):
+    columns = default_columns
+   parser.parse_json(config, j.get('config', {}))
+  except ValueError as e:
+   wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
+
+import functions
+functions.clean_library()
 
 gmusicapi_version = '7.0.0-dev'
