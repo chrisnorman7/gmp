@@ -795,7 +795,8 @@ class MainFrame(wx.Frame):
     track = FileStream(file = library.get_path(item))
     if self.current_library and item in self.current_library:
      new_item = copy(item)
-     new_item['playCount'] += 1
+     if 'playCount' in new_item:
+      new_item['playCount'] += 1
      self.current_library[self.current_library.index(item)] = new_item # Save it with the modified play count so the poll thread doesn't screw anything up.
    except BassError as e:
     del library.downloaded[id]
