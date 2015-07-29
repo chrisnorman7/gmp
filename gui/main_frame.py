@@ -471,7 +471,7 @@ class MainFrame(wx.Frame):
   self.stop_after = play_menu.AppendCheckItem(
   *self.add_accelerator(
   wx.ACCEL_CTRL|wx.ACCEL_SHIFT, '.',
-  self.toggle_stop_after,
+  lambda event: self.toggle(self.stop_after, ['sound', 'stop_after'], 'Stop after current track'),
   'Stop &After',
   'Stop after the currently playing track has finished playing.'
   ))
@@ -503,14 +503,24 @@ class MainFrame(wx.Frame):
   'Shuffle &Queue',
   'Shuffle the play queue.'
   ))
-  self.repeat = play_menu.AppendCheckItem(
+  repeat_menu = wx.Menu()
+  self.repeat = repeat_menu.AppendCheckItem(
   *self.add_accelerator(
   wx.ACCEL_CTRL, 'r',
-  self.toggle_repeat,
+  lambda event: self.toggle(self.repeat, ['sound', 'repeat'], 'Repeat all'),
   '&Repeat',
   'Repeat tracks.'
   ))
   self.repeat.Check(application.config.get('sound', 'repeat'))
+  self.repeat_track = repeat_menu.AppendCheckItem(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 'r',
+  lambda event: self.toggle(self.repeat_track, ['sound', 'repeat_track'], 'Repeat current track'),
+  'Repeat &Track',
+  'Repeat the current track.'
+  ))
+  self.repeat_track.Check(application.config.get('sound', 'repeat_track'))
+  play_menu.AppendMenu(wx.ID_ANY, '&Repeat', repeat_menu, 'Repeat options.')
   play_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_SHIFT, wx.WXK_UP,
@@ -928,19 +938,13 @@ class MainFrame(wx.Frame):
   else:
    event.Skip()
  
- def toggle_stop_after(self, event):
-  """Toggles the stop after menu item."""
-  application.config.toggle('sound', 'stop_after')
-  c = application.config.get('sound', 'stop_after')
-  self.stop_after.Check(c)
-  functions.announce('%s after.' % ('Stop' if c else 'Don\'t stop'))
- 
- def toggle_repeat(self, event):
-  """Toggles the repeat setting."""
-  application.config.toggle('sound', 'repeat')
-  c = application.config.get('sound', 'repeat')
-  self.repeat.Check(c)
-  functions.announce('Repeat %s.' % ('on' if c else 'off'))
+ def toggle(self, item, config, text):
+  """Toggles various settings."""
+  application.config.toggle(*config)
+  c = application.config.get(*config)
+  item.Check(c)
+  if text:
+   functions.announce('%s %s.' % (text, 'on' if c else 'off'))
  
  def add_accelerator(self, modifiers, key, func, title, description = None, id = None):
   """Adds an accelerator to the table."""

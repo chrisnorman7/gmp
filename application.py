@@ -102,7 +102,8 @@ config.set('windows', 'new_playlist_public_label', 'Make playlist &public', titl
 config.set('windows', 'create_label', '&Create', title = 'The label for create buttons')
 
 config.add_section('sound')
-config.set('sound', 'repeat', False, title = 'Repeat')
+config.set('sound', 'repeat', False, title = 'Repeat results')
+config.set('sound', 'repeat_track', False, title = 'Repeat the current track.')
 config.set('sound', 'interface_sounds', True, title = 'Play interface sound effects')
 config.set('sound', 'stop_after', False, title = 'Stop after the current track has finished playing')
 config.set('sound', 'volume_increment', 10, title = 'The percent to increase the volume by when using the volume hotkey')

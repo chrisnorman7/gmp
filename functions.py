@@ -1,6 +1,7 @@
 """Various functions used in the program."""
 
 import application, wx, os, requests, sys, random, library, logging
+from accessible_output2.outputs.auto import Auto
 from shutil import copy as shcopy, rmtree
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError, IOError)
 from sound_lib.main import BassError
@@ -12,6 +13,7 @@ from copy import copy
 from threading import Thread, current_thread
 
 frame = None # The main frame (save typing frame = application.main_frame the whole time).
+output = Auto()
 
 id_fields = [
  'storeId',
@@ -242,7 +244,10 @@ def get_next_song(clear = False):
 def next(event = None, interactive = True):
  """Plays the next track."""
  #announce('Next.')
- q = get_next_song(True)
+ if application.config.get('sound', 'repeat_track'):
+  q = frame.get_current_track()
+ else:
+  q = get_next_song(True)
  if q:
   application.main_frame.play(q)
  else:
@@ -782,7 +787,7 @@ def save_result(event = None):
 
 def announce(stuff):
  """Accessible alerts as were."""
- return wx.MessageBox(stuff, 'Alert') if application.config.get('accessibility', 'announcements') else None
+ output.output(stuff)
 
 def results_to_library(event = None):
  """Adds everything in the current list of results to the library."""
