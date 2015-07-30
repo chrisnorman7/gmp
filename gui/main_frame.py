@@ -122,12 +122,12 @@ class MainFrame(wx.Frame):
   s3 = wx.BoxSizer(wx.HORIZONTAL)
   s3.Add(wx.StaticText(p, label = application.config.get('windows', 'volume_label')), 0, wx.GROW)
   self.volume = wx.Slider(p, style = wx.SL_VERTICAL|wx.SL_INVERSE)
-  self.volume.SetValue(application.config.get('sound', 'volume') * 100)
+  self.volume.SetValue(application.config.get('sound', 'volume'))
   self.volume.Bind(wx.EVT_SLIDER, self.set_volume)
   s3.Add(self.volume, 1, wx.GROW)
   s3.Add(wx.StaticText(p, label = application.config.get('windows', 'pan_label')), 0, wx.GROW)
   self.pan = wx.Slider(p)
-  self.pan.SetValue((application.config.get('sound', 'pan') + 1.0) * 50.0)
+  self.pan.SetValue(application.config.get('sound', 'pan'))
   self.pan.Bind(wx.EVT_SLIDER, self.set_pan)
   s3.Add(self.pan, 1, wx.GROW)
   self.s3 = s3
@@ -835,8 +835,8 @@ class MainFrame(wx.Frame):
   self.SetTitle()
   self.duration = columns.parse_durationMillis(self.get_current_track().get('durationMillis'))
   self.update_hotkey_area()
-  self.current_track.set_volume(application.config.get('sound', 'volume'))
-  self.current_track.set_pan(application.config.get('sound', 'pan'))
+  self.set_volume()
+  self.set_pan()
   self.set_frequency()
   if play:
    self.current_track.play()
@@ -853,17 +853,17 @@ class MainFrame(wx.Frame):
   except functions.RE:
    pass # We are not connected to the internet, but we can still play stuff.
  
- def set_volume(self, event):
+ def set_volume(self, event = None):
   """Sets the volume with the slider."""
-  application.config.set('sound', 'volume', self.volume.GetValue() / 100.0)
+  application.config.set('sound', 'volume', self.volume.GetValue())
   if self.current_track:
-   self.current_track.set_volume(application.config.get('sound', 'volume'))
+   self.current_track.set_volume(application.config.get('sound', 'volume') / 100.0)
  
  def set_pan(self, event = None):
   """Sets pan with the slider."""
-  application.config.set('sound', 'pan', (self.pan.GetValue() / 50.0) - 1.0)
+  application.config.set('sound', 'pan', self.pan.GetValue())
   if self.current_track:
-   self.current_track.set_pan(application.config.get('sound', 'pan'))
+   self.current_track.set_pan((application.config.get('sound', 'pan') / 50.0) - 1.0)
  
  def set_frequency(self, event = None):
   """Sets the frequency of the currently playing track by the frequency slider."""

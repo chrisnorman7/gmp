@@ -5,7 +5,7 @@ from stoppable_thread import StoppableThread
 from time import sleep
 
 library = []
-downloaded = [] # The songs that have been downloaded.
+downloaded = {} # The songs that have been downloaded.
 downloading = {} # The stuff that is currently downloading.
 playlists = []
 

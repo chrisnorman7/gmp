@@ -171,16 +171,18 @@ def stop(event = None):
 def volume_up(event = None):
  """Turn up the playing song."""
  #announce('Volume Up.')
- v = min(100, application.config.get('sound', 'volume_increment') + frame.volume.GetValue())
- if v == 100:
+ v = application.config.get('sound', 'volume_increment') + frame.volume.GetValue()
+ if v > 100:
+  v = 100
   bell()
  set_volume(v)
 
 def volume_down(event = None):
  """Turn down the playing song."""
  #announce('Volume Down.')
- v = max(frame.volume.GetValue() - application.config.get('sound', 'volume_decrement'), 0)
- if not v:
+ v = frame.volume.GetValue() - application.config.get('sound', 'volume_decrement')
+ if v < 0:
+  v = 0
   bell()
  set_volume(v)
 
@@ -190,9 +192,8 @@ def set_volume(v):
   return False
  else:
   frame.volume.SetValue(v)
-  frame.set_volume(None)
+  frame.set_volume()
   return True
-
 
 def get_previous_song(alter = False):
  """Get the song which will be played when the previous button is pressed. If alter is True, actually remove the track from the history buffer."""

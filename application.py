@@ -106,13 +106,13 @@ config.set('sound', 'repeat', False, title = 'Repeat results')
 config.set('sound', 'repeat_track', False, title = 'Repeat the current track.')
 config.set('sound', 'interface_sounds', True, title = 'Play interface sound effects')
 config.set('sound', 'stop_after', False, title = 'Stop after the current track has finished playing')
-config.set('sound', 'volume_increment', 10, title = 'The percent to increase the volume by when using the volume hotkey')
-config.set('sound', 'volume_decrement', 10, title = 'The amount to decrement the volume by when using the hotkey')
+config.set('sound', 'volume_increment', 10, title = 'The percent to increase the volume by when using the volume hotkey', kwargs = dict(min = 1, max = 100))
+config.set('sound', 'volume_decrement', 10, title = 'The amount to decrement the volume by when using the hotkey', kwargs = dict(min = 1, max = 100))
 config.set('sound', 'rewind_amount', 100000, title = 'The number of samples to rewind by when using the hotkey')
 config.set('sound', 'fastforward_amount', 100000, title = 'The number of samples to fastforward by when using the hotkey')
 config.set('sound', 'frequency', 50, title = 'The frequency to play songs at (50 is 44100)')
-config.set('sound', 'volume', 1.0, title = 'The volume to play tracks at (between 0.0 and 1.0)')
-config.set('sound', 'pan', 0.0, title = 'The left and right stereo balance to play songs at')
+config.set('sound', 'volume', 100, title = 'The volume to play tracks at', kwargs = dict(min = 0, max = 100))
+config.set('sound', 'pan', 50, title = 'The left and right stereo balance to play songs at', kwargs = dict(min = 0, max = 100))
 
 config.add_section('http')
 config.set('http', 'enabled', False, title = 'Enable the web server')
@@ -153,8 +153,6 @@ app.SetAppDisplayName('%s (v %s)' % (name, version))
 app.SetAppName(name)
 app.SetVendorName(vendor_name)
 app.SetVendorDisplayName(vendor_name)
-from gui.main_frame import MainFrame
-main_frame = MainFrame()
 lyrics_frame = None # The lyrics viewer.
 
 import library
@@ -176,9 +174,15 @@ if os.path.isfile(config_file):
    if len(columns) != len(default_columns):
     columns = default_columns
    parser.parse_json(config, j.get('config', {}))
+   if type(config.get('sound', 'volume')) == float:
+    config.set('sound', 'volume', 100)
+   if type(config.get('sound', 'pan')) == float:
+    config.set('sound', 'pan', 50)
   except ValueError as e:
    wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
 
+from gui.main_frame import MainFrame
+main_frame = MainFrame()
 import functions
 functions.clean_library()
 
