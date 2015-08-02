@@ -4,11 +4,8 @@ future
 hg+http://hg.q-continuum.net/libloader#egg=libloader
 hg+http://hg.q-continuum.net/platform_utils#egg=platform_utils
 hg+http://hg.q-continuum.net/sound_lib#egg=sound_lib
-confmanager
+git+https://github.com/chrisnorman7/confmanager.git#egg=confmanager
 requests
 git+https://github.com/simon-weber/Unofficial-Google-Music-API.git
 git+https://github.com/chrisnorman7/updatecheck.git
 unidecode
-hg+https://bitbucket.org/nicfit/eyed3#egg=eyed3
-lxml
-cssselect

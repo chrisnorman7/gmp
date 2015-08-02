@@ -684,7 +684,8 @@ class MainFrame(wx.Frame):
   self.current_saved_result = saved_result
   if clear:
    self.clear_results()
-  map(self.add_result, results)
+  for r in results:
+   wx.CallAfter(self.add_result, r)
   if artists:
    self.artists.SetItems(artists)
   else:
@@ -706,7 +707,7 @@ class MainFrame(wx.Frame):
  def init_results(self, event = None):
   """Initialises the results table."""
   songs = library.library
-  wx.CallAfter(self.add_results, songs, True, library = songs)
+  self.add_results(songs, clear = True, library = songs)
  
  def Show(self, value = True):
   """Shows the frame."""
