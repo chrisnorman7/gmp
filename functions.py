@@ -257,14 +257,14 @@ def next(event = None, interactive = True):
  else:
   q = get_next_song(True)
  if q:
-  application.main_application.main_frame.play(q)
+  application.main_frame.play(q)
  else:
   return bell() if interactive else None
 
 def rewind(event):
  """Rewind the track a bit."""
  #announce('Rewind.')
- track = application.main_application.main_frame.current_track
+ track = application.main_frame.current_track
  if not track:
   bell()
  else:
@@ -276,7 +276,7 @@ def rewind(event):
 def fastforward(event):
  """Fastforward the track a bit."""
  #announce('Fast Forward.')
- track = application.main_application.main_frame.current_track
+ track = application.main_frame.current_track
  if not track:
   bell()
  else:
@@ -407,7 +407,7 @@ def promoted_songs(event):
   songs = application.mobile_api.get_promoted_songs()
  except RE as e:
   return wx.MessageBox(*format_requests_error(e))
- wx.CallAfter(application.main_application.main_frame.add_results, songs, True)
+ wx.CallAfter(application.main_frame.add_results, songs, True)
 
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
@@ -534,7 +534,7 @@ def add_to_playlist(event = None, playlist = None):
  id = get_id(application.main_frame.get_results()[cr])
  if not playlist:
   playlist = select_playlist(interactive = False)
- application.main_application.main_frame.add_to_playlist = playlist
+ application.main_frame.add_to_playlist = playlist
  if playlist:
   try:
    application.mobile_api.add_songs_to_playlist(playlist.get('id'), id)
@@ -544,7 +544,7 @@ def add_to_playlist(event = None, playlist = None):
 def add_again_to_playlist(event):
  """Adds again to the last playlist used."""
  announce('Add To Previous Playlist.')
- add_to_playlist(playlist = application.main_application.main_frame.add_to_playlist)
+ add_to_playlist(playlist = application.main_frame.add_to_playlist)
 
 def delete(event):
  """Deletes an item from the focused playlist, or the library if that is focused."""
