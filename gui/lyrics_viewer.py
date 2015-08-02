@@ -55,12 +55,12 @@ class LyricsViewer(wx.Frame):
  def populate_lyrics(self, artist, title):
   """Fills self.lyrics with the lyrics from the included lyrics package."""
   self.SetTitle('Lyrics for %s - %s' % (artist, title))
-  self.url = lyricwikiurl(artist, title)
   error = True
   try:
+   self.url = lyricwikiurl(artist, title)
    l = getlyrics(artist, title)
    error = False
-  except IOError:
+  except (IOError, UnicodeEncodeError):
    raw_title = self.format_string(title)
    raw_artist = unidecode(artist).replace(' ', '').replace('&', 'and').lower()
    if 'feat' in raw_artist:
@@ -71,24 +71,24 @@ class LyricsViewer(wx.Frame):
    self.url = 'http://www.azlyrics.com/lyrics/%s/%s.html' % (raw_artist, raw_title)
    try:
     res = requests.get(self.url)
-   except (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError) as e:
-    l = 'Could not get lyrics: %s.' % str(e)
-   if res.status_code != 200:
-    l = 'No lyrics found.'
-   else:
-    l = res.content
-    start = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
-    end = '</div>'
-    if start in l:
-     l = l[l.index(start) + len(start):].replace('<br>', '')
-     if end in l:
-      l = l[:l.index(end)]
-      l = re.sub(r'\<[^>]+\>', '', l)
-      while l.startswith('\n') or l.startswith('\r'):
-       l = l[1:]
-      error = False
+    if res.status_code != 200:
+     l = 'No lyrics found.'
     else:
-     l = 'Error in HTML. Place marker not found.'
+     l = res.content
+     start = '<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->'
+     end = '</div>'
+     if start in l:
+      l = l[l.index(start) + len(start):].replace('<br>', '')
+      if end in l:
+       l = l[:l.index(end)]
+       l = re.sub(r'\<[^>]+\>', '', l)
+       while l.startswith('\n') or l.startswith('\r'):
+        l = l[1:]
+       error = False
+     else:
+      l = 'Error in HTML. Place marker not found.'
+   except (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError) as e:
+    l = 'Could not get lyrics from %s: %s.' % (self.url, str(e))
   if error:
    wx.CallAfter(self.lyrics.SetValue, '')
    wx.CallAfter(self.browse.Disable)

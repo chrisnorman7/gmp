@@ -746,7 +746,7 @@ def get_lyrics(event, track = None):
  artist = track.get('artist')
  title = track.get('title')
  if application.lyrics_frame:
-  Thread(target = application.lyrics_frame, args = [artist, title]).start()
+  Thread(target = application.lyrics_frame.populate_lyrics, args = [artist, title]).start()
  else:
   application.lyrics_frame = LyricsViewer(artist, title)
 
