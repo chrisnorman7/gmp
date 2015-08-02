@@ -159,6 +159,9 @@ import library
 
 config_file = os.path.join(directory, 'config.json')
 
+from gui.main_frame import MainFrame
+main_frame = MainFrame()
+
 if os.path.isfile(config_file):
  with open(config_file, 'rb') as f:
   try:
@@ -181,8 +184,6 @@ if os.path.isfile(config_file):
   except ValueError as e:
    wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
 
-from gui.main_frame import MainFrame
-main_frame = MainFrame()
 import functions
 functions.clean_library()
 
