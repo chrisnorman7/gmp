@@ -59,10 +59,11 @@ def _poll():
      application.main_frame.init_results()
    except wx.PyDeadObjectError:
     break # The frame has closed.
-   playlists = []
+   _playlists = []
    for p in api.get_all_playlists():
     p['tracks'] = api.get_shared_playlist_contents(p['shareToken'])
-    playlists.append(p)
+    _playlists.append(p)
+   playlists = _playlists
    sleep(application.config.get('library', 'poll_time'))
   except functions.RE as e:
    return wx.MessageBox(*functions.format_requests_error(e))
