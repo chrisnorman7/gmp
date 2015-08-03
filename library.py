@@ -14,10 +14,13 @@ def valid_filename(name):
  valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
  return ''.join(c for c in name if c in valid_chars)
 
-media_directory = os.path.join(application.directory, 'media')
+_media_directory = os.path.join(application.directory, 'media')
+def media_directory():
+ """Get the actual media directory."""
+ return application.config.get('library', 'media_directory') or _media_directory
 
-if not os.path.isdir(media_directory):
- os.mkdir(media_directory)
+if not os.path.isdir(media_directory()):
+ os.mkdir(media_directory())
 
 track_extension = '.mp3'
 
@@ -35,7 +38,7 @@ def get_filename(item):
  return '%s%s - %s%s' % ('0' if item['trackNumber'] < 10 else '', item['trackNumber'], item['title'], track_extension)
 def get_path(item):
  """Get the path where the file should be stored."""
- p = os.path.join(media_directory, valid_filename(item['artist']), valid_filename(item['album']))
+ p = os.path.join(media_directory(), valid_filename(item['artist']), valid_filename(item['album']))
  if not os.path.isdir(p):
   make_path(p)
  return os.path.join(p, valid_filename(get_filename(item)))

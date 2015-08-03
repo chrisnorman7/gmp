@@ -593,14 +593,6 @@ class MainFrame(wx.Frame):
   'Check For &Updates',
   'Check for updates to the program.'
   ))
-  #self.Bind(
-  #wx.EVT_MENU,
-  #functions.show_errors_frame,
-  #help_menu.Append(
-  #wx.ID_ANY,
-  #'&View Error Log',
-  #'View the error log for the application.'
-  #))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)
   self._thread = StoppableThread(target = self.track_thread)
@@ -905,7 +897,7 @@ class MainFrame(wx.Frame):
    self._thread.should_stop.set()
    if self.http_server:
     Thread(target = self.http_server.shutdown).start()
-   for f in [application.errors_frame, application.lyrics_frame]:
+   for f in [application.lyrics_frame]:
     try:
      f.Close(True)
     except (wx.PyDeadObjectError, AttributeError):

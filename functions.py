@@ -8,7 +8,6 @@ from sound_lib.main import BassError
 from time import time, ctime
 from gui.lyrics_viewer import LyricsViewer
 from gui.search_frame import SearchFrame, songs
-from gui.errors_frame import ErrorsFrame
 from copy import copy
 from threading import Thread, current_thread
 
@@ -90,7 +89,7 @@ def reveal_media(event):
   cmd = 'open'
  else:
   cmd = 'explorer'
- os.system('%s "%s"' % (cmd, application.media_directory))
+ os.system('%s "%s"' % (cmd, library.media_directory()))
 
 def add_to_library(event):
  """Adds the current result to the library."""
@@ -306,9 +305,9 @@ def prune_library():
 
 def clean_library():
  """Erase all the folders that don't have any entries in library.downloaded associated with them."""
- for artist in os.listdir(library.media_directory):
+ for artist in os.listdir(library.media_directory()):
   if artist not in [x['artist'] for x in library.downloaded.values()]:
-   delete_path(os.path.join(library.media_directory, artist))
+   delete_path(os.path.join(library.media_directory(), artist))
 
 def download_file(url, id, info, callback = lambda info: None):
  """Download the track from url, add ID to the list of downloaded tracks, and store it in the media directory. Finally call callback with the provided info as the only argument."""
@@ -334,7 +333,7 @@ def download_file(url, id, info, callback = lambda info: None):
    title = info.get('title', 'Unnamed'),
    trackNumber = info.get('trackNumber', 0)
   )
-  while get_size(library.media_directory) > ((application.config.get('library', 'library_size') * 1024) * 1024):
+  while get_size(library.media_directory()) > ((application.config.get('library', 'library_size') * 1024) * 1024):
    prune_library()
   callback(info)
   return True
@@ -753,14 +752,6 @@ def get_lyrics(event, track = None):
 def bell():
  """Play a bell sound."""
  return wx.Bell() if application.config.get('sound', 'interface_sounds') else None
-
-def show_errors_frame(event = None):
- """Show the errors application.main_frame."""
- if application.errors_frame:
-  application.errors_application.main_frame.Raise()
-  application.errors_application.main_frame.Show(True)
- else:
-  ErrorsFrame()
 
 def get_size(start_path = '.'):
  total_size = 0

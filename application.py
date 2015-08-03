@@ -4,8 +4,6 @@ compress = False
 add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py', 'pywintypes27.dll', 'pythoncom27.dll', 'cssselect']
 update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
-errors_frame = None
-
 from confmanager import ConfManager, parser
 from sys import platform
 
@@ -74,6 +72,7 @@ config.set('library', 'max_results', 50, title = 'Maximum results to display')
 config.set('library', 'history_length', 5, title = 'The number of previous results to save')
 config.set('library', 'poll_time', 5.0, title = 'The time to wait between downloading your library and playlists', kwargs = dict(digits = 1))
 config.set('library', 'download_timeout', 15.0, title = 'The time to wait before retrying a download.', kwargs = dict(digits = 1))
+config.set('library', 'media_directory', '', title = 'Library &Location')
 
 config.add_section('windows')
 config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
@@ -140,12 +139,6 @@ class MyApp(wx.App):
   }
   with open(config_file, 'wb') as f:
    json.dump(stuff, f, indent = 1)
-  if not devel:
-   import errors
-   l = errors.log.log
-   if l:
-    with open('errors.log', 'w') as f:
-     f.write('\n'.join([x[1] for x in l]))
   return res
 
 app = MyApp(False)
