@@ -792,13 +792,26 @@ def results_to_library(event = None):
  """Adds everything in the current list of results to the library."""
  if application.main_frame.current_library:
   return bell()
+ else:
+  return results_to_target(application.main_frame.get_results(), application.mobile_api.add_aa_track)
+
+def results_to_playlist(event = None):
+ """Add the current results to a playlist."""
  results = application.main_frame.get_results()
+ if not results:
+  return wx.Bell()
+ playlist = select_playlist(interactive = False)
+ if playlist:
+  return results_to_target(results, lambda id, playlist = playlist.get('id'): application.mobile_api.add_songs_to_playlist(playlist, id))
+
+def results_to_target(results, func):
+ """Run results through func."""
  l = len(results)
- dlg = wx.ProgressDialog('Add To Library', 'Adding %s songs to your library.' % l, l, frame, wx.PD_APP_MODAL|wx.PD_AUTO_HIDE|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME|wx.PD_ESTIMATED_TIME)
+ dlg = wx.ProgressDialog('Add Results', 'Adding %s songs to your library.' % l, l, frame, wx.PD_APP_MODAL|wx.PD_AUTO_HIDE|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME|wx.PD_ESTIMATED_TIME)
  for i, r in enumerate(results):
   i += 1
-  cont, skip = dlg.Update(i, '(%s/%s) Adding %s to library.' % (i, l, format_title(r)))
-  application.mobile_api.add_aa_track(get_id(r))
+  cont, skip = dlg.Update(i, '(%s/%s) Adding %s.' % (i, l, format_title(r)))
+  func(get_id(r))
   if not cont:
    wx.CallAfter(dlg.Update, l, 'Finishing up...')
    wx.CallAfter(dlg.Destroy)

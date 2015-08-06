@@ -1,8 +1,7 @@
 """GMP's library functions."""
 
 import os, errno, string, application, wx, functions
-from stoppable_thread import StoppableThread
-from time import sleep
+from threading import Timer, Thread
 
 library = []
 downloaded = {} # The songs that have been downloaded.
@@ -50,22 +49,22 @@ def exists(item):
 def _poll():
  """Download all the necessaries."""
  api = application.mobile_api
- while not poll_thread.should_stop.is_set():
-  global library, playlists
+ global library, playlists
+ try:
+  library = api.get_all_songs()
   try:
-   library = api.get_all_songs()
-   try:
-    if type(application.main_frame.current_library) == list and [x['id'] for x in library] != [x['id'] for x in application.main_frame.current_library]:
-     application.main_frame.init_results()
-   except wx.PyDeadObjectError:
-    break # The frame has closed.
-   _playlists = []
-   for p in api.get_all_playlists():
-    p['tracks'] = api.get_shared_playlist_contents(p['shareToken'])
-    _playlists.append(p)
-   playlists = _playlists
-   sleep(application.config.get('library', 'poll_time'))
-  except functions.RE as e:
-   return wx.MessageBox(*functions.format_requests_error(e))
+   if type(application.main_frame.current_library) == list and [x['id'] for x in library] != [x['id'] for x in application.main_frame.current_library]:
+    application.main_frame.init_results()
+  except wx.PyDeadObjectError:
+   return # The frame has closed.
+  _playlists = []
+  for p in api.get_all_playlists():
+   p['tracks'] = api.get_shared_playlist_contents(p['shareToken'])
+   _playlists.append(p)
+  playlists = _playlists
+ except functions.RE as e:
+  wx.MessageBox(*functions.format_requests_error(e))
+ global poll_thread
+ poll_thread = Timer(application.config.get('library', 'poll_time'), _poll)
 
-poll_thread = StoppableThread(target = _poll)
+poll_thread = Thread(target = _poll)

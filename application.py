@@ -128,7 +128,6 @@ class MyApp(wx.App):
   """Overrides wx.App.MainLoop, to save the config at the end."""
   res = super(MyApp, self).MainLoop(*args, **kwargs)
   sound_output.stop()
-  library.poll_thread.should_stop.set()
   stuff = {
    'saved_results': saved_results,
    'columns': columns,
@@ -174,6 +173,8 @@ if os.path.isfile(config_file):
     config.set('sound', 'volume', 100)
    if type(config.get('sound', 'pan')) == float:
     config.set('sound', 'pan', 50)
+   if not os.path.isdir(config.get('library', 'media_directory')):
+    config.set('library', 'media_directory', '')
   except ValueError as e:
    wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
 

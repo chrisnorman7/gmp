@@ -229,6 +229,13 @@ class MainFrame(wx.Frame):
   ))
   file_menu.Append(
   *self.add_accelerator(
+  wx.ACCEL_CTRL|wx.ACCEL_SHIFT, '8',
+  functions.results_to_playlist,
+  'Add all &results to a playlist',
+  'Add the current results set in it\'s entirety to one of your playlists.'
+  ))
+  file_menu.Append(
+  *self.add_accelerator(
   wx.ACCEL_NORMAL, wx.WXK_DELETE,
   functions.delete,
   '&Delete',
@@ -902,6 +909,8 @@ class MainFrame(wx.Frame):
      f.Close(True)
     except (wx.PyDeadObjectError, AttributeError):
      pass # It's not open.
+   if library.poll_thread:
+    library.poll_thread.cancel()
    event.Skip()
  
  def init_results_columns(self):
