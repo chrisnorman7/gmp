@@ -66,5 +66,6 @@ def _poll():
   wx.MessageBox(*functions.format_requests_error(e))
  global poll_thread
  poll_thread = Timer(application.config.get('library', 'poll_time'), _poll)
+ poll_thread.start()
 
 poll_thread = Thread(target = _poll)

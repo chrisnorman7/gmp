@@ -230,7 +230,7 @@ class MainFrame(wx.Frame):
   file_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_CTRL|wx.ACCEL_SHIFT, '8',
-  functions.results_to_playlist,
+  lambda event: Thread(target = functions.results_to_playlist, args = [event]).start(),
   'Add all &results to a playlist',
   'Add the current results set in it\'s entirety to one of your playlists.'
   ))

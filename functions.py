@@ -1,6 +1,7 @@
 """Various functions used in the program."""
 
 import application, wx, os, requests, sys, random, library, logging
+from gmusicapi.exceptions import CallFailure
 from accessible_output2.outputs.auto import Auto
 from shutil import copy as shcopy, rmtree
 RE = (requests.exceptions.RequestException, requests.adapters.ReadTimeoutError, IOError)
@@ -802,21 +803,28 @@ def results_to_playlist(event = None):
   return wx.Bell()
  playlist = select_playlist(interactive = False)
  if playlist:
-  return results_to_target(results, lambda id, playlist = playlist.get('id'): application.mobile_api.add_songs_to_playlist(playlist, id))
+  results_to_target(results, lambda id, playlist = playlist['id']: application.mobile_api.add_songs_to_playlist(playlist, id))
 
 def results_to_target(results, func):
  """Run results through func."""
  l = len(results)
  dlg = wx.ProgressDialog('Add Results', 'Adding %s songs to your library.' % l, l, frame, wx.PD_APP_MODAL|wx.PD_AUTO_HIDE|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME|wx.PD_ESTIMATED_TIME)
+ def finish(msg = 'Finishing up...'):
+  """Finish up."""
+  wx.CallAfter(dlg.Update, l, msg)
+  wx.CallAfter(dlg.Destroy)
  for i, r in enumerate(results):
   i += 1
   cont, skip = dlg.Update(i, '(%s/%s) Adding %s.' % (i, l, format_title(r)))
-  func(get_id(r))
-  if not cont:
-   wx.CallAfter(dlg.Update, l, 'Finishing up...')
-   wx.CallAfter(dlg.Destroy)
+  try:
+   func(get_id(r))
+  except CallFailure:
+   finish('Cann\'t add any more tracks.')
    break
- wx.CallAfter(dlg.Destroy)
+  if not cont:
+   finish()
+   break
+ finish()
 
 def delete_path(path):
  """Delete something."""

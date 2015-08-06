@@ -75,6 +75,7 @@ config.set('library', 'download_timeout', 15.0, title = 'The time to wait before
 config.set('library', 'media_directory', '', title = 'Library &Location')
 
 config.add_section('windows')
+config.set('windows', 'load_library', True, title = 'Load the music library when the program starts')
 config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
 config.set('windows', 'now_playing_format', u'({pos} / {duration}): {title}', title = 'The format for the status display in the now playing field')
 config.set('windows', 'confirm_quit', False, title = 'Confirm before quitting the program')
@@ -169,6 +170,8 @@ if os.path.isfile(config_file):
    if len(columns) != len(default_columns):
     columns = default_columns
    parser.parse_json(config, j.get('config', {}))
+   if not config.get('windows', 'load_library'):
+    main_frame.current_library = None
    if type(config.get('sound', 'volume')) == float:
     config.set('sound', 'volume', 100)
    if type(config.get('sound', 'pan')) == float:
