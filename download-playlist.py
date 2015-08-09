@@ -4,7 +4,7 @@ parser = argparse.ArgumentParser(version = '1.0')
 parser.add_argument('dir', default = os.getcwd(), nargs = '?', help = 'The directory in which the resulting MP3 files should be saved')
 parser.add_argument('-u', '--username', help = 'The username to log in with')
 parser.add_argument('-p', '--password', help = 'The login password')
-parser.add_argument('-w', '--wait', default = 1.5, type = float, help = 'Time to wait between downloads')
+parser.add_argument('-w', '--wait', default = 10.0, type = float, help = 'Time to wait between downloads')
 parser.add_argument('-r', '--random-id', action = 'store_true', help = 'Randomise the android Id')
 parser.add_argument('-l', '--logfile', type = argparse.FileType('w'), default = sys.stdout, help = 'Log program output')
 parser.add_argument('--loglevel', default = 'warning', help = 'The logging level')
@@ -63,7 +63,6 @@ if not api.login(args.username, args.password, ''.join([choice('1234567890abcdef
 m = Menu('Select source to download')
 m.add_entry('Library', api.get_all_songs)
 for p in api.get_all_playlists():
- logging.debug('Adding playlist to menu: %s', p)
  m.add_entry('%s playlist' % p.get('name', 'Untitled'), lambda token = p['shareToken']: [x['track'] for x in api.get_shared_playlist_contents(token)])
 res = m.get_selection()
 if res:
@@ -74,15 +73,15 @@ if res:
  try:
   for i, r in enumerate(res()):
    logging.debug('Result = %s', r)
-   artist = r.get('artist', 'Unknown Artist')
-   album = r.get('album', 'Unknown Album')
+   artist = valid_filename(r.get('artist', 'Unknown Artist'))
+   album = valid_filename(r.get('album', 'Unknown Album'))
    number = r.get('trackNumber', 0)
    if number < 10:
     number = '0%s' % number
    else:
     number = str(number)
-   title = r.get('title', 'Untitled')
-   filename = u'%s - %s.mp3' % (number, valid_filename(title))
+   title = valid_filename(r.get('title', 'Untitled'))
+   filename = u'%s - %s.mp3' % (number, title)
    path = os.path.join(args.dir, artist, album)
    filename = os.path.join(path, filename)
    if os.path.isfile(filename):
@@ -94,7 +93,7 @@ if res:
    if args.wait:
     print('Waiting %.2f seconds between tracks.' % args.wait)
     sleep(args.wait)
-   print('Downloading %s - %s to %s.' % (artist, title, filename))
+   print(u'Downloading %s - %s to %s.' % (artist, title, filename))
    start = time()
    logging.debug('Started download at %s.', ctime(start))
    try:
@@ -122,6 +121,6 @@ if res:
  except KeyboardInterrupt:
   logging.debug('Program terminated by user.')
   print('Exiting.')
- print('Downloaded %s %s in %.2f seconds (%.2f average).' % (i, 'file' if i == 1 else 'files', time() - program_start, total / i))
+ print('Downloaded %s %s in %.2f seconds (%.2f average).' % (i + 1, 'file' if not i else 'files', time() - program_start, total / (i + 1)))
 else:
  quit('Exiting.')

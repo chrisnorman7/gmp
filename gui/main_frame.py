@@ -4,7 +4,7 @@ import wx, wx.dataview as dv, application, columns, functions, gmusicapi, reques
 from threading import Thread
 from copy import copy
 from stoppable_thread import StoppableThread
-from time import time
+from time import time, sleep
 from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
@@ -886,6 +886,7 @@ class MainFrame(wx.Frame):
       self.track_position.SetValue(i)
      if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
       functions.next(None, interactive = False)
+    sleep(1.0)
    except wx.PyDeadObjectError:
     return # The window has probably closed.
  

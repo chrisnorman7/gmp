@@ -1,6 +1,6 @@
 if __name__ == '__main__':
  import logging, errors
- logging.basicConfig(filename = 'errors.log', level = logging.INFO)
+ logging.basicConfig(filename = 'errors.log', filemode = 'w', level = logging.INFO)
  import certifi, sys, os
  sys.path.insert(0, os.path.join(os.getcwd(), 'library.zip', 'Crypto'))
  sys.path.insert(0, os.path.join(os.getcwd(), 'certifi'))
