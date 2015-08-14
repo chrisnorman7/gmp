@@ -226,7 +226,7 @@ def previous(event = None):
 
 def get_next_song(clear = False):
  """Get the next song from the play queue or list of results. If clear is True, unqueue the resulting track."""
- q = application.main_frame.get_queue()
+ q = copy(application.main_frame.get_queue())
  if q:
   if clear:
    application.main_frame.unqueue_track(0)
