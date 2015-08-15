@@ -651,6 +651,7 @@ class MainFrame(wx.Frame):
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
   self.results.DeleteItem(result)
+  self._full_results.remove(self._results[result])
   del self._results[result]
  
  def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None, artists = None, albums = None):
@@ -682,20 +683,20 @@ class MainFrame(wx.Frame):
   self.current_library = library
   self.current_saved_result = saved_result
   if clear:
-   self.clear_results()
+   wx.CallAfter(self.clear_results)
   for r in results:
    wx.CallAfter(self.add_result, r)
   if artists:
-   self.artists.SetItems(artists)
+   wx.CallAfter(self.artists.SetItems, artists)
   else:
-   self.artists.SetItems(sorted(set([x.get('artist', 'Unknown Artist') for x in self.get_results()] + ['  All Artists  '])))
-  self.artists.SetSelection(0)
+   wx.CallAfter(self.artists.SetItems, sorted(set([x.get('artist', 'Unknown Artist') for x in self.get_results()] + ['  All Artists  '])))
+  wx.CallAfter(self.artists.SetSelection, 0)
   if albums:
-   self.albums.SetItems(albums)
+   wx.CallAfter(self.albums.SetItems, albums)
   else:
-   self.albums.SetItems(sorted(set([x.get('album', 'Unknown Album') for x in self.get_results()] + ['  All Albums  '])))
-  self.albums.SetSelection(0)
-  self.results.SetFocus()
+   wx.CallAfter(self.albums.SetItems, sorted(set([x.get('album', 'Unknown Album') for x in self.get_results()] + ['  All Albums  '])))
+  wx.CallAfter(self.albums.SetSelection, 0)
+  wx.CallAfter(self.results.SetFocus)
  
  def clear_results(self):
   """Clears the results table."""

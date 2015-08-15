@@ -4,6 +4,7 @@ if __name__ == '__main__':
  import certifi, sys, os
  sys.path.insert(0, os.path.join(os.getcwd(), 'library.zip', 'Crypto'))
  sys.path.insert(0, os.path.join(os.getcwd(), 'certifi'))
+ logging.info('Running from %s.', os.getcwd())
  import requests, application, wx
  from gui.update_frame import UpdateFrame
  u = UpdateFrame()

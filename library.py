@@ -1,7 +1,7 @@
 """GMP's library functions."""
 
 import os, errno, string, application, wx, functions
-from threading import Timer, Thread
+from threading import Timer
 
 library = []
 downloaded = {} # The songs that have been downloaded.
@@ -68,4 +68,4 @@ def _poll():
  poll_thread = Timer(application.config.get('library', 'poll_time'), _poll)
  poll_thread.start()
 
-poll_thread = Thread(target = _poll)
+poll_thread = Timer(0.0, _poll)

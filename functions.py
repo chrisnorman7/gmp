@@ -566,7 +566,7 @@ def delete(event):
    source = '%s playlist' % playlist.get('name', 'Unnamed')
    for t in playlist.get('tracks', []):
     if t.get('track', {}).get('nid') == track.get('nid'):
-     form = lambda value: [t.get('id')]
+     form = lambda value, track = t: [track.get('id')]
      break
    else:
     return wx.MessageBox('Cannot find that track in %s.' % source, 'Error')
@@ -576,7 +576,7 @@ def delete(event):
    func = application.mobile_api.delete_songs
   if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(track), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
    try:
-    func(form(track.get('id', get_id(track))))
+    print func(form(track.get('id', get_id(track))))
     application.main_frame.delete_result(cr)
    except RE as e:
     return wx.MessageBox(*format_requests_error(e))
