@@ -576,7 +576,7 @@ def delete(event):
    func = application.mobile_api.delete_songs
   if wx.MessageBox('Are you sure you want to delete %s from the %s?' % (format_title(track), source), 'Are You Sure', style = wx.YES_NO) == wx.YES:
    try:
-    print func(form(track.get('id', get_id(track))))
+    logging.debug('Result of func: %s.', func(form(track.get('id', get_id(track)))))
     application.main_frame.delete_result(cr)
    except RE as e:
     return wx.MessageBox(*format_requests_error(e))
@@ -811,20 +811,20 @@ def results_to_target(results, func):
  dlg = wx.ProgressDialog('Add Results', 'Adding %s songs to your library.' % l, l, frame, wx.PD_APP_MODAL|wx.PD_AUTO_HIDE|wx.PD_CAN_ABORT|wx.PD_ELAPSED_TIME|wx.PD_ESTIMATED_TIME)
  def finish(msg = 'Finishing up...'):
   """Finish up."""
-  wx.CallAfter(dlg.Update, l, msg)
-  wx.CallAfter(dlg.Destroy)
+  dlg.Update(l, msg)
+  dlg.Destroy()
  for i, r in enumerate(results):
   i += 1
   cont, skip = dlg.Update(i, '(%s/%s) Adding %s.' % (i, l, format_title(r)))
   try:
    func(get_id(r))
   except CallFailure:
-   finish('Cann\'t add any more tracks.')
+   wx.CallAfter(finish, 'Cann\'t add any more tracks.')
    break
   if not cont:
-   finish()
+   wx.CallAfter(finish)
    break
- finish()
+ wx.CallAfter(finish)
 
 def delete_path(path):
  """Delete something."""
