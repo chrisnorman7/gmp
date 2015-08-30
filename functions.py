@@ -106,8 +106,10 @@ def add_to_library(event):
  wx.MessageBox('Added %s to your library.' % format_title(track), 'Track Added')
 
 def select_playlist(event = None, playlists = None, playlist = None, interactive = True):
+ """Allows you to pick a playlist with a GUI."""
+ api = application.mobile_api
  if not playlists:
-  playlists = library.playlists()
+  playlists = api.get_all_playlists()
  if playlist:
   for p in playlists:
    if p['id'] == playlist:
@@ -118,6 +120,7 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
   dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', [x['name'] for x in playlists])
   if dlg.ShowModal() == wx.ID_OK:
    playlist = playlists[dlg.GetSelection()]
+   playlist['tracks'] = api.get_shared_playlist_contents(playlist['shareToken'])
   dlg.Destroy()
  if interactive:
   if playlist:

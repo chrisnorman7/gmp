@@ -43,12 +43,3 @@ def get_path(item):
 def exists(item):
  """Figures out if the file exists."""
  return os.path.isfile(get_path(item))
-
-def playlists():
- """Get all playlists."""
- stuff = [] # The retrieved playlists.
- api = application.mobile_api
- for p in api.get_all_playlists():
-  p['tracks'] = api.get_shared_playlist_contents(p['shareToken'])
-  stuff.append(p)
- return stuff
