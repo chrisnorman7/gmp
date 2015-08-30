@@ -58,7 +58,7 @@ def get_id(item):
 
 def in_library(id):
  """Checks if the given ID is in the library."""
- lib = library.library
+ lib = application.mobile_api.get_all_songs()
  for l in lib:
   if get_id(l) == id:
    return True
@@ -107,7 +107,7 @@ def add_to_library(event):
 
 def select_playlist(event = None, playlists = None, playlist = None, interactive = True):
  if not playlists:
-  playlists = library.playlists
+  playlists = library.playlists()
  if playlist:
   for p in playlists:
    if p['id'] == playlist:
@@ -339,7 +339,7 @@ def download_file(url, id, info, callback = lambda info: None):
   callback(info)
   return True
  else:
-  logging.info('Download failed with status code %s.', g.status_code)
+  logging.error('Download failed with status code %s.', g.status_code)
   return False
 
 def track_seek(event):
@@ -515,7 +515,7 @@ def related_artists(event):
 def all_playlist_tracks(event):
  """Add every track from every playlist."""
  announce('Load All Playlist Tracks.')
- tracks = [x['tracks'] for x in library.playlists] # The final results.
+ tracks = [x['tracks'] for x in library.playlists()] # The final results.
  wx.CallAfter(application.main_frame.add_results, tracks, clear = True)
 
 def queue_result(event):
@@ -767,8 +767,7 @@ def save_result(event = None):
  track = application.main_frame.get_current_track()
  if not track:
   return wx.Bell()
- track = library.get_track(get_id(track))
- if track.exists() and track.downloaded:
+ if exists(track):
   dlg = wx.FileDialog(frame, defaultDir = os.path.expanduser('~'), wildcard = '*%s' % application.track_extension, defaultFile = format_title(track).replace('\\', ',').replace('/', ','), style = wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
   if dlg.ShowModal() == wx.ID_OK:
    new_path = dlg.GetPath()
@@ -779,7 +778,7 @@ def save_result(event = None):
    try:
     if not new_path.endswith(application.track_extension):
      new_path += application.track_extension
-    shcopy(path, new_path)
+    shcopy(library.get_path(track), new_path)
    except Exception as e:
     wx.MessageBox(str(e), 'Error')
  else:

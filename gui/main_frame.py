@@ -650,9 +650,9 @@ class MainFrame(wx.Frame):
  
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
-  self.results.DeleteItem(result)
   self._full_results.remove(self._results[result])
   del self._results[result]
+  self.reload_results()
  
  def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None, artists = None, albums = None):
   """
@@ -706,7 +706,7 @@ class MainFrame(wx.Frame):
  
  def init_results(self, event = None):
   """Initialises the results table."""
-  songs = library.library
+  songs = application.mobile_api.get_all_songs()
   self.add_results(songs, clear = True, library = songs)
  
  def Show(self, value = True):
@@ -911,8 +911,6 @@ class MainFrame(wx.Frame):
      f.Close(True)
     except (wx.PyDeadObjectError, AttributeError):
      pass # It's not open.
-   if library.poll_thread:
-    library.poll_thread.cancel()
    event.Skip()
  
  def init_results_columns(self):
