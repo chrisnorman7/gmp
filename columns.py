@@ -26,7 +26,7 @@ def boolean_as_string(data):
  return '*' if data else ' '
 
 parse_trackAvailableForPurchase = boolean_as_string
-deleted = boolean_as_string
+parse_deleted = boolean_as_string
 
 def time_as_string(data):
  """Returns floating point times as a string."""
