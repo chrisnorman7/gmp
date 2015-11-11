@@ -401,7 +401,7 @@ def select_output(event = None):
  """Selects a new audio output."""
  o = application.sound_output
  p = getattr(o, '__class__')
- dlg = wx.SingleChoiceDialog(frame, 'Select Output Device', 'Select an output device from the list', o.get_device_names())
+ dlg = wx.SingleChoiceDialog(frame, 'Select Output Device', 'Select an output device from the list', ['Default'] + o.get_device_names())
  if dlg.ShowModal() == wx.ID_OK:
   if application.main_frame.current_track:
    loc = application.main_frame.current_track.get_position()
@@ -411,7 +411,11 @@ def select_output(event = None):
   else:
    item = None
   o.free()
-  application.sound_output = p(device = dlg.GetSelection() + 1)
+  res = dlg.GetSelection()
+  if not res:
+   res = -1
+  logging.debug('Setting output device: %s.', res)
+  application.sound_output = p(device = res)
   if item:
    application.main_frame.play(item, play = playing)
    application.main_frame.current_track.set_position(loc)
