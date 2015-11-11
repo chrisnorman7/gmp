@@ -568,7 +568,7 @@ def delete(event):
    source = '%s playlist' % playlist.get('name', 'Unnamed')
    for t in playlist.get('tracks', []):
     if t.get('track', {}).get('nid') == track.get('nid'):
-     form = lambda value, track = t: [track.get('id')]
+     form = lambda value, track = t: track.get('id')
      break
    else:
     return wx.MessageBox('Cannot find that track in %s.' % source, 'Error')
