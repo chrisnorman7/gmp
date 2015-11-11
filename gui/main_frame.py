@@ -1,6 +1,6 @@
 """The main frame for Google Music Player"""
 
-import wx, wx.dataview as dv, application, columns, functions, gmusicapi, requests, os, sys, server, library
+import wx, application, functions, gmusicapi, requests, os, sys, server, library, logging, columns
 from threading import Thread
 from copy import copy
 from stoppable_thread import StoppableThread
@@ -11,6 +11,8 @@ from sound_lib.main import BassError
 from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
 from gui.update_frame import UpdateFrame
+
+logger = logging.getLogger('Main Frame')
 
 keys = {} # Textual key names.
 mods = {} # Textual modifiers
@@ -77,24 +79,10 @@ class MainFrame(wx.Frame):
   p = wx.Panel(self)
   s = wx.BoxSizer(wx.VERTICAL)
   s1 = wx.BoxSizer(wx.HORIZONTAL)
-  if application.platform == 'darwin':
-   self.results = dv.DataViewListCtrl(p) # User friendly track list.
-   self.results.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
-   self.queue = dv.DataViewListCtrl(p)
-   self.queue.Bind(dv.EVT_DATAVIEW_ITEM_ACTIVATED, self.select_item)
-  else:
-   self.results = wx.ListCtrl(p, style = wx.LC_REPORT|wx.LC_SINGLE_SEL)
-   self.results.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
-   self.queue = wx.ListCtrl(p, style = wx.LC_REPORT)
-   self.queue.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.select_item)
+  self.results = wx.ListBox(p, style = wx.LB_SINGLE)
+  self.queue = wx.ListBox(p, style = wx.LB_SINGLE)
   self.results.SetFocus()
   self._results = [] # The raw json from Google.
-  self.init_results_columns()
-  for x, y in enumerate(['Name', 'Artist', 'Album', 'Duration']):
-   if application.platform == 'darwin':
-    self.queue.AppendTextColumn(y, width = 500)
-   else:
-    self.queue.InsertColumn(x, y, width = 500)
   s1.Add(self.results, 7, wx.GROW)
   s1.Add(self.queue, 3, wx.GROW)
   s.Add(s1, 7, wx.GROW)
@@ -317,13 +305,6 @@ class MainFrame(wx.Frame):
   functions.get_lyrics,
   'View &Lyrics',
   'View lyrics for the currently selected result.'
-  ))
-  view_menu.Append(
-  *self.add_accelerator(
-  wx.ACCEL_CTRL, 'j',
-  lambda event: ColumnEditor().Show(True),
-  '&View Options...',
-  'Configure the columns for the table of results.'
   ))
   self.play_controls_check = view_menu.AppendCheckItem(
   wx.ID_ANY,
@@ -635,18 +616,10 @@ class MainFrame(wx.Frame):
    a = result.get('artist', 'Unknown Artist')
    if a not in self.artists.GetItems():
     self.artists.Append(a)
-   a = result.get('album', 'Unknonw Album')
+   a = result.get('album', 'Unknown Album')
    if a not in self.albums.GetItems():
     self.albums.Append(a)
-  stuff = []
-  for spec, column in application.columns:
-   if type(column) != dict:
-    application.columns.remove([spec, column])
-    column = application.default_columns.get('spec', {})
-    application.columns.append([spec, column])
-   if column.get('include', False):
-    stuff.append(getattr(columns, 'parse_%s' % spec, lambda data: unicode(data))(result.get(spec, 'Unknown')))
-  wx.CallAfter(self.results.AppendItem if application.platform == 'darwin' else self.results.Append, stuff)
+  self.results.Append(functions.format_title(result))
  
  def delete_result(self, result):
   """Deletes the result and the associated row in self._results."""
@@ -702,7 +675,7 @@ class MainFrame(wx.Frame):
   """Clears the results table."""
   self._results = []
   self._full_results = []
-  self.results.DeleteAllItems()
+  self.results.Clear()
  
  def init_results(self, event = None):
   """Initialises the results table."""
@@ -755,7 +728,7 @@ class MainFrame(wx.Frame):
  def queue_track(self, value):
   """Add a track to the queue."""
   self._queue.append(value)
-  wx.CallAfter(self.queue.AppendItem if application.platform == 'darwin' else self.queue.Append, [value['title'], value['artist'], value['album'], columns.parse_durationMillis(value['durationMillis'])])
+  wx.CallAfter(self.queue.Append, functions.format_title(value))
  
  def queue_tracks(self, items, clear = False):
   """Add multiple items to the queue."""
@@ -766,7 +739,7 @@ class MainFrame(wx.Frame):
  
  def unqueue_track(self, result):
   """Removes a track from the queue."""
-  self.queue.DeleteItem(result)
+  self.queue.Delete(result)
   del self._queue[result]
  
  def clear_queue(self):
@@ -822,7 +795,8 @@ class MainFrame(wx.Frame):
     track = URLStream(url = url)
    except BassError as e:
     error = e # Just store it for later alerting.
-   Thread(target = functions.download_file, args = [url, id, item]).start()
+   if application.config.get('library', 'cache'): # CaThe user wants their tracks downloaded.
+    Thread(target = functions.download_file, args = [url, id, item]).start()
   if error:
    return wx.MessageBox(str(e), 'Error')
   if self.current_track:
@@ -895,10 +869,7 @@ class MainFrame(wx.Frame):
   """Returns the current result."""
   if not ctrl:
    ctrl = self.results
-  if application.platform == 'darwin':
-   return ctrl.GetSelection().GetID() - 1
-  else:
-   return ctrl.GetFocusedItem()
+  return ctrl.GetSelection()
  
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
@@ -913,24 +884,8 @@ class MainFrame(wx.Frame):
      pass # It's not open.
    event.Skip()
  
- def init_results_columns(self):
-  """Creates columns for the results table."""
-  if application.platform == 'darwin':
-   self.results.ClearColumns()
-  else:
-   self.results.ClearAll()
-  for i, (spec, column) in enumerate(application.columns):
-   if column.get('include', False):
-    name = column.get('friendly_name', spec.title())
-    width = column.get('width', -1)
-    if application.platform == 'darwin':
-     self.results.AppendTextColumn(name, width = width)
-    else:
-     self.results.InsertColumn(i, name, width = width)
- 
  def reload_results(self):
   """Reloads the results table."""
-  self.init_results_columns()
   self.add_results(self.get_results(), clear = True, playlist = self.current_playlist, library = self.current_library, station = self.current_station)
  
  def hotkey_parser(self, event):
@@ -1073,10 +1028,13 @@ class MainFrame(wx.Frame):
   """Reload the http server."""
   if self.http_server:
    self.http_server.shutdown()
-  if application.config.get('http', 'enabled'):
+   logger.info('Shutdown the HTTP server.')
+  if application.config.get('http', 'enabled') and not self.http_server:
    self.http_server = server.get_server()
    self.server_thread = Thread(target = self.http_server.serve_forever)
    self.server_thread.start()
+   logger.info('Started HTTP server.')
   else:
    self.http_server = None
    self.server_thread = None
+   logger.info('Not starting HTTP server.')

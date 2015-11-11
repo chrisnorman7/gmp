@@ -70,8 +70,8 @@ config.set('library', 'library_size', 1024, title = 'The size of the library in 
 config.set('library', 'max_top_tracks', 50, title = 'The max top tracks to retrieve when getting artist info')
 config.set('library', 'max_results', 50, title = 'Maximum results to display')
 config.set('library', 'history_length', 5, title = 'The number of previous results to save')
-config.set('library', 'poll_time', 5.0, title = 'The time to wait between downloading your library and playlists', kwargs = dict(digits = 1))
 config.set('library', 'download_timeout', 15.0, title = 'The time to wait before retrying a download.', kwargs = dict(digits = 1))
+config.set('library', 'cache', True, title = '&Cache songs in the background')
 config.set('library', 'media_directory', '', title = 'Library &Location')
 
 config.add_section('windows')

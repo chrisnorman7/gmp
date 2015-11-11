@@ -109,7 +109,7 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
  """Allows you to pick a playlist with a GUI."""
  api = application.mobile_api
  if not playlists:
-  playlists = api.get_all_playlists()
+  playlists = api.get_all_user_playlist_contents()
  if playlist:
   for p in playlists:
    if p['id'] == playlist:
@@ -120,7 +120,6 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
   dlg = wx.SingleChoiceDialog(frame, 'Select a playlist', 'Select Playlist', [x['name'] for x in playlists])
   if dlg.ShowModal() == wx.ID_OK:
    playlist = playlists[dlg.GetSelection()]
-   playlist['tracks'] = api.get_shared_playlist_contents(playlist['shareToken'])
   dlg.Destroy()
  if interactive:
   if playlist:
