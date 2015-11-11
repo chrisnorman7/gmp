@@ -8,7 +8,6 @@ from time import time, sleep
 from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
-from gui.column_editor import ColumnEditor
 from gui.new_playlist import NewPlaylist
 from gui.update_frame import UpdateFrame
 

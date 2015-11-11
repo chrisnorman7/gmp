@@ -123,8 +123,23 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
   dlg.Destroy()
  if interactive:
   if playlist:
-   tracks = playlist['tracks']
-   wx.CallAfter(application.main_frame.add_results, [x['track'] for x in tracks], True, playlist = playlist)
+   try:
+    tracks = application.mobile_api.get_shared_playlist_contents(playlist['shareToken'])
+   except Exception as e:
+    logging.exception(e)
+    return wx.MessageBox('Could not load the %s playlist. See log for details.' % playlist['name'], 'Error Loading Playlist', style = wx.ICON_EXCLAMATION)
+   stuff = [] # The actual tracks to pass to add_results.
+   not_loaded = 0 # The number of tracks that couldn't be loaded.
+   for t in tracks:
+    if 'track' in t:
+     logging.debug('Parsed track: %s.', format_title(t['track']))
+     stuff.append(t['track'])
+    else:
+     logging.warning('No track data found for track (ID = %s): %s.', get_id(t), t)
+     not_loaded += 1
+   if not_loaded:
+    wx.MessageBox('Failed to load %s track%s. See warning log for details.' % (not_loaded, '' if not_loaded == 1 else 's'), 'Load Error', style = wx.ICON_EXCLAMATION)
+   wx.CallAfter(application.main_frame.add_results, stuff, True, playlist = playlist)
  else:
   return playlist
 
