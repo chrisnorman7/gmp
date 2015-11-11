@@ -79,7 +79,10 @@ elif sys.platform == 'darwin':
   z = y + '.zip'
   print 'Decompressing %s...' % z
   system('unzip "%s" -d "%s"' % (z, y))
-  remove(z)
+  try:
+   remove(z)
+  except OSError:
+   pass
   rename(y, z)
  sp = z
  xd = x

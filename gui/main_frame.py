@@ -624,7 +624,9 @@ class MainFrame(wx.Frame):
   """Deletes the result and the associated row in self._results."""
   self._full_results.remove(self._results[result])
   del self._results[result]
-  self.reload_results()
+  self.results.Delete(result)
+  if self._results:
+   self.results.SetSelection(max(result - 1, 0))
  
  def add_results(self, results, clear = False, bypass_history = False, scroll_history = True, playlist = None, station = None, library = None, saved_result = None, artists = None, albums = None):
   """
