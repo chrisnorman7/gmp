@@ -696,7 +696,7 @@ class MainFrame(wx.Frame):
    self.title = functions.format_title(self.get_current_track()) if self.get_current_track() else None
   else:
    self.title = value
-  self.hotkey_area.SetValue(self.title)
+  self.hotkey_area.SetValue(self.title or application.name)
   title = application.name
   if self.title:
    title += ' (%s)' % self.title
