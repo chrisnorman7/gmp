@@ -76,7 +76,7 @@ config.set('library', 'media_directory', '', title = 'Library &Location')
 
 config.add_section('windows')
 config.set('windows', 'load_library', True, title = 'Load the music library when the program starts')
-config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names in the window title')
+config.set('windows', 'title_format', u'{artist} - {title}', title = 'The format for track names (possible formatters: {albumArtRef}, {artistId}, {composer}, {trackType}, {id}, {album}, {title}, {creationTimestamp}, {recentTimestamp}, {albumArtist}, {trackNumber}, {discNumber}, {contentType}, {deleted}, {storeId}, {nid}, {estimatedSize}, {albumId}, {genre}, {playCount}, {artistArtRef}, {kind}, {artist}, {lastModifiedTimestamp}, {durationMillis})')
 config.set('windows', 'now_playing_format', u'({pos} / {duration}): {title}', title = 'The format for the status display in the now playing field')
 config.set('windows', 'confirm_quit', False, title = 'Confirm before quitting the program')
 config.set('windows', 'play_controls_show', True, title = 'Show player controls')

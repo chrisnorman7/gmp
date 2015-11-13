@@ -1,6 +1,6 @@
 """Various functions used in the program."""
 
-import application, wx, os, requests, sys, random, library, logging
+import application, wx, os, requests, sys, random, library, logging, columns
 from gmusicapi.exceptions import CallFailure
 from accessible_output2.outputs.auto import Auto
 from shutil import copy as shcopy, rmtree
@@ -13,6 +13,7 @@ from copy import copy
 from threading import Thread, current_thread
 
 output = Auto()
+logger = logging.getLogger('Functions')
 
 id_fields = [
  'storeId',
@@ -22,9 +23,13 @@ id_fields = [
 ]
 
 def format_title(track):
+ stuff = {} # Stuff for format().
  try:
-  return application.config.get('windows', 'title_format').format(**track)
+  for k, v in track.items():
+   stuff[k] = getattr(columns, 'parse_%s' % k, lambda value: str(value))(v)
+  return application.config.get('windows', 'title_format').format(**stuff)
  except KeyError as e:
+  logger.exception(e)
   return 'Error in title format: %s.' % e
 
 def config_update(config, section, option, value):

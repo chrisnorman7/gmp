@@ -609,6 +609,7 @@ class MainFrame(wx.Frame):
  
  def add_result(self, result, update_filters = False):
   """Given a list item from Google, add it to self._results, and add data to the table."""
+  logger.debug('Adding result: %s.', result)
   self._full_results.append(result)
   self._results.append(result)
   if update_filters:
@@ -707,8 +708,7 @@ class MainFrame(wx.Frame):
   ctrl = self.FindFocus()
   if application.platform == 'darwin':
    ctrl = self.results
-   func = self.get_results
-  elif ctrl == self.queue:
+  if ctrl == self.queue:
    func = self.get_queue
   elif ctrl == self.results:
    func = self.get_results
@@ -760,8 +760,9 @@ class MainFrame(wx.Frame):
   Plays the track given in item.
   
   If history is True, add any current track to the history.
-  If play is True, play the track immidiately.
+  If play is True, play the track immediately.
   """
+  logger.debug('Playing item: %s.', item)
   id = functions.get_id(item)
   track = None # The object to store the track in until it's ready for playing.
   error = None # Any error that occured.
@@ -796,7 +797,7 @@ class MainFrame(wx.Frame):
     track = URLStream(url = url)
    except BassError as e:
     error = e # Just store it for later alerting.
-   if application.config.get('library', 'cache'): # CaThe user wants their tracks downloaded.
+   if application.config.get('library', 'cache'): # The user wants their tracks downloaded.
     Thread(target = functions.download_file, args = [url, id, item]).start()
   if error:
    return wx.MessageBox(str(e), 'Error')
