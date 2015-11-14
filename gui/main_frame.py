@@ -748,7 +748,7 @@ class MainFrame(wx.Frame):
  def clear_queue(self):
   """Clears the play queue."""
   self._queue = []
-  self.queue.DeleteAllItems()
+  self.queue.Clear()
  
  def get_current_queue_result(self):
   """Same as get_current_result, but with the queue."""
