@@ -1,5 +1,7 @@
 if __name__ == '__main__':
- import logging, argparse, sys
+ import logging, argparse, sys, os.path
+ if os.path.basename(sys.executable).startswith('pythonw'):
+  sys.stdout = open(os.path.join(os.path.expanduser('~'), 'gmp.log'), 'w')
  parser = argparse.ArgumentParser()
  parser.add_argument('-l', '--logfile', metavar = 'filename', dest = 'log_file', type = argparse.FileType('w'), default = sys.stdout, help = 'Log program errors')
  parser.add_argument('-L', '--loglevel', metavar = 'level', dest = 'log_level', default = 'info', choices = ['debug', 'info', 'warning', 'error', 'critical'], help = 'The logging level')
@@ -24,5 +26,6 @@ if __name__ == '__main__':
    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
    LoginFrame()
    application.app.MainLoop()
+   logging.info('Application closed.')
  except Exception as e:
   logging.exception(e)

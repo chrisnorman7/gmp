@@ -80,5 +80,9 @@ class LoginFrame(SF):
  
  def post_login(self):
   """Closes this window and opens the main frame."""
-  application.main_frame.Show(True)
-  self.Close(True)
+  try:
+   application.main_frame.Show(True)
+  except wx.PyDeadObjectError:
+   pass # The user closed it already.
+  finally:
+   self.Close(True)

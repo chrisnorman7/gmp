@@ -9,28 +9,6 @@ from sys import platform
 
 saved_results = {}
 results_history = []
-columns = [
- ['composer', {'friendly_name': 'Composer', 'width': 200}],
- ['trackType', {'friendly_name': 'Track Type'}],
- ['creationTimestamp', {'friendly_name': 'Created', 'width': 50}],
- ['recentTimestamp', {'friendly_name': 'Recently Modified', 'width': 50}],
- ['albumArtist', {'friendly_name': 'Album Artist', 'width': 500}],
- ['contentType', {'friendly_name': 'Content Type'}],
- ['deleted', {'friendly_name': 'Deleted'}],
- ['estimatedSize', {'friendly_name': 'Estimated Size', 'width': 50}],
- ['lastModifiedTimestamp', {'friendly_name': 'Last Modified', 'width': 50}],
- ['trackNumber', {'friendly_name': 'Number', 'include': True, 'width': 30}],
- ['title', {'friendly_name': 'Name', 'include': True, 'width': 500}],
- ['artist', {'friendly_name': 'Artist', 'include': True, 'width': 500}],
- ['album', {'friendly_name': 'Album', 'include': True, 'width': 500}],
- ['discNumber', {'friendly_name': 'Disc Number', 'include': True, 'width': 20}],
- ['durationMillis', {'friendly_name': 'Duration', 'include': True, 'width': 50}],
- ['genre', {'friendly_name': 'Genre', 'include': True, 'width': 150}],
- ['year', {'friendly_name': 'Year', 'include': True, 'width': 100}],
- ['playCount', {'friendly_name': 'Play Count', 'include': True}]
-]
-
-default_columns = columns
 
 import wx, os, json
 from sound_lib.output import Output
@@ -131,7 +109,6 @@ class MyApp(wx.App):
   sound_output.stop()
   stuff = {
    'saved_results': saved_results,
-   'columns': columns,
    'config': config.get_dump(),
    'device_id': device_id,
    'results_history': results_history,
@@ -166,9 +143,6 @@ if os.path.isfile(config_file):
    for x, y in j.get('saved_results', {}).iteritems():
     main_frame.add_saved_result(name = x, results = y)
    results_history = j.get('results_history', [])
-   columns = j.get('columns', columns)
-   if len(columns) != len(default_columns):
-    columns = default_columns
    parser.parse_json(config, j.get('config', {}))
    if not config.get('windows', 'load_library'):
     main_frame.current_library = None

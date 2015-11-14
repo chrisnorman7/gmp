@@ -687,7 +687,7 @@ class MainFrame(wx.Frame):
  def Show(self, value = True):
   """Shows the frame."""
   res = super(MainFrame, self).Show(value)
-  Thread(target = self.reload_http_server).start()
+#  Thread(target = self.reload_http_server).start()
   self._thread.start()
   return res
  

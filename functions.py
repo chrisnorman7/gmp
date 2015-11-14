@@ -26,7 +26,7 @@ def format_title(track):
  stuff = {} # Stuff for format().
  try:
   for k, v in track.items():
-   stuff[k] = getattr(columns, 'parse_%s' % k, lambda value: str(value))(v)
+   stuff[k] = getattr(columns, 'parse_%s' % k, lambda value: value)(v)
   return application.config.get('windows', 'title_format').format(**stuff)
  except KeyError as e:
   logger.exception(e)
