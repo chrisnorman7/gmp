@@ -9,9 +9,10 @@ if __name__ == '__main__':
  logging.basicConfig(stream = args.log_file, level = args.log_level.upper())
  try:
   import certifi, sys, os
-  sys.path.insert(0, os.path.join(os.getcwd(), 'library.zip', 'Crypto'))
-  sys.path.insert(0, os.path.join(os.getcwd(), 'certifi'))
-  logging.debug('Running from %s.', os.getcwd())
+  cwd = os.getcwd()
+  sys.path.insert(0, os.path.join(cwd, 'library.zip', 'Crypto'))
+  sys.path.insert(0, os.path.join(cwd, 'certifi'))
+  logging.debug('Running from %s.', cwd)
   import requests, application, wx
   from gui.update_frame import UpdateFrame
   logging.debug('Checking for update...')
@@ -21,10 +22,8 @@ if __name__ == '__main__':
   if application.gmusicapi_version > v:
    wx.MessageBox('Gmusicapi version %s is required, but only %s installed. Please install the correct version with the requirements.txt file.' % (application.gmusicapi_version, v), 'Incompatible Gmusicapi Version')
   else:
-   from gui.login_frame import LoginFrame
    from requests.packages.urllib3.exceptions import InsecureRequestWarning
    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-   LoginFrame()
    application.app.MainLoop()
    logging.info('Application closed.')
  except Exception as e:

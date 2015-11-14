@@ -7,8 +7,8 @@ from functions import format_requests_error
 
 class LoginFrame(SF):
  """Frame to log in with."""
- def __init__(self):
-  super(LoginFrame, self).__init__(None, title = 'Login')
+ def __init__(self, parent):
+  super(LoginFrame, self).__init__(parent, title = 'Login')
   self.SetAcceleratorTable(wx.AcceleratorTable([]))
   self.processing = False # Set to true when we start the login process.
   p = self.GetContentsPane()
@@ -66,7 +66,7 @@ class LoginFrame(SF):
     wx.CallAfter(self.pwd.SetSelection, 0, -1)
     self.processing = False
   except requests.exceptions.RequestException as e:
-   wx.MessageBox(*format_requests_error(e))
+   wx.MessageBox(*format_requests_error(e), style = wx.ICON_EXCLAMATION)
    application.main_frame.Close(True)
    return self.Close(True)
  

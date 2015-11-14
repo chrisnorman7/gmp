@@ -687,8 +687,10 @@ class MainFrame(wx.Frame):
  def Show(self, value = True):
   """Shows the frame."""
   res = super(MainFrame, self).Show(value)
-#  Thread(target = self.reload_http_server).start()
-  self._thread.start()
+  try:
+   self._thread.start()
+  except RuntimeError:
+   pass # This function has already been called.
   return res
  
  def SetTitle(self, value = None):

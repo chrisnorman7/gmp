@@ -1,8 +1,9 @@
 """Functions for the parsing of columns."""
 
-import datetime
+import datetime, logging
 from time import ctime
 
+logger = logging.getLogger('Columns')
 def parse_trackNumber(data):
  """Converts from an integer to a string."""
  return '%s%s' % ((0 if data < 10 else ''), str(data))
@@ -30,7 +31,12 @@ parse_deleted = boolean_as_string
 
 def time_as_string(data):
  """Returns floating point times as a string."""
- return ctime(data)
+ logger.debug('Converting %s to time.', data)
+ try:
+  return ctime(float(data))
+ except Exception as e:
+  logger.exception(e)
+  return '(Error) %s' % data
 
 parse_creationTimestamp = time_as_string
 parse_recentTimestamp = time_as_string
