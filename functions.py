@@ -442,16 +442,12 @@ def promoted_songs(event):
 
 def focus_playing(event):
  """Scrolls the results view to the currently playing track, if it's in the list."""
- #announce('Focus Playing.')
+ announce('Focus Playing.')
  track = frame.get_current_track()
  if track:
   if track in frame.get_results():
    pos = frame.get_results().index(track)
-   if application.platform == 'darwin':
-    frame.results.SelectRow(pos)
-   else:
-    frame.results.Select(pos)
-    frame.results.Focus(pos)
+   frame.results.Select(pos)
   else:
    frame.add_results([track], clear = True, bypass_history = True)
  else:
