@@ -433,7 +433,6 @@ def select_output(event = None):
 
 def promoted_songs(event):
  """Get promoted songs."""
- return wx.MessageBox('This feature has been disabled until the API has been fixed.', 'Feature Disabled')
  try:
   songs = application.mobile_api.get_promoted_songs()
  except RE as e:
