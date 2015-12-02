@@ -812,7 +812,8 @@ def save_result(event = None):
 
 def announce(stuff):
  """Accessible alerts as were."""
- output.output(stuff)
+ if application.config.get('accessibility', 'announcements'):
+  output.output(stuff)
 
 def results_to_library(event = None):
  """Adds everything in the current list of results to the library."""
