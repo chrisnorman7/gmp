@@ -285,8 +285,11 @@ def next(event = None, interactive = True):
   q = get_next_song(True)
  if q:
   frame.play(q)
+  return True
  else:
-  return bell() if interactive else None
+  if interactive:
+   bell()
+  return False
 
 def rewind(event):
  """Rewind the track a bit."""

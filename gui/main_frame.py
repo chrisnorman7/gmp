@@ -3,8 +3,7 @@
 import wx, application, functions, gmusicapi, requests, os, sys, server, library, logging, columns
 from threading import Thread
 from copy import copy
-from stoppable_thread import StoppableThread
-from time import time, sleep
+from time import time
 from inspect import getdoc
 from sound_lib.stream import URLStream, FileStream
 from sound_lib.main import BassError
@@ -582,7 +581,9 @@ class MainFrame(wx.Frame):
   ))
   mb.Append(help_menu, '&Help')
   self.SetMenuBar(mb)
-  self._thread = StoppableThread(target = self.track_thread)
+  self.timer = wx.Timer(self)
+  self.Bind(wx.EVT_TIMER, self.track_thread, source = self.timer)
+  self.timer.Start(100)
   self.Maximize()
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.do_close)
@@ -850,24 +851,19 @@ class MainFrame(wx.Frame):
   if self.current_track:
    self.current_track.set_frequency(self.frequency.GetValue() * 882)
  
- def track_thread(self):
+ def track_thread(self, event):
   """Move track progress bars and play queued tracks."""
-  thread = self._thread
-  while not thread.should_stop.is_set():
-   try:
-    self.update_hotkey_area()
-    if self.current_track:
-     p = self.current_track.get_position()
-     l = self.current_track.get_length()
-     self.current_pos = p / (l / int(self.get_current_track().get('durationMillis')))
-     i = min(l, int(p / (l / 100.0)))
-     if not self.track_position.HasFocus() and i != self.track_position.GetValue():
-      self.track_position.SetValue(i)
-     if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
-      functions.next(None, interactive = False)
-    sleep(1.0)
-   except wx.PyDeadObjectError:
-    return # The window has probably closed.
+  self.update_hotkey_area()
+  if self.current_track:
+   p = self.current_track.get_position()
+   l = self.current_track.get_length()
+   self.current_pos = p / (l / int(self.get_current_track().get('durationMillis')))
+   i = min(l, int(p / (l / 100.0)))
+   if not self.track_position.HasFocus() and i != self.track_position.GetValue():
+    self.track_position.SetValue(i)
+   if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
+    if not functions.next(None, interactive = False):
+     self.SetTitle()
  
  def get_current_result(self, ctrl = None):
   """Returns the current result."""
@@ -878,7 +874,7 @@ class MainFrame(wx.Frame):
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
   if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
-   self._thread.should_stop.set()
+   self.timer.Stop()
    if self.http_server:
     Thread(target = self.http_server.shutdown).start()
    for f in [application.lyrics_frame]:
