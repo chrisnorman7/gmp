@@ -861,3 +861,9 @@ def delete_path(path):
   os.remove(path)
  else:
    rmtree(path)
+
+def reverse_results(results):
+ """Reverses the provided results."""
+ res = copy(results)
+ res.reverse()
+ return res

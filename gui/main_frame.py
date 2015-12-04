@@ -403,6 +403,7 @@ class MainFrame(wx.Frame):
   '&Queue Item',
   'Add the currently selected item to the play queue.'
   ))
+  self.Bind(wx.EVT_MENU, lambda event: self.add_results(functions.reverse_results(self.get_results()), clear = True), track_menu.Append(wx.ID_ANY, '&Reverse Results', 'Reverse the list of results.'))
   mb.Append(track_menu, '&Track')
   play_menu = wx.Menu()
   play_menu.Append(
