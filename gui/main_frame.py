@@ -874,7 +874,6 @@ class MainFrame(wx.Frame):
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
   if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
-   self.timer.Stop()
    if self.http_server:
     Thread(target = self.http_server.shutdown).start()
    for f in [application.lyrics_frame]:
