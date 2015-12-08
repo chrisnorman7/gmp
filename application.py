@@ -6,6 +6,7 @@ update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
 from sys import platform
 
+streams = []
 saved_results = {}
 results_history = []
 
@@ -44,6 +45,7 @@ class MyApp(wx.App):
   res = super(MyApp, self).MainLoop(*args, **kwargs)
   sound_output.stop()
   stuff = {
+   'streams': streams,
    'saved_results': saved_results,
    'config': config.get_dump(),
    'device_id': device_id,
@@ -76,6 +78,7 @@ if os.path.isfile(config_file):
    if type(library.downloaded) != dict:
     library.downloaded = {} # Better to clear the user's library than have them suffer tracebacks.
    device_id = j.get('device_id', None)
+   streams = j.get('streams', [])
    for x, y in j.get('saved_results', {}).iteritems():
     main_frame.add_saved_result(name = x, results = y)
    results_history = j.get('results_history', [])

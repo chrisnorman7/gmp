@@ -28,7 +28,6 @@ class MainFrame(wx.Frame):
  def __init__(self, ):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
-  self.last_update = 0.0
   functions.frame = self # Save typing in the functions.
   self.current_pos = 0.0 # The position in the currently playing track for the Winamp-style control.
   self.duration = None # The duration of the track as a string.
@@ -394,6 +393,13 @@ class MainFrame(wx.Frame):
   'Loa&d All Playlist Tracks',
   'Load every item from every playlist into the results table.'
   ))
+  source_menu.Append(
+  *self.add_accelerator(
+  wx.ACCEL_CTRL, 'U',
+  functions.load_url,
+  '&URL...',
+  'Load and play a URL'
+  ))
   mb.Append(source_menu, '&Source')
   track_menu = wx.Menu()
   track_menu.Append(
@@ -686,15 +692,6 @@ class MainFrame(wx.Frame):
   songs = application.mobile_api.get_all_songs()
   self.add_results(songs, clear = True, library = songs)
  
- def Show(self, value = True):
-  """Shows the frame."""
-  res = super(MainFrame, self).Show(value)
-  try:
-   self._thread.start()
-  except RuntimeError:
-   pass # This function has already been called.
-  return res
- 
  def SetTitle(self, value = None):
   """Sets the title."""
   if value == None:
@@ -857,12 +854,18 @@ class MainFrame(wx.Frame):
   self.update_hotkey_area()
   if self.current_track:
    p = self.current_track.get_position()
-   l = self.current_track.get_length()
-   self.current_pos = p / (l / int(self.get_current_track().get('durationMillis')))
+   try:
+    l = self.current_track.get_length()
+   except BassError:
+    l = 1.0
+   if self.get_current_track():
+    self.current_pos = p / (l / int(self.get_current_track().get('durationMillis')))
+   else:
+    self.current_pos = 0
    i = min(l, int(p / (l / 100.0)))
    if not self.track_position.HasFocus() and i != self.track_position.GetValue():
     self.track_position.SetValue(i)
-   if self.current_track.get_position() == self.current_track.get_length() and not self.stop_after.IsChecked():
+   if self.current_track.get_position() == l and not self.stop_after.IsChecked():
     if not functions.next(None, interactive = False):
      self.SetTitle()
  
@@ -974,16 +977,11 @@ class MainFrame(wx.Frame):
  
  def update_hotkey_area(self):
   """Updates the value of self.hotkey_area."""
-  if time() - self.last_update >= 1.0:
-   if self.current_track:
-    v = application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title)
-   else:
-    v = 'No track playing.'
-   try:
-    self.hotkey_area.SetValue(v)
-    self.last_update = time()
-   except wx.PyDeadObjectError:
-    pass # The window has been destroyed.
+  if self.current_track:
+   v = application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title)
+  else:
+   v = 'No track playing.'
+  self.hotkey_area.SetValue(v)
  
  def filter_results(self, event):
   """Filter results based on the selections from self.artists and self.albums."""

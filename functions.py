@@ -9,6 +9,7 @@ from sound_lib.main import BassError
 from time import time, ctime
 from gui.lyrics_viewer import LyricsViewer
 from gui.search_frame import SearchFrame, songs
+from gui.url_frame import URLFrame
 from copy import copy
 from threading import Thread, current_thread
 
@@ -222,12 +223,8 @@ def volume_down(event = None):
 
 def set_volume(v):
  """Set the volume. Return True upon success, or False otherwise."""
- if v < 0 or v > 100:
-  return False
- else:
-  frame.volume.SetValue(v)
-  frame.set_volume()
-  return True
+ frame.volume.SetValue(v)
+ frame.set_volume()
 
 def get_previous_song(alter = False):
  """Get the song which will be played when the previous button is pressed. If alter is True, actually remove the track from the history buffer."""
@@ -867,3 +864,7 @@ def reverse_results(results):
  res = copy(results)
  res.reverse()
  return res
+
+def load_url(event):
+ """Load and play a URL."""
+ URLFrame().Show(True)
