@@ -6,7 +6,7 @@ update_url = 'https://www.dropbox.com/s/wjs54oeeorfbnp3/version.json?dl=1'
 
 from sys import platform
 
-streams = []
+streams = [['Dodge Radio', 'http://198.154.106.104:8496/stream']]
 saved_results = {}
 results_history = []
 
@@ -78,7 +78,7 @@ if os.path.isfile(config_file):
    if type(library.downloaded) != dict:
     library.downloaded = {} # Better to clear the user's library than have them suffer tracebacks.
    device_id = j.get('device_id', None)
-   streams = j.get('streams', [])
+   streams = j.get('streams', streams)
    for x, y in j.get('saved_results', {}).iteritems():
     main_frame.add_saved_result(name = x, results = y)
    results_history = j.get('results_history', [])
