@@ -125,6 +125,7 @@ def select_playlist(event = None, playlists = None, playlist = None, interactive
   for p in playlists:
    if p['id'] == playlist:
     playlist = p
+    break
   else:
    return ValueError('Provided playlist does not exist.')
  else:
@@ -640,7 +641,7 @@ def station_from_result(event):
   return bell()
  track = frame.get_results()[cr]
  dlg = wx.TextEntryDialog(frame, 'Enter a name for your new station', 'Create A Station', 'Station based on %s - %s' % (track.get('artist', 'Unknown Artist'), track.get('title', 'Untitled Track')))
- if dlg.ShowModal() and dlg.GetValue():
+ if dlg.ShowModal() == wx.ID_OK and dlg.GetValue():
   name = dlg.GetValue()
   dlg.Destroy()
   try:

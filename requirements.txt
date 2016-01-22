@@ -11,3 +11,4 @@ git+https://github.com/chrisnorman7/updatecheck.git
 git+https://github.com/chrisnorman7/confmanager.git#egg=confmanager
 unidecode
 lxml
+cssselect
