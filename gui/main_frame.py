@@ -83,6 +83,8 @@ class MainFrame(wx.Frame):
   s1.Add(self.results, 7, wx.GROW)
   s1.Add(self.queue, 3, wx.GROW)
   s.Add(s1, 7, wx.GROW)
+  bottom_sizer = wx.BoxSizer(wx.HORIZONTAL)
+  bottom_left_sizer = wx.BoxSizer(wx.VERTICAL)
   s2 = wx.BoxSizer(wx.HORIZONTAL)
   s2.Add(wx.StaticText(p, label = '&Track Seek'), 0, wx.GROW)
   self.track_position = wx.Slider(p, name = 'Track Position')
@@ -103,7 +105,7 @@ class MainFrame(wx.Frame):
   self.frequency.SetValue(application.config.get('sound', 'frequency'))
   s2.Add(self.frequency, 1, wx.GROW)
   self.s2 = s2
-  s.Add(self.s2, 0, wx.GROW)
+  bottom_left_sizer.Add(self.s2, 0, wx.GROW)
   s3 = wx.BoxSizer(wx.HORIZONTAL)
   s3.Add(wx.StaticText(p, label = application.config.get('windows', 'volume_label')), 0, wx.GROW)
   self.volume = wx.Slider(p, style = wx.SL_VERTICAL|wx.SL_INVERSE)
@@ -116,7 +118,7 @@ class MainFrame(wx.Frame):
   self.pan.Bind(wx.EVT_SLIDER, self.set_pan)
   s3.Add(self.pan, 1, wx.GROW)
   self.s3 = s3
-  s.Add(self.s3, 0, wx.GROW)
+  bottom_left_sizer.Add(self.s3, 0, wx.GROW)
   l = 'No song playing.'
   if application.platform == 'darwin':
    self.artist_bio = wx.StaticText(p, label = l)
@@ -124,13 +126,13 @@ class MainFrame(wx.Frame):
   else:
    self.artist_bio = wx.TextCtrl(p, style = wx.TE_MULTILINE|wx.TE_READONLY, value = l)
    self.set_artist_bio = lambda value: self.artist_bio.SetValue(value)
-  s.Add(self.artist_bio, 1, wx.GROW)
+  bottom_left_sizer.Add(self.artist_bio, 1, wx.GROW)
   s4 = wx.BoxSizer(wx.HORIZONTAL)
   s4.Add(wx.StaticText(p, label = application.config.get('windows', 'now_playing_label')), 0, wx.GROW)
   self.hotkey_area = wx.TextCtrl(p)
   self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
   s4.Add(self.hotkey_area, 1, wx.GROW)
-  s.Add(s4, 0, wx.GROW)
+  bottom_left_sizer.Add(s4, 0, wx.GROW)
   self._full_results = [] # The unadulterated results.
   s5 = wx.BoxSizer(wx.HORIZONTAL)
   s5.Add(wx.StaticText(p, label = '&Artists'), 0, wx.GROW)
@@ -141,7 +143,13 @@ class MainFrame(wx.Frame):
   self.albums = wx.Choice(p, style = wx.CB_SORT)
   self.albums.Bind(wx.EVT_CHOICE, self.filter_results)
   s5.Add(self.albums, 1, wx.GROW)
-  s.Add(s5, 0, wx.GROW)
+  bottom_left_sizer.Add(s5, 0, wx.GROW)
+  bottom_sizer.Add(bottom_left_sizer, 1, wx.GROW)
+  self.album_art = wx.StaticBitmap(p)
+  self.album_art_url = None # The URL last used to download album art.
+  self.album_art.SetLabel('Album Art')
+  bottom_sizer.Add(self.album_art, 1, wx.GROW)
+  s.Add(bottom_sizer, 0, wx.GROW)
   p.SetSizerAndFit(s)
   self.panel = p
   self.main_sizer = s
@@ -717,7 +725,7 @@ class MainFrame(wx.Frame):
    return event.Skip()
   id = self.get_current_result(ctrl)
   if id == -1:
-   return functions.bell()()
+   return functions.bell()
   track = func()[id]
   if ctrl == self.queue:
    self.unqueue_item(id)
@@ -821,6 +829,18 @@ class MainFrame(wx.Frame):
    self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
   else:
    self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+  url = item['albumArtRef'][0]['url']
+  if url != self.album_art_url:
+   logger.debug('Downloading album art from %s.', url)
+   self.album_art_url = url
+   art = requests.get(url)
+   filename = os.path.join(application.artwork_directory, item['albumId'] + '.jpg')
+   with open(filename, 'wb') as f:
+    f.write(art.content)
+   i = wx.Image(filename)
+   self.album_art.SetBitmap(i.ConvertToBitmap())
+   i.Destroy()
+   logger.info('Loaded album art from %s.', filename)
   try:
    Thread(target = application.mobile_api.increment_song_playcount, args = [id]).start()
    self.artist_info = application.mobile_api.get_artist_info(item['artistId'][0])

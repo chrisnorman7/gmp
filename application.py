@@ -33,8 +33,10 @@ info.SetVersion(version)
 info.SetDevelopers(developers)
 
 directory = os.path.join(os.path.expanduser('~'), '.%s' % name)
-if not os.path.isdir(directory):
- os.mkdir(directory)
+artwork_directory = os.path.join(directory, 'artwork')
+for d in (directory, artwork_directory):
+ if not os.path.isdir(d):
+  os.mkdir(d)
 
 import config as _config
 from confmanager import parser
