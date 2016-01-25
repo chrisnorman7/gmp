@@ -1,6 +1,6 @@
 """Various functions used in the program."""
 
-import application, wx, os, requests, sys, random, library, logging, columns
+import application, wx, os, requests, sys, random, library, logging, columns, config
 from gmusicapi.exceptions import CallFailure
 from accessible_output2.outputs.auto import Auto
 from shutil import copy as shcopy, rmtree
@@ -28,7 +28,7 @@ def format_title(track):
  try:
   for k, v in track.items():
    stuff[k] = getattr(columns, 'parse_%s' % k, lambda value: value)(v)
-  return application.config.get('windows', 'title_format').format(**stuff)
+  return config.config.get('windows', 'title_format').format(**stuff)
  except KeyError as e:
   logger.exception(e)
   return 'Error in title format: %s.' % e
@@ -58,8 +58,6 @@ def config_update(config, section, option, value):
    frame.results.SetSelection(cr)
  elif section == 'http' and option in ['enabled', 'hostname', 'port']:
   Thread(target = frame.reload_http_server).start()
-
-application.config.updateFunc = config_update
 
 def get_id(item):
  """Return the ID for the provided item."""
@@ -176,7 +174,7 @@ def select_station(event = None, station = None, interactive = True):
  if interactive:
   if station:
    try:
-    tracks = application.mobile_api.get_station_tracks(station['id'], application.config.get('library', 'max_results'))
+    tracks = application.mobile_api.get_station_tracks(station['id'], config.config.get('library', 'max_results'))
     wx.CallAfter(frame.add_results, tracks, True, station = station)
    except RE as e:
     return wx.MessageBox(*format_requests_error(e))
@@ -189,10 +187,10 @@ def play_pause(event = None):
  if frame.current_track:
   if frame.current_track.is_paused or frame.current_track.is_stopped:
    frame.current_track.play()
-   frame.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
+   frame.play_pause.SetLabel(config.config.get('windows', 'pause_label'))
   else:
    frame.current_track.pause()
-   frame.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+   frame.play_pause.SetLabel(config.config.get('windows', 'play_label'))
  else:
   bell()
 
@@ -202,12 +200,12 @@ def stop(event = None):
  if frame.current_track:
   frame.current_track.pause()
   frame.current_track.set_position(0) # Pause instead of stopping.
-  frame.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+  frame.play_pause.SetLabel(config.config.get('windows', 'play_label'))
 
 def volume_up(event = None):
  """Turn up the playing song."""
  #announce('Volume Up.')
- v = application.config.get('sound', 'volume_increment') + frame.volume.GetValue()
+ v = config.config.get('sound', 'volume_increment') + frame.volume.GetValue()
  if v > 100:
   v = 100
   bell()
@@ -216,7 +214,7 @@ def volume_up(event = None):
 def volume_down(event = None):
  """Turn down the playing song."""
  #announce('Volume Down.')
- v = frame.volume.GetValue() - application.config.get('sound', 'volume_decrement')
+ v = frame.volume.GetValue() - config.config.get('sound', 'volume_decrement')
  if v < 0:
   v = 0
   bell()
@@ -262,7 +260,7 @@ def get_next_song(clear = False):
   if track in q:
    cr = q.index(track) + 1
    if cr == len(q):
-    if application.config.get('sound', 'repeat') and q:
+    if config.config.get('sound', 'repeat') and q:
      return q[0]
     else:
      return # User has not selected repeat or there are no results there.
@@ -277,7 +275,7 @@ def get_next_song(clear = False):
 def next(event = None, interactive = True):
  """Plays the next track."""
  #announce('Next.')
- if application.config.get('sound', 'repeat_track'):
+ if config.config.get('sound', 'repeat_track'):
   q = frame.get_current_track()
  else:
   q = get_next_song(True)
@@ -296,7 +294,7 @@ def rewind(event):
  if not track:
   bell()
  else:
-  pos = track.get_position() - application.config.get('sound', 'rewind_amount')
+  pos = track.get_position() - config.config.get('sound', 'rewind_amount')
   if pos < 0:
    pos = 0
   track.set_position(pos)
@@ -308,7 +306,7 @@ def fastforward(event):
  if not track:
   bell()
  else:
-  pos = min(track.get_position() + application.config.get('sound', 'rewind_amount'), track.get_length())
+  pos = min(track.get_position() + config.config.get('sound', 'rewind_amount'), track.get_length())
   try:
    track.set_position(pos)
   except Exception as e:
@@ -362,7 +360,7 @@ def download_file(url, id, info, callback = lambda info: None):
    title = info.get('title', 'Unnamed'),
    trackNumber = info.get('trackNumber', 0)
   )
-  while get_size(library.media_directory()) > ((application.config.get('library', 'library_size') * 1024) * 1024):
+  while get_size(library.media_directory()) > ((config.config.get('library', 'library_size') * 1024) * 1024):
    prune_library()
   callback(info)
   return True
@@ -728,7 +726,7 @@ def top_tracks(artist = None, interactive = False):
    return bell()
   artist = select_artist(frame.get_results()[cr].get('artistId', []))
  try:
-  tracks = application.mobile_api.get_artist_info(artist, max_top_tracks = application.config.get('library', 'max_top_tracks')).get('topTracks', [])
+  tracks = application.mobile_api.get_artist_info(artist, max_top_tracks = config.config.get('library', 'max_top_tracks')).get('topTracks', [])
  except RE as e:
   if interactive:
    return wx.MessageBox(*format_request_error(e))
@@ -779,7 +777,7 @@ def get_lyrics(event, track = None):
 
 def bell():
  """Play a bell sound."""
- return wx.Bell() if application.config.get('sound', 'interface_sounds') else None
+ return wx.Bell() if config.config.get('sound', 'interface_sounds') else None
 
 def get_size(start_path = '.'):
  total_size = 0
@@ -813,7 +811,7 @@ def save_result(event = None):
 
 def announce(stuff):
  """Accessible alerts as were."""
- if application.config.get('accessibility', 'announcements'):
+ if config.config.get('accessibility', 'announcements'):
   output.output(stuff)
 
 def results_to_library(event = None):

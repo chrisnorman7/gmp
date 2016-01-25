@@ -1,31 +1,32 @@
 """Login frame for Google Music Player."""
 
-import wx, application, requests, functions
+import wx, application, requests, functions, logging, config
 from wx.lib.sized_controls import SizedFrame as SF
 from threading import Thread
 from functions import format_requests_error
 
+logger = logging.getLogger('Login Frame')
+
 class LoginFrame(SF):
  """Frame to log in with."""
- def __init__(self, parent):
-  super(LoginFrame, self).__init__(parent, title = 'Login')
-  self.SetAcceleratorTable(wx.AcceleratorTable([]))
+ def __init__(self):
+  super(LoginFrame, self).__init__(None, title = 'Login')
   self.processing = False # Set to true when we start the login process.
   p = self.GetContentsPane()
   p.SetSizerType('form')
-  wx.StaticText(p, label = application.config.get('windows', 'uid_label'))
-  self.uid = wx.TextCtrl(p, style = wx.TE_PROCESS_ENTER, value = application.config.get('login', 'uid'))
+  wx.StaticText(p, label = config.config.get('windows', 'uid_label'))
+  self.uid = wx.TextCtrl(p, style = wx.TE_PROCESS_ENTER, value = config.config.get('login', 'uid'))
   self.uid.Bind(wx.EVT_TEXT_ENTER, self.do_login)
-  wx.StaticText(p, label = application.config.get('windows', 'pwd_label'))
-  self.pwd = wx.TextCtrl(p, style = wx.TE_PASSWORD|wx.TE_PROCESS_ENTER, value = application.config.get('login', 'pwd'))
+  wx.StaticText(p, label = config.config.get('windows', 'pwd_label'))
+  self.pwd = wx.TextCtrl(p, style = wx.TE_PASSWORD|wx.TE_PROCESS_ENTER, value = config.config.get('login', 'pwd'))
   self.pwd.Bind(wx.EVT_TEXT_ENTER, self.do_login)
   if self.uid.GetValue():
    self.pwd.SetFocus()
-  wx.StaticText(p, label = application.config.get('windows', 'remember_label'))
-  self.remember = wx.CheckBox(p, label = application.config.get('windows', 'remember_label'))
-  self.remember.SetValue(application.config.get('login', 'remember'))
-  wx.Button(p, label = application.config.get('windows', 'cancel_label')).Bind(wx.EVT_BUTTON, self.do_cancel)
-  self.login = wx.Button(p, label = application.config.get('windows', 'login_label'))
+  wx.StaticText(p, label = config.config.get('windows', 'remember_label'))
+  self.remember = wx.CheckBox(p, label = config.config.get('windows', 'remember_label'))
+  self.remember.SetValue(config.config.get('login', 'remember'))
+  wx.Button(p, label = config.config.get('windows', 'cancel_label')).Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
+  self.login = wx.Button(p, label = config.config.get('windows', 'login_label'))
   self.login.SetDefault()
   self.login.Bind(wx.EVT_BUTTON, self.do_login)
   self.Maximize()
@@ -43,21 +44,23 @@ class LoginFrame(SF):
   self.login.Disable()
   self.uid.Disable()
   self.pwd.Disable()
-  Thread(target = self._do_login).start()
+  Thread(target = self._do_login, args = [self.uid.GetValue(), self.pwd.GetValue()]).start()
  
- def _do_login(self):
+ def _do_login(self, uid, pwd):
   """Actually perform the login."""
   try:
-   if application.mobile_api.login(self.uid.GetValue(), self.pwd.GetValue(), application.mobile_api.FROM_MAC_ADDRESS):
-    application.config.set('login', 'uid', self.uid.GetValue())
+   if application.mobile_api.login(uid, pwd, application.mobile_api.FROM_MAC_ADDRESS):
+    logger.info('Login successful.')
+    config.config.set('login', 'uid', self.uid.GetValue())
     if self.remember.GetValue():
-     application.config.set('login', 'pwd', self.pwd.GetValue())
+     config.config.set('login', 'pwd', self.pwd.GetValue())
     else:
-     application.config.set('login', 'pwd', '')
-    application.config.set('login', 'remember', self.remember.GetValue())
+     config.config.set('login', 'pwd', '')
+    config.config.set('login', 'remember', self.remember.GetValue())
     wx.CallAfter(self.post_login)
    else:
-    wx.CallAfter(self.login.SetLabel, application.config.get('windows', 'login_label'))
+    logger.warning('Login failed.')
+    wx.CallAfter(self.login.SetLabel, config.config.get('windows', 'login_label'))
     wx.CallAfter(self.login.Enable)
     wx.CallAfter(self.uid.Enable)
     wx.CallAfter(self.pwd.Enable)
@@ -67,20 +70,15 @@ class LoginFrame(SF):
     self.processing = False
   except requests.exceptions.RequestException as e:
    wx.MessageBox(*format_requests_error(e), style = wx.ICON_EXCLAMATION)
-   application.main_frame.Close(True)
    return self.Close(True)
- 
- def do_cancel(self, event = None):
-  """Closes this window and application.main_frame."""
-  try:
-   application.main_frame.Close(True)
-  except wx.PyDeadObjectError: #The frame hasn't been opened yet.
-   pass
-  return self.Close(True)
+  except wx.PyDeadObjectError:
+   logger.warning('User closed the main frame before login could be completed.')
  
  def post_login(self):
   """Closes this window and opens the main frame."""
   try:
+   from gui.main_frame import MainFrame
+   application.main_frame = MainFrame()
    application.main_frame.Show(True)
   except wx.PyDeadObjectError:
    pass # The user closed it already.

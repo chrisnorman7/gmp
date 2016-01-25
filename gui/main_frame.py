@@ -1,6 +1,6 @@
 """The main frame for Google Music Player"""
 
-import wx, application, functions, gmusicapi, requests, os, sys, server, library, logging, columns
+import wx, application, functions, gmusicapi, requests, os, sys, server, library, logging, columns, config
 from threading import Thread
 from copy import copy
 from time import time
@@ -25,7 +25,7 @@ mods[wx.ACCEL_SHIFT] = 'SHIFT'
 
 class MainFrame(wx.Frame):
  """The main program interface."""
- def __init__(self, ):
+ def __init__(self):
   """Create the window."""
   super(MainFrame, self).__init__(None, title = application.name)
   functions.frame = self # Save typing in the functions.
@@ -90,31 +90,31 @@ class MainFrame(wx.Frame):
   self.track_position = wx.Slider(p, name = 'Track Position')
   self.track_position.Bind(wx.EVT_SLIDER, functions.track_seek)
   s2.Add(self.track_position, 3, wx.GROW)
-  self.previous = wx.Button(p, label = application.config.get('windows', 'previous_label'))
+  self.previous = wx.Button(p, label = config.config.get('windows', 'previous_label'))
   self.Bind(wx.EVT_BUTTON, functions.previous)
   s2.Add(self.previous, 1, wx.GROW)
-  self.play_pause = wx.Button(p, label = application.config.get('windows', 'play_label'))
+  self.play_pause = wx.Button(p, label = config.config.get('windows', 'play_label'))
   self.play_pause.Bind(wx.EVT_BUTTON, functions.play_pause)
   s2.Add(self.play_pause, 1, wx.GROW)
-  self.next = wx.Button(p, label = application.config.get('windows', 'next_label'))
+  self.next = wx.Button(p, label = config.config.get('windows', 'next_label'))
   self.next.Bind(wx.EVT_BUTTON, functions.next)
   s2.Add(self.next, 1, wx.GROW)
-  s2.Add(wx.StaticText(p, label = application.config.get('windows', 'frequency_label')), 0, wx.GROW)
+  s2.Add(wx.StaticText(p, label = config.config.get('windows', 'frequency_label')), 0, wx.GROW)
   self.frequency = wx.Slider(p, name = 'Track frequency', style = wx.SL_VERTICAL|wx.SL_INVERSE)
   self.frequency.Bind(wx.EVT_SLIDER, self.set_frequency)
-  self.frequency.SetValue(application.config.get('sound', 'frequency'))
+  self.frequency.SetValue(config.config.get('sound', 'frequency'))
   s2.Add(self.frequency, 1, wx.GROW)
   self.s2 = s2
   bottom_left_sizer.Add(self.s2, 0, wx.GROW)
   s3 = wx.BoxSizer(wx.HORIZONTAL)
-  s3.Add(wx.StaticText(p, label = application.config.get('windows', 'volume_label')), 0, wx.GROW)
+  s3.Add(wx.StaticText(p, label = config.config.get('windows', 'volume_label')), 0, wx.GROW)
   self.volume = wx.Slider(p, style = wx.SL_VERTICAL|wx.SL_INVERSE)
-  self.volume.SetValue(application.config.get('sound', 'volume'))
+  self.volume.SetValue(config.config.get('sound', 'volume'))
   self.volume.Bind(wx.EVT_SLIDER, self.set_volume)
   s3.Add(self.volume, 1, wx.GROW)
-  s3.Add(wx.StaticText(p, label = application.config.get('windows', 'pan_label')), 0, wx.GROW)
+  s3.Add(wx.StaticText(p, label = config.config.get('windows', 'pan_label')), 0, wx.GROW)
   self.pan = wx.Slider(p)
-  self.pan.SetValue(application.config.get('sound', 'pan'))
+  self.pan.SetValue(config.config.get('sound', 'pan'))
   self.pan.Bind(wx.EVT_SLIDER, self.set_pan)
   s3.Add(self.pan, 1, wx.GROW)
   self.s3 = s3
@@ -128,7 +128,7 @@ class MainFrame(wx.Frame):
    self.set_artist_bio = lambda value: self.artist_bio.SetValue(value)
   bottom_left_sizer.Add(self.artist_bio, 1, wx.GROW)
   s4 = wx.BoxSizer(wx.HORIZONTAL)
-  s4.Add(wx.StaticText(p, label = application.config.get('windows', 'now_playing_label')), 0, wx.GROW)
+  s4.Add(wx.StaticText(p, label = config.config.get('windows', 'now_playing_label')), 0, wx.GROW)
   self.hotkey_area = wx.TextCtrl(p)
   self.hotkey_area.Bind(wx.EVT_KEY_DOWN, self.hotkey_parser)
   s4.Add(self.hotkey_area, 1, wx.GROW)
@@ -316,7 +316,7 @@ class MainFrame(wx.Frame):
   '&Show / Hide Player Controls',
   'Show and hide the track seek and playback controls.'
   )
-  self.play_controls_func(application.config.get('windows', 'play_controls_show'))
+  self.play_controls_func(config.config.get('windows', 'play_controls_show'))
   self.Bind(
   wx.EVT_MENU,
   lambda event: self.play_controls_func(event.GetSelection()),
@@ -512,7 +512,7 @@ class MainFrame(wx.Frame):
   '&Repeat',
   'Repeat tracks.'
   ))
-  self.repeat.Check(application.config.get('sound', 'repeat'))
+  self.repeat.Check(config.config.get('sound', 'repeat'))
   self.repeat_track = repeat_menu.AppendCheckItem(
   *self.add_accelerator(
   wx.ACCEL_CTRL|wx.ACCEL_SHIFT, 'r',
@@ -520,7 +520,7 @@ class MainFrame(wx.Frame):
   'Repeat &Track',
   'Repeat the current track.'
   ))
-  self.repeat_track.Check(application.config.get('sound', 'repeat_track'))
+  self.repeat_track.Check(config.config.get('sound', 'repeat_track'))
   play_menu.AppendMenu(wx.ID_ANY, '&Repeat', repeat_menu, 'Repeat options.')
   play_menu.Append(
   *self.add_accelerator(
@@ -557,7 +557,7 @@ class MainFrame(wx.Frame):
   options_menu.Append(
   *self.add_accelerator(
   wx.ACCEL_CTRL, ',',
-  lambda event: application.config.get_gui().Show(True),
+  lambda event: config.config.get_gui().Show(True),
   '&Preferences',
   'Configure the program.',
   id = wx.ID_PREFERENCES
@@ -602,6 +602,7 @@ class MainFrame(wx.Frame):
   self.Maximize()
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.do_close)
+  application.post_load_config()
  
  def get_current_track(self):
   """Gets the current track data."""
@@ -664,7 +665,7 @@ class MainFrame(wx.Frame):
    r = self.get_results()
    if r and (not application.results_history or r != application.results_history[-1]): # Don't save blank or duplicate results.
     application.results_history.append([[r], {'playlist': self.current_playlist, 'library': self.current_library, 'station': self.current_station, 'saved_result': self.current_saved_result, 'clear': True}])
-    while len(application.results_history) > application.config.get('library', 'history_length'):
+    while len(application.results_history) > config.config.get('library', 'history_length'):
      del application.results_history[0] # Make sure the results history doesn't get too large.
   if scroll_history:
    application.results_history_index = len(application.results_history)
@@ -788,7 +789,7 @@ class MainFrame(wx.Frame):
     return self.play(item, history = history, play = play) # Try again... File's probably not there or something...
   else:
    if id in library.downloading:
-    if time() - library.downloading[id] <= application.config.get('library', 'download_timeout'):
+    if time() - library.downloading[id] <= config.config.get('library', 'download_timeout'):
      return wx.MessageBox('This song is still downloading, please wait.', 'Download In Progress')
     else:
      del library.downloading[id]
@@ -800,13 +801,13 @@ class MainFrame(wx.Frame):
    except functions.RE as e:
     if self.current_track:
      self.current_track.set_position(self.current_track.get_length() - 1)
-     self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+     self.play_pause.SetLabel(config.config.get('windows', 'play_label'))
     return wx.MessageBox(*functions.format_requests_error(e))
    try:
     track = URLStream(url = url)
    except BassError as e:
     error = e # Just store it for later alerting.
-   if application.config.get('library', 'cache'): # The user wants their tracks downloaded.
+   if config.config.get('library', 'cache'): # The user wants their tracks downloaded.
     Thread(target = functions.download_file, args = [url, id, item]).start()
   if error:
    return wx.MessageBox(str(e), 'Error')
@@ -826,9 +827,9 @@ class MainFrame(wx.Frame):
   self.set_frequency()
   if play:
    self.current_track.play()
-   self.play_pause.SetLabel(application.config.get('windows', 'pause_label'))
+   self.play_pause.SetLabel(config.config.get('windows', 'pause_label'))
   else:
-   self.play_pause.SetLabel(application.config.get('windows', 'play_label'))
+   self.play_pause.SetLabel(config.config.get('windows', 'play_label'))
   url = item['albumArtRef'][0]['url']
   if url != self.album_art_url:
    logger.debug('Downloading album art from %s.', url)
@@ -853,19 +854,19 @@ class MainFrame(wx.Frame):
  
  def set_volume(self, event = None):
   """Sets the volume with the slider."""
-  application.config.set('sound', 'volume', self.volume.GetValue())
+  config.config.set('sound', 'volume', self.volume.GetValue())
   if self.current_track:
-   self.current_track.set_volume(application.config.get('sound', 'volume') / 100.0)
+   self.current_track.set_volume(config.config.get('sound', 'volume') / 100.0)
  
  def set_pan(self, event = None):
   """Sets pan with the slider."""
-  application.config.set('sound', 'pan', self.pan.GetValue())
+  config.config.set('sound', 'pan', self.pan.GetValue())
   if self.current_track:
-   self.current_track.set_pan((application.config.get('sound', 'pan') / 50.0) - 1.0)
+   self.current_track.set_pan((config.config.get('sound', 'pan') / 50.0) - 1.0)
  
  def set_frequency(self, event = None):
   """Sets the frequency of the currently playing track by the frequency slider."""
-  application.config.set('sound', 'frequency', self.frequency.GetValue())
+  config.config.set('sound', 'frequency', self.frequency.GetValue())
   if self.current_track:
    self.current_track.set_frequency(self.frequency.GetValue() * 882)
  
@@ -897,7 +898,7 @@ class MainFrame(wx.Frame):
  
  def do_close(self, event):
   """Closes the window after shutting down the track thread."""
-  if not application.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
+  if not config.config.get('windows', 'confirm_quit') or wx.MessageBox('Are you sure you want to close the program?', 'Really Close', style = wx.YES_NO) == wx.YES:
    if self.http_server:
     Thread(target = self.http_server.shutdown).start()
    for f in [application.lyrics_frame]:
@@ -921,8 +922,8 @@ class MainFrame(wx.Frame):
  
  def toggle(self, item, config, text):
   """Toggles various settings."""
-  application.config.toggle(*config)
-  c = application.config.get(*config)
+  config.config.toggle(*config)
+  c = config.config.get(*config)
   item.Check(c)
   if text:
    functions.announce('%s %s.' % (text, 'on' if c else 'off'))
@@ -998,7 +999,7 @@ class MainFrame(wx.Frame):
  def update_hotkey_area(self):
   """Updates the value of self.hotkey_area."""
   if self.current_track:
-   v = application.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title)
+   v = config.config.get('windows', 'now_playing_format').format(pos = columns.parse_durationMillis(self.current_pos), duration = self.duration, title = self.title)
   else:
    v = 'No track playing.'
   self.hotkey_area.SetValue(v)
@@ -1029,7 +1030,7 @@ class MainFrame(wx.Frame):
  
  def play_controls_func(self, c):
   """Shows or hides play controls."""
-  application.config.set('windows', 'play_controls_show', c)
+  config.config.set('windows', 'play_controls_show', c)
   self.play_controls_check.Check(c)
   if c:
    self.s2.ShowItems(True)
@@ -1047,7 +1048,7 @@ class MainFrame(wx.Frame):
   if self.http_server:
    self.http_server.shutdown()
    logger.info('Shutdown the HTTP server.')
-  if application.config.get('http', 'enabled') and not self.http_server:
+  if config.config.get('http', 'enabled') and not self.http_server:
    self.http_server = server.get_server()
    self.server_thread = Thread(target = self.http_server.serve_forever)
    self.server_thread.start()

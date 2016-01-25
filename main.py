@@ -14,16 +14,16 @@ if __name__ == '__main__':
   sys.path.insert(0, os.path.join(cwd, 'certifi'))
   logging.debug('Running from %s.', cwd)
   import requests, application, wx
-  from gui.update_frame import UpdateFrame
-  logging.debug('Checking for update...')
-  u = UpdateFrame()
   from gmusicapi import __version__ as v
   logging.info('API Version: %s.', v)
   if application.gmusicapi_version > v:
-   wx.MessageBox('Gmusicapi version %s is required, but only %s installed. Please install the correct version with the requirements.txt file.' % (application.gmusicapi_version, v), 'Incompatible Gmusicapi Version')
+   wx.MessageBox('Gmusicapi version %s is required, but only %s installed. Please install the correct version with the requirements.txt file.' % (application.gmusicapi_version, v), 'Incompatible Gmusicapi Version', style = wx.ICON_EXCLAMATION)
   else:
    from requests.packages.urllib3.exceptions import InsecureRequestWarning
    requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+   application.load_config()
+   from gui.login_frame import LoginFrame
+   l = LoginFrame()
    application.app.MainLoop()
    logging.info('Application closed.')
  except Exception as e:

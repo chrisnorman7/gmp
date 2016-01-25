@@ -1,5 +1,5 @@
 from confmanager import ConfManager, parser
-import application, wx
+import application, wx, functions
 
 config = ConfManager(application.name + ' Options')
 
@@ -66,5 +66,3 @@ config.set('http', 'pwd', 'LetMeIn', title = 'A password which must be entered t
 
 config.add_section('accessibility')
 config.set('accessibility', 'announcements', False, title = 'Enable Accessibility Announcements')
-
-application.config = config

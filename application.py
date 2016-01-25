@@ -1,4 +1,4 @@
-version = '2.1'
+version = '2.2'
 devel = False
 compress = False
 add_to_site = ['certifi', 'pkg_resources', 'mechanicalsoup', 'bs4', 'htmlentitydefs.py', 'HTMLParser.py', 'markupbase.py', 'pywintypes27.dll', 'pythoncom27.dll', 'cssselect']
@@ -49,7 +49,7 @@ class MyApp(wx.App):
   stuff = {
    'streams': streams,
    'saved_results': saved_results,
-   'config': config.get_dump(),
+   'config': _config.config.get_dump(),
    'device_id': device_id,
    'results_history': results_history,
    'library': library.downloaded
@@ -69,35 +69,47 @@ import library
 
 config_file = os.path.join(directory, 'config.json')
 
-from gui.main_frame import MainFrame
-main_frame = MainFrame()
+main_frame = None
 
-if os.path.isfile(config_file):
- with open(config_file, 'rb') as f:
-  try:
-   j = json.load(f)
-   library.downloaded = j.get('library', {})
-   if type(library.downloaded) != dict:
-    library.downloaded = {} # Better to clear the user's library than have them suffer tracebacks.
-   device_id = j.get('device_id', None)
-   streams = j.get('streams', streams)
-   for x, y in j.get('saved_results', {}).iteritems():
-    main_frame.add_saved_result(name = x, results = y)
-   results_history = j.get('results_history', [])
-   parser.parse_json(config, j.get('config', {}))
-   if not config.get('windows', 'load_library'):
-    main_frame.current_library = None
-   if type(config.get('sound', 'volume')) == float:
-    config.set('sound', 'volume', 100)
-   if type(config.get('sound', 'pan')) == float:
-    config.set('sound', 'pan', 50)
-   if not os.path.isdir(config.get('library', 'media_directory')):
-    config.set('library', 'media_directory', '')
-  except ValueError as e:
-   wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
+config = {}
 
-from gui.login_frame import LoginFrame
-LoginFrame(main_frame)
+def load_config():
+ if os.path.isfile(config_file):
+  with open(config_file, 'rb') as f:
+   try:
+    j = json.load(f)
+    library.downloaded = j.get('library', {})
+    if type(library.downloaded) != dict:
+     library.downloaded = {} # Better to clear the user's library than have them suffer tracebacks.
+    device_id = j.get('device_id', None)
+    s = j.get('streams', streams)
+    while streams:
+     del streams[0]
+    for x in s:
+     streams.append(s)
+    parser.parse_json(_config.config, j.get('config', {}))
+    config.update(**j)
+   except ValueError as e:
+      wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
+
+def post_load_config():
+ j = config
+ try:
+  for x, y in j.get('saved_results', {}).iteritems():
+   main_frame.add_saved_result(name = x, results = y)
+  results_history = j.get('results_history', [])
+  if not _config.config.get('windows', 'load_library'):
+   main_frame.current_library = None
+  if type(_config.config.get('sound', 'volume')) == float:
+   _config.config.set('sound', 'volume', 100)
+  if type(_config.config.get('sound', 'pan')) == float:
+   _config.config.set('sound', 'pan', 50)
+  if not os.path.isdir(_config.config.get('library', 'media_directory')):
+   _config.config.set('library', 'media_directory', '')
+ except ValueError as e:
+    wx.MessageBox('Error in config file: %s. Resetting preferences.' % e.message, 'Config Error') # They've broken their config file.
+ finally:
+  _config.config.updateFunc = functions.config_update
 
 import functions
 functions.clean_library()

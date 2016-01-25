@@ -1,6 +1,6 @@
 """GMP's library functions."""
 
-import os, errno, string, application, wx, functions
+import os, errno, string, application, wx, functions, config
 
 downloaded = {} # The stuff that GMP has downloaded.
 downloading = {} # The stuff that is currently downloading.
@@ -13,7 +13,7 @@ def valid_filename(name):
 _media_directory = os.path.join(application.directory, 'media')
 def media_directory():
  """Get the actual media directory."""
- dir = application.config.get('library', 'media_directory') or _media_directory
+ dir = config.config.get('library', 'media_directory') or _media_directory
  if not os.path.isdir(dir):
   make_path(dir)
  return dir

@@ -1,6 +1,6 @@
 """The search frame for gmp."""
 
-import wx, application, functions
+import wx, application, functions, config
 from wx.lib.sized_controls import SizedFrame
 from threading import Thread
 
@@ -33,8 +33,8 @@ class SearchFrame(SizedFrame):
   wx.StaticText(p, label = 'Search &Type')
   self.type = wx.Choice(p, choices = [x[0] for x in search_types])
   self.type.SetSelection(type)
-  wx.Button(p, label = application.config.get('windows', 'cancel_label')).Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
-  b = wx.Button(p, label = application.config.get('windows', 'search_label'))
+  wx.Button(p, label = config.config.get('windows', 'cancel_label')).Bind(wx.EVT_BUTTON, lambda event: self.Close(True))
+  b = wx.Button(p, label = config.config.get('windows', 'search_label'))
   b.SetDefault()
   b.Bind(wx.EVT_BUTTON, self.do_search)
  
@@ -52,7 +52,7 @@ class SearchFrame(SizedFrame):
   if not search:
    return wx.MessageBox('You must search for something.', 'Nothing to search for')
   try:
-   results = application.mobile_api.search_all_access(search, max_results = application.config.get('library', 'max_results'))
+   results = application.mobile_api.search_all_access(search, max_results = config.config.get('library', 'max_results'))
   except functions.RE as e:
    return wx.MessageBox(*functions.format_requests_error(e))
   results = results.get(search_types[type][1])
