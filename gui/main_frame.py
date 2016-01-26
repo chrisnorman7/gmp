@@ -146,7 +146,7 @@ class MainFrame(wx.Frame):
   bottom_left_sizer.Add(s5, 0, wx.GROW)
   bottom_sizer.Add(bottom_left_sizer, 1, wx.GROW)
   self.album_art = wx.StaticBitmap(p)
-  self.album_art_url = None # The URL last used to download album art.
+  self.album_art_filename= None # The path to the last album art.
   self.album_art.SetLabel('Album Art')
   bottom_sizer.Add(self.album_art, 1, wx.GROW)
   s.Add(bottom_sizer, 0, wx.GROW)
@@ -830,14 +830,17 @@ class MainFrame(wx.Frame):
    self.play_pause.SetLabel(config.config.get('windows', 'pause_label'))
   else:
    self.play_pause.SetLabel(config.config.get('windows', 'play_label'))
-  url = item['albumArtRef'][0]['url']
-  if url != self.album_art_url:
-   logger.debug('Downloading album art from %s.', url)
-   self.album_art_url = url
-   art = requests.get(url)
-   filename = os.path.join(application.artwork_directory, item['albumId'] + '.jpg')
-   with open(filename, 'wb') as f:
-    f.write(art.content)
+  filename = os.path.join(application.artwork_directory, item['albumId'] + '.jpg')
+  if filename != self.album_art_filename:
+   if filename in os.listdir(application.artwork_directory):
+    logger.debug('Loading album art from cache.')
+   else:
+    url = item['albumArtRef'][0]['url']
+    logger.debug('Downloading album art from %s.', url)
+    art = requests.get(url)
+    with open(filename, 'wb') as f:
+     f.write(art.content)
+   self.album_art_filename = filename
    i = wx.Image(filename)
    self.album_art.SetBitmap(i.ConvertToBitmap())
    i.Destroy()
