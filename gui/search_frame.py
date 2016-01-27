@@ -8,7 +8,8 @@ search_types = [
  ['Songs', 'song_hits'],
  ['Artists', 'artist_hits'],
  ['Albums', 'album_hits'],
- ['Playlists', 'playlist_hits']
+ ['Playlists', 'playlist_hits'],
+ ['Library Only', 'library results'],
 ]
 
 # Search type constants:
@@ -16,6 +17,7 @@ songs = 0
 artists = 1
 albums = 2
 playlists = 3
+library = 4
 
 class SearchFrame(SizedFrame):
  """The frame to use to search for stuff."""
@@ -52,12 +54,19 @@ class SearchFrame(SizedFrame):
   if not search:
    return wx.MessageBox('You must search for something.', 'Nothing to search for')
   try:
-   results = application.mobile_api.search_all_access(search, max_results = config.config.get('library', 'max_results'))
+   if type == library:
+    results = []
+    search_lower = search.lower()
+    for s in application.mobile_api.get_all_songs():
+     if search_lower in s['title'].lower() or search_lower in s['album'].lower() or search_lower in s['artist'].lower():
+      results.append(s)
+   else:
+    results = application.mobile_api.search_all_access(search, max_results = config.config.get('library', 'max_results'))
+    results = results.get(search_types[type][1])
   except functions.RE as e:
    return wx.MessageBox(*functions.format_requests_error(e))
-  results = results.get(search_types[type][1])
   if not results:
-   wx.MessageBox('No %s found for %s.' % (search_types[type][0].lower(), search), 'Nothing Found')
+   wx.MessageBox('No %s found for %s.' % ('library results' if self.library.GetValue() else search_types[type][0].lower(), search), 'Nothing Found')
   else:
    application.main_frame.last_search = search
    application.main_frame.last_search_type = type
@@ -77,5 +86,5 @@ class SearchFrame(SizedFrame):
     functions.select_playlist(playlists = [x['playlist'] for x in results])
    else:
     # Must be songs.
-    wx.CallAfter(application.main_frame.add_results, [x['track'] for x in results], clear = True)
+    wx.CallAfter(application.main_frame.add_results, results if type == library else [x['track'] for x in results], clear = True)
    self.Close(True)
