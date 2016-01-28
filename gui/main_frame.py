@@ -602,7 +602,10 @@ class MainFrame(wx.Frame):
   self.Maximize()
   self.Raise()
   self.Bind(wx.EVT_CLOSE, self.do_close)
+ 
+ def Show(self, *args, **kwargs):
   application.post_load_config()
+  return super(MainFrame, self).Show(*args, **kwargs)
  
  def get_current_track(self):
   """Gets the current track data."""
