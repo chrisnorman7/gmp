@@ -926,9 +926,9 @@ class MainFrame(wx.Frame):
   else:
    event.Skip()
  
- def toggle(self, item, config, text):
+ def toggle(self, item, conf, text):
   """Toggles various settings."""
-  config.config.toggle(*config)
+  config.config.toggle(*conf)
   c = config.config.get(*config)
   item.Check(c)
   if text:
