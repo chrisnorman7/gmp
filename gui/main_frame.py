@@ -929,7 +929,7 @@ class MainFrame(wx.Frame):
  def toggle(self, item, conf, text):
   """Toggles various settings."""
   config.config.toggle(*conf)
-  c = config.config.get(*config)
+  c = config.config.get(*conf)
   item.Check(c)
   if text:
    functions.announce('%s %s.' % (text, 'on' if c else 'off'))
