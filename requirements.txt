@@ -10,5 +10,5 @@ git+https://github.com/simon-weber/Unofficial-Google-Music-API.git
 git+https://github.com/chrisnorman7/updatecheck.git
 git+https://github.com/chrisnorman7/confmanager.git#egg=confmanager
 unidecode
-lxml
+#lxml (Fails on windows. Download the exe instead)
 cssselect
