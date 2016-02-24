@@ -318,7 +318,7 @@ def prune_library():
  delete_id = None
  for id, track in library.downloaded.items():
   if library.exists(track):
-   t = os.path.getctime(library.get_path(track))
+   t = os.path.getatime(library.get_path(track))
    if t < delete_stamp:
     delete_stamp = t
     delete_id = id
