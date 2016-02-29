@@ -66,7 +66,7 @@ class SearchFrame(SizedFrame):
   except functions.RE as e:
    return wx.MessageBox(*functions.format_requests_error(e))
   if not results:
-   wx.MessageBox('No %s found for %s.' % ('library results' if self.library.GetValue() else search_types[type][0].lower(), search), 'Nothing Found')
+   wx.MessageBox('No %s found for %s.' % ('library results' if type == library else search_types[type][0].lower(), search), 'Nothing Found')
   else:
    application.main_frame.last_search = search
    application.main_frame.last_search_type = type

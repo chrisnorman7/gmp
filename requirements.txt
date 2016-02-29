@@ -6,7 +6,7 @@ hg+http://hg.q-continuum.net/platform_utils#egg=platform_utils
 hg+http://hg.q-continuum.net/sound_lib#egg=sound_lib
 hg+http://hg.q-continuum.net/accessible_output2#egg=accessible_output2
 requests
-git+https://github.com/simon-weber/Unofficial-Google-Music-API.git
+git+https://github.com/simon-weber/gmusicapi.git
 git+https://github.com/chrisnorman7/updatecheck.git
 git+https://github.com/chrisnorman7/confmanager.git#egg=confmanager
 unidecode
