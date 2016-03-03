@@ -47,6 +47,7 @@ from gmusicapi import Mobileclient
 from gmusicapi.exceptions import CallFailure
 from getpass import getpass
 from requests import get
+from shutil import copyfileobj
 from cmenu import Menu
 
 api = Mobileclient(debug_logging = False)
@@ -104,13 +105,14 @@ if res:
    logging.debug('URL = %s', url)
    while True:
     try:
-     g = get(url)
+     g = get(url, stream = True)
      if g.status_code != 200:
-      logging.warning('Download failed with status code %s.', g.status_code)
+      logging.critical('Download failed with status code %s.', g.status_code)
       break
      else:
-      with open(filename, 'w') as f:
-       f.write(g.content)
+      g.raw.decode_content = True
+      with open(filename, 'wb') as f:
+       copyfileobj(g.raw, f)
        logging.debug('Wrote %s bytes.', len(g.content))
        track_total = time() - start
        total += track_total
