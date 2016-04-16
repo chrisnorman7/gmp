@@ -61,7 +61,7 @@ class SearchFrame(SizedFrame):
      if search_lower in s['title'].lower() or search_lower in s['album'].lower() or search_lower in s['artist'].lower():
       results.append(s)
    else:
-    results = application.mobile_api.search_all_access(search, max_results = config.config.get('library', 'max_results'))
+    results = application.mobile_api.search(search, max_results = config.config.get('library', 'max_results'))
     results = results.get(search_types[type][1])
   except functions.RE as e:
    return wx.MessageBox(*functions.format_requests_error(e))

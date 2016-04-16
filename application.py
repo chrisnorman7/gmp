@@ -114,4 +114,4 @@ def post_load_config():
 import functions
 functions.clean_library()
 
-gmusicapi_version = '7.0.0-dev'
+gmusicapi_version = '9.0.1-dev'
