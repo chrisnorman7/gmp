@@ -94,7 +94,7 @@ if res:
    if args.wait:
     print('Waiting %.2f seconds between tracks.' % args.wait)
     sleep(args.wait)
-   print(u'Downloading %s - %s to %s.' % (artist, title, filename))
+   print(u'[%s] Downloading %s - %s to %s.' % (i, artist, title, filename))
    start = time()
    logging.debug('Started download at %s.', ctime(start))
    try:
