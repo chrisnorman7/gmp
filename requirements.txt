@@ -10,5 +10,5 @@ git+https://github.com/simon-weber/gmusicapi.git
 git+https://github.com/chrisnorman7/updatecheck.git
 git+https://github.com/chrisnorman7/confmanager.git#egg=confmanager
 unidecode
-#lxml (Fails on windows. Download the exe instead)
+lxml (Fails on windows. Download the exe instead)
 cssselect
